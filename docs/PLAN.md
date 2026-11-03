@@ -2,9 +2,9 @@
 
 Synthetic RGB-D of aluminium profiles and brackets with a RealSense D415 camera model, and the effect on downstream pose estimation and suction grasping.
 
-Authoritative requirements are in [`task_description.md`](../task_description.md). This file records **decisions and how they will be evaluated**. Assumptions live in [`ASSUMPTIONS.md`](ASSUMPTIONS.md) (IDs `A-xx`, `H-x`), and sources in §9 (IDs `[S-xx]`).
+Authoritative requirements are in [`task_description.md`](../task_description.md). This file records **decisions and how they will be evaluated**. Assumptions live in [`ASSUMPTIONS.md`](ASSUMPTIONS.md) (IDs `A-xx`, `H-x`), sources in [`SOURCES.md`](SOURCES.md) (IDs `[S-xx]`), the report outline in [`REPORT_PLAN.md`](REPORT_PLAN.md), and the current state in [`STATUS.md`](STATUS.md).
 
-- **Status:** Phase 0 (planning) is complete as of 2026-11-03. No code yet.
+- **Status:** Phase 0 (planning) and pre-Phase-1 setup are complete as of 2026-11-03. The protocol (§5) is frozen at git tag `protocol-v1`; changes after that are deviations (§5.12).
 - **Deadline:** Sun 2026-11-08 23:59 CET (A-02).
 - **Budget:** about 6 h/day, Apple M2 with 8 GB, free software only.
 
@@ -35,6 +35,11 @@ Authoritative requirements are in [`task_description.md`](../task_description.md
 | D7 | **Fallback:** if the stereo route isn't plausible by the Wed 4 Nov gate, switch to Route 2, a rule-based image-space model (z² noise, occlusion invalidation, edge flying pixels, specular dropout) | Time risk | — |
 | D8 | **Resolution and placement:** 1280×720; camera 0.65–0.95 m above the table; tilt ≤ 30°. Fallback: 848×480 if the day-1 render benchmark is too slow | 1280×720 is Intel's recommended D415 resolution and matches ROBI. Datasheet Min-Z = 450 mm at 1280×720 (A-16) | [S-01][S-03][S-05] ✅ |
 | D9 | **Experiment design:** as in §5, after an adversarial review. All review changes accepted; suggestions to use forum images and the MP6D dataset rejected | Avoids C2 being trivially null by construction, A1 sitting at its ceiling, and pseudo-replication | [S-04] |
+| D10 | **Dev/test split:** the 5-scene M4 pilot is the dev split (disjoint seed range), excluded from the ~50 test scenes (§5.10) | Hyperparameters are never tuned on test scenes; no extra render cost | — |
+| D11 | **Suction planarity tolerance = 1.0 mm** (A-19, §5.3) | Rejects T-slot openings and edges; tolerant of mesh tessellation | — |
+| D12 | **C1 sanity check = zero-offset ICP test** (§5.11), replacing "A1 on C1 ≈ 0 error" | At the 10 mm/10° offset, C1 can fail for geometric reasons (ICP sliding along prisms, §5.9), so it cannot serve as a bug detector | — |
+
+D10–D12 were decided by the user on 2026-11-03, before any data existed, to close gaps in the protocol.
 
 ## 3. Scope
 
@@ -69,7 +74,7 @@ Authoritative requirements are in [`task_description.md`](../task_description.md
 ## 4. Pipeline (planned)
 
 1. **Parts:** procedural meshes (profiles with T-slots, L-brackets) with known CAD and symmetries (A-20).
-2. **Scenes:** a tray or table in a cell; 3–6 parts per scene placed with physics drop; ~50 scenes × 2 views, scaled to measured render time.
+2. **Scenes:** a tray or table in a cell; 3–6 parts per scene placed with physics drop; ~50 test scenes × 2 views, scaled to measured render time, plus 5 dev scenes (§5.10).
 3. **Renders per frame:**
    - RGB + ideal depth + instance masks (BOP writer);
    - left/right IR with projected pattern, metal materials;
@@ -84,24 +89,25 @@ These are paired: same scenes, same poses.
 
 | ID | Depth input | Role |
 |---|---|---|
-| C1 | Ideal rendered depth | Upper bound; also a sanity check (A1 on C1 must give ≈0 error) |
+| C1 | Ideal rendered depth | Upper bound; also used for the zero-offset sanity check (§5.11) |
 | C2a / C2b | Ideal depth + Gaussian noise, σ = z²·ε_d/(f·B) [S-02] with ε_d = 0.08 px [S-03] (C2a), and a level matched to Carfagni (C2b) [S-04] | **Naive baseline, not the camera model** |
 | C3 | Stereo simulation, metal materials | **The camera model (headline)** |
 | C4 | Stereo simulation, matte materials, brightness matched | Isolates the material effect (C3 vs C4) |
 
 ### 5.2 Task A: pose estimation
 - Inputs: ground-truth instance mask → masked depth points → point-to-plane ICP against the CAD model.
-- **A1 (primary):** start from the ground-truth pose with a 10 mm / 10° offset. Sweep the offset over 2/5/10/20 mm as a secondary result.
+- **A1 (primary):** start from the ground-truth pose with a 10 mm / 10° offset. Sweep the offset over 2/5/10/20 mm as a secondary result, with the rotation swept together (n mm and n°, A-30).
+- **Offset definition:** a translation of exactly the stated magnitude in a uniformly random direction, composed with a rotation of exactly the stated angle about a uniformly random axis. The offsets are drawn once per instance and are **identical across conditions** (§5.10).
 - **A2 (optional):** global registration (FPFH + RANSAC) followed by ICP.
-- Hyperparameters are fixed once on a small dev split and are identical across conditions.
+- Hyperparameters are fixed once on the dev split (§5.10) and are identical across conditions.
 
 ### 5.3 Task B: suction
 - On the masked points, estimate normals and choose the flattest point that fits a cup of 10 mm radius.
 - **Success** is checked against the ground-truth mesh. All three must hold:
   - the point is within 2 mm of the surface;
   - the normal error is under 15°;
-  - the ground-truth surface within the cup disk is planar (the cup is not over a slot or edge).
-- The planarity tolerance is fixed **before** running (A-19).
+  - the ground-truth surface within the cup disk is planar (the cup is not over a slot or edge): the whole 10 mm-radius disk lies on the same part, and every ground-truth surface point inside it is within **1.0 mm** of the tangent plane at the chosen point (D11, A-19).
+- All suction parameters are fixed before running (A-19) and are in `configs/default.yaml`.
 
 ### 5.4 Metrics
 - **A:** MSSD (symmetry-aware). Primary: recall at **absolute 5 mm**. Secondary: recall at 2 mm, translation and rotation error, error along the profile axis vs across it.
@@ -109,9 +115,10 @@ These are paired: same scenes, same poses.
 - **Sensor (cause → effect):** depth MAE vs ground truth, % invalid pixels, % of pixels with error > 5 mm. Each is split edge vs interior and metal vs matte.
 
 ### 5.5 Statistics
-- Bootstrap over **scenes** (not instances), 95% CIs on paired differences in success rate.
+- Test scenes only; dev scenes are never part of the reported results.
+- Bootstrap over **scenes** (not instances), 95% CIs on paired differences in success rate, 10 000 resamples.
 - McNemar's test for paired success/failure outcomes.
-- State the detectable effect size: roughly 10–15 percentage points with ~50 scenes (A-18, to be computed).
+- State the detectable effect size: roughly 10–15 percentage points with ~50 scenes (A-18; computed on the dev-split pilot at M4).
 - Log seeds and compute times.
 
 ### 5.6 Primary endpoint
@@ -136,6 +143,27 @@ Null results are reported as results.
 - **Wrong symmetry definitions.**
 - **Suction check passes almost everywhere.**
 - **A1 at ceiling, or A2 at floor.**
+
+### 5.10 Dev/test split, seeds and pairing (D10)
+- **Test scenes:** scene seeds 0–49. **Dev scenes:** scene seeds 1000–1004 (= the M4 pilot). The ranges are disjoint, and dev scenes are excluded from all reported results.
+- **Master seed** 0, set in `configs/default.yaml`.
+- Every random stream is derived from `(master, scene seed, view, stream)` via `numpy.random.SeedSequence` (`src/synthrgbd/seeds.py`). The streams are scene layout/physics, C2a noise, C2b noise, IR sensor noise, initial pose offset, and bootstrap.
+- **Pairing:** C3 and C4 use the **same IR-noise realisation**, and all conditions use the **same initial pose offsets**, so paired differences come only from the depth input.
+- Every generated dataset and experiment run logs its seeds and the commit hash.
+
+### 5.11 Sanity check (D12)
+- On C1, start ICP **at the ground-truth pose** (zero offset). At least **99%** of instances must stay at MSSD < **0.5 mm**.
+- If the check fails, treat it as a bug: fix, rerun all conditions, and log it in DIARY.md. A failed check is not a result.
+- C1 at the 10 mm / 10° offset is reported as the upper bound, whatever its value.
+- Unit tests in `tests/` cover the known silent-bug risks (R5): ×16 disparity scaling, disparity ↔ depth, z-depth vs ray distance, MSSD with symmetries.
+
+### 5.12 Protocol freeze and deviations
+- The protocol (§5 and the thresholds in `configs/default.yaml`) is frozen at git tag `protocol-v1`, before any data exist.
+- Any later change is a **deviation**: add a dated row below with the reason, and report it in the paper.
+
+| Date | Deviation | Reason |
+|---|---|---|
+| — | none yet | — |
 
 ## 6. Minimum deliverable and optional work
 
@@ -165,7 +193,7 @@ Work proceeds as fast as it goes. Dates are **latest-by** gates, not planned slo
 | M1 Environment | BlenderProc quickstart runs | 1 h of trying → Open3D fallback |
 | M2 Scenes + labels | Procedural parts, physics scenes, BOP output | — |
 | M3 Stereo route | IR pair + projector + SGBM; plane anchor; render benchmark per frame | **Wed 4 Nov end of day** → Route 2 if implausible; 848×480 if too slow |
-| M4 Camera model done | Metal/matte, IR noise and blur, SGBM tuning, 5-scene pilot (ceiling/floor check; document any design change) | — |
+| M4 Camera model done | Metal/matte, IR noise and blur, SGBM tuning, 5-scene pilot on the dev split (ceiling/floor check; power estimate A-18; tune hyperparameters; log any design change as a deviation, §5.12) | — |
 | M5 Experiment | Full renders, A1 + B, sensor metrics, statistics, invalidation check | **A metrics by Fri 6 Nov end of day** → otherwise freeze B |
 | M6 Report | Skeleton → figures → text → reflection → AI note; README | **Code freeze Sat 7 Nov 20:00. Target submission Sun 8 Nov 18:00** |
 
@@ -173,66 +201,18 @@ Work proceeds as fast as it goes. Dates are **latest-by** gates, not planned slo
 
 | ID | Risk | Mitigation / trigger |
 |---|---|---|
-| R1 | BlenderProc fails on this macOS version (known permission issue) | 1 h limit; grant terminal permission [S-10]; else Open3D fallback |
+| R1 | BlenderProc fails on this macOS version (known permission issue). This Mac runs **macOS 27.2**, newer than the 26.3 tested in PR #1231, so the risk is higher | Run M1 first; 1 h limit; grant terminal permission [S-10]; else Open3D fallback |
 | R2 | Stereo simulation implausible | M3 gate → Route 2 |
 | R3 | Render time / memory on 8 GB | Benchmark at M3; reduce resolution, then samples, then views, then scenes |
 | R4 | Ceiling or floor effect in A1 or B | Pilot at M4; thresholds fixed in advance; offset sweep |
-| R5 | Silent bugs (units, disparity scaling, symmetries) | Sanity check: A1 on C1 ≈ 0 error; plane test; unit checks |
+| R5 | Silent bugs (units, disparity scaling, symmetries) | Zero-offset sanity check (§5.11); plane test; unit tests in `tests/` |
 | R6 | Report runs over time | Notes kept in DIARY.md continuously; skeleton early; code freeze |
 | R7 | Reviewers can't run the code | Pinned environment, quick-run configuration, seeds, clear README |
 
-## 9. Sources
+## 9. Sources → [`SOURCES.md`](SOURCES.md)
 
-Status legend:
-- ✅ = the lead agent read the primary source and confirmed the specific claim.
-- 🔶 = reported by a subagent or a search summary; **verify before citing in the report**.
-- ⚠️ = partially verified; the caveat is stated.
+Moved out on 2026-11-03. IDs `[S-xx]` are unchanged.
 
-| ID | Source | Claims used | Status |
-|---|---|---|---|
-All entries below were checked by the lead agent on 2026-11-03 against the primary source (datasheet, paper and PDF text extracted locally; official pages fetched). The verification notes record corrections to earlier claims.
+## 10–11. Report outline and reflection outline → [`REPORT_PLAN.md`](REPORT_PLAN.md)
 
-| ID | Source | Verified claims | Status and notes |
-|---|---|---|---|
-| S-01 | Intel RealSense D400 Series Datasheet, Rev 013, April 2022 (doc 337029-013), third-party copy: https://docs.clearpathrobotics.com/assets/files/clearpath_robotics_017103-TDS2-80efb31ac3e573ef412db1cbfe285e63.pdf | D415 baseline 55 mm and depth FOV H65°/V40° (HD) (Table 3-11); D41x projector 850 nm ± 10 nm, static pattern, VCSEL (Table 3-16); **Min-Z D415: 450 mm @1280×720, 310 mm @848×480** (Table 4-11); invalid left band = B·F/Z px (§4.5); spec (≤2 m, 80% ROI, HD, 150 mW, auto exposure): Z-accuracy ±2%, fill ≥99%, RMS (spatial noise vs best-fit plane) ≤2%, temporal ≤1% (Tables 4-12, 4-14) | ✅. **Correction:** "specular reflections may cause image saturation" (Table 3-49) is a *D435 vs D435f* comparison, not a D415 statement. Do not cite it for the D415 |
-| S-02 | Keselman, Woodfill, Grunnet-Jepsen, Bhowmik, "Intel RealSense Stereoscopic Depth Cameras", CVPR 2017 Workshops (CCD), https://arxiv.org/abs/1705.05548 | Eq. 1 z = f·B/d; eq. 2 ε_z = z²·ε_d/(f·B); ε_d "≈ 0.1" treated as constant | ✅. **Correction:** the 0.08 px disparity RMS in this paper is measured on the **R200**, not the D400. Cite it for the formula only |
-| S-03 | Intel/RealSense, "Tuning depth cameras for best performance", https://dev.realsenseai.com/docs/tuning-depth-cameras-for-best-performance | Theoretical RMS curve uses subpixel 0.08 (well-textured targets < 0.1, approaching 0.05); RMS measured as a plane fit; **recommended resolution D415 = 1280×720**; invalid pixels have depth = 0; poor exposure is the main cause of bad depth; glossy surfaces worse than matte textured ones; laser power 150 mW nominal | ✅ (the formula itself appears only as an image on the page). The BKMs PDF suggested by the reviewer was not checked and is not used |
-| S-04 | Carfagni et al., "Metrological and Critical Characterization of the Intel D415 Stereo Depth Camera", *Sensors* 19(3):489, 2019, https://pmc.ncbi.nlm.nih.gov/articles/PMC6387018/ (PDF: https://flore.unifi.it/retrieve/e398c381-ea32-179a-e053-3705fe0a4cff/sensors-19-00489-v2.pdf) | §3.3: whole-scan deviation from a certified ground-truth plane (labelled "systematic non-planarity errors"): mean 0.004 mm / SD 0.345 mm @200 mm, mean 0.237 mm / SD 4.74 mm @1 m; max 1.6 → 26.5 mm; "noise tends to be distributed locally"; lens non-linearity noted; near-zero depth offset; Default preset; Eq. 3 MinZ = f·B/(shift+126); no fitted noise model; no reflective targets | ✅. Note: the paper states "maximum IR camera resolution (1920 × 1080)" while its own spec table gives depth up to 1280×720, an internal inconsistency |
-| S-05 | Yang, Gao, Li, Waslander, "ROBI: A Multi-View Dataset for Reflective Objects in Robotic Bin-Picking", IROS 2021, https://arxiv.org/abs/2105.04112 (full text https://ar5iv.labs.arxiv.org/html/2105.04112); project page https://www.trailab.utias.utoronto.ca/robi | D415 at 1280×720 + Ensenso N35; 7 metallic parts; 63 scenes; GT 6D poses; GT depth from the Ensenso with anti-reflective spray; RealSense depth "higher level of completeness" but "significant degradation of depth accuracy (e.g., loss of geometric details)"; license CC BY-NC-SA 4.0; downloads via Google Drive + ROBI_Toolkit | ✅ (download size unknown) |
-| S-06 | Ahn, Chae, Noh, Nam, Hong, "Analysis and Noise Modeling of the Intel RealSense D435 for Mobile Robots", 16th Int. Conf. on Ubiquitous Robots (UR) 2019, https://ucla.box.com/shared/static/gqxwr2vvqsf22oi9dqtn50hr0xkruzie.pdf | Gaussian axial and lateral noise model vs distance and incidence angle for the D435 | ⚠️ Existence and scope verified. **Coefficients unverified** (PDF behind a Box redirect; constants not found elsewhere). Not used; do not cite numbers |
-| S-07 | Hodaň et al., "BOP Challenge 2020 on 6D Object Localization", ECCVW 2020, https://arxiv.org/abs/2009.07378 | MSSD eq. 2: e = min over symmetries S of max over vertices x of ‖P̂x − P̄Sx‖₂; "MSSD is relevant for robotic grasping"; symmetries are those with Hausdorff distance < max(15 mm, 0.1·diameter); AR_MSSD averages recall over thresholds of 5–50% of diameter | ✅ (PDF text extracted) |
-| S-08 | RealSense spin-out (Intel Capital, 11 July 2025): https://www.intelcapital.com/realsense-completes-spin-out-from-intel-raises-50-million-to-accelerate-ai-powered-vision-for-robotics-and-biometrics/ ; products page https://realsenseai.com/products/ | Spin-out completed; will "continue to support its existing customer base and product roadmap"; D415 listed as a current product (65°×40°, rolling shutter, ideal range 0.4–3 m) | ✅. The product page shows no stock, price or EOL information, so claim only "listed as a current product" |
-| S-09 | Zhang et al., "Close the Optical Sensing Domain Gap by Physics-Grounded Active Stereo Sensor Simulation", arXiv 2201.11924 (v4, Jan 2023; listed as to appear in IEEE T-RO) | Physics-grounded active-stereo simulation: material acquisition, ray-traced IR rendering, IR noise simulation, depth estimation | ✅ (abstract). The DOI and the specific sensor model simulated were not verified |
-| S-10 | BlenderProc: PyPI https://pypi.org/project/blenderproc/ ; issue #768 https://github.com/DLR-RM/BlenderProc/issues/768 ; PR #1231 https://github.com/DLR-RM/BlenderProc/pull/1231 ; issue #1070 https://github.com/DLR-RM/BlenderProc/issues/1070 | v2.8.0 latest (PyPI dates inconsistent); BOP annotation writer; #768 (open): "Operation not permitted" inside Blender.app on macOS, workaround = allow the terminal to perform updates in macOS settings; PR #1231 (open, unmerged): fixes this on macOS 26.3 / M4 Pro / Blender 4.2.1; #1070 (open): M2 Pro quickstart error with BlenderProc 2.7.0 / Blender 3.5.1, not reproduced by the maintainer | ✅. No official macOS support statement found; Apple Silicon use is evidenced only by these issues |
-| S-11 | BlenderProc stereo matching source https://raw.githubusercontent.com/DLR-RM/BlenderProc/main/blenderproc/python/postprocessing/StereoGlobalMatching.py ; projector example https://dlr-rm.github.io/BlenderProc/examples/advanced/stereo_matching_with_projector/README.html | `stereo_global_matching(color_images, depth_max, window_size=7, num_disparities=32, min_disparity=0, disparity_filter=True, depth_completion=True)` → (depths, disparities); CPU `cv2.StereoSGBM_create` (MODE_HH) + optional `ximgproc` WLS filter; **num_disparities must be divisible by 16**. Projector = SPOT light with `setup_as_projector(fov, ratio, pattern_img)` and a random dot pattern; stereo via `set_stereo_parameters(interocular_distance, convergence_mode="PARALLEL")` | ✅. Defaults (WLS filter, depth completion) would hide artifacts and must be disabled for our use. The example needs SUNCG, so we adapt rather than run it |
-| S-12 | Open3D ray casting tutorial https://www.open3d.org/docs/latest/tutorial/geometry/ray_casting.html | `RaycastingScene.cast_rays` → t_hit, geometry_ids, primitive_ids, primitive_uvs, primitive_normals; `create_rays_pinhole` helper | ✅. t_hit is distance along the ray, not z-depth (convert if used) |
-
-Not used, and not verified: the camera alternatives from the research subagent (Orbbec Femto Bolt, Gemini 335, Zivid 2+). Verify them if the report's camera-choice section compares against them.
-
-## 10. Report outline (≤ 8 pages total)
-
-| § | Content | Pages |
-|---|---|---|
-| 1 | Problem, scope, non-goals | 0.5 |
-| 2 | Reference camera: why the D415 | 0.5 |
-| 3 | Synthetic data pipeline | 1.0 |
-| 4 | Camera model: active stereo simulation, included/excluded table, anchor (a) | 1.5 |
-| 5 | Experiment design and pre-specified endpoint | 0.75 |
-| 6 | Results, incl. what did not work | 1.5 |
-| 7 | Limitations | 0.5 |
-| 8 | Synthetic-to-real reflection (≤ 1 page) | 1.0 |
-| 9 | AI-use note | 0.25 |
-| — | References | ~0.5 |
-
-## 11. Reflection outline (tentative until results)
-
-**Riskiest assumption candidates**
-- **(a) Preferred:** the simulated sensor reproduces how the real sensor errs on reflective metal. Links to the C3 vs C4 result; ROBI suggests the real D415 smooths metal rather than leaving holes [S-05].
-- **(b)** Randomised appearance in simulation covers real factory surfaces.
-- **(c)** Pose error in simulation predicts real pick or assembly success.
-
-**Six-month plan for (a)**
-1. **Months 1–2:** collect a small real calibration set with the target camera on real parts; ground-truth depth from spray-coated scanning (ROBI protocol).
-2. **Months 2–3:** measure the simulation-to-reality gap effect by effect.
-3. **Months 3–4:** fit the sensor-model parameters or learn a residual correction; randomise what remains unmodelled.
-4. **Months 5–6:** closed-loop pick and assembly validation, with success criteria and go/no-go thresholds fixed in advance.
+Moved out on 2026-11-03.

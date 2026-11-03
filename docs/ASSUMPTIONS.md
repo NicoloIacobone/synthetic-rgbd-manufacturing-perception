@@ -4,7 +4,7 @@ Every scoping, modelling or evaluation choice that is not a direct fact belongs 
 
 **Columns**
 - **Type:**
-  - `doc` = a documented fact (with a source from PLAN.md §9);
+  - `doc` = a documented fact (with a source from [SOURCES.md](SOURCES.md));
   - `inf` = our inference;
   - `asm` = an unverified assumption or design choice;
   - `usr` = provided or decided by the user.
@@ -34,13 +34,19 @@ Every scoping, modelling or evaluation choice that is not a direct fact belongs 
 | A-16 | D415 Min-Z = 450 mm at 1280×720 (310 mm at 848×480), so the camera at 0.65–0.95 m keeps all parts above Min-Z | doc | [S-01] Table 4-11 ✅ (own estimate f·B/126 ≈ 440 mm agrees) | Check per frame that the nearest part depth > 0.45 m | accepted | §3 |
 | A-17 | Instances within one scene are correlated, so scenes are the independent unit | inf | Reviewer judgement | Bootstrap over scenes | accepted | §5 |
 | A-18 | About 50 scenes can detect differences of ~10–15 percentage points | inf | Reviewer judgement | Compute properly once pilot data exist | open | §5 |
-| A-19 | Suction parameters: 10 mm cup radius, 15° normal tolerance, 2 mm on-surface, planarity tolerance TBD | asm | Design parameters | Fixed before the full run | open | §5 |
-| A-20 | Symmetries: square profile = 4-fold about its axis × 2-fold end flip (assumes a symmetric cross-section and slots); equal-leg L-bracket = 2-fold | inf | Geometry of our procedural meshes | Unit test on symmetric poses (MSSD ≈ 0) | open | §5 |
+| A-19 | Suction parameters: 10 mm cup radius, 15° normal tolerance, 2 mm on-surface, planarity tolerance 1.0 mm (whole disk on the same part, every GT surface point within 1.0 mm of the tangent plane) | usr | Design parameters; planarity fixed by the user 2026-11-03 (D11) | Fixed before any data, frozen at `protocol-v1` | accepted | §5 |
+| A-20 | Symmetries: square profile = 4-fold about its axis × 2-fold end flip (assumes a symmetric cross-section and slots); equal-leg L-bracket = 2-fold (180° about the leg bisector). Model-frame convention: profile axis = z, centred at the origin; bracket corner at the origin, legs along +x and +y, centred in z | inf | Geometry of our procedural meshes | MSSD implementation unit-tested on ideal point sets (`tests/test_mssd.py`) ✅; still to test on the generated meshes (M2) | open | §5 |
 | A-21 | 5 mm absolute pose error is a meaningful assembly-oriented threshold | asm | No source | 2 mm also reported; sweep shown | open | §5, §7 |
 | A-22 | Multipath/interreflection is not modelled on purpose (some may emerge from path tracing) | asm | — | Listed as excluded/partial | accepted | §4 |
-| A-23 | BlenderProc 2.8 runs on this macOS version on M2 | asm | [S-10] ✅ (issues only; no official macOS support statement) | M1 milestone | open | — |
-| A-25 | OpenCV SGBM needs num_disparities divisible by 16, so the D415's 126 px search range is emulated with 128 plus masking of d > 126 | inf | [S-11] ✅ (divisible-by-16 constraint); 126 from [S-04] Eq. 3 | Check that Min-Z in the simulation ≈ 450 mm on the plane test | open | §4 |
+| A-23 | BlenderProc 2.8 runs on this macOS version (27.2) on M2 | asm | [S-10] ✅ (issues only; no official macOS support statement; the newest fix, PR #1231, was tested on macOS 26.3) | M1 milestone | open | — |
 | A-24 | Brightness matching between metal (C3) and matte (C4) isolates reflectance as the only change | asm | Reviewer recommendation | Compare mean IR intensity of the two conditions | open | §5 |
+| A-25 | OpenCV SGBM needs num_disparities divisible by 16, so the D415's 126 px search range is emulated with 128 plus masking of d > 126 | inf | [S-11] ✅ (divisible-by-16 constraint); 126 from [S-04] Eq. 3 | Check that Min-Z in the simulation ≈ 450 mm on the plane test; masking unit-tested (`tests/test_geometry.py`) | open | §4 |
+| A-26 | The 5 dev scenes (= M4 pilot, seeds 1000–1004) are representative enough to tune ICP, SGBM and suction hyperparameters for the 50 test scenes (seeds 0–49) | usr | Decided by the user 2026-11-03 (D10) | Dev scenes never enter reported results | accepted | §5 |
+| A-27 | Zero-offset ICP on C1 detects pipeline bugs: ≥ 99% of instances at MSSD < 0.5 mm, else the run is treated as buggy | usr | Decided by the user 2026-11-03 (D12); thresholds are design choices | Run before every full evaluation | accepted | §5 |
+| A-28 | Intrinsics: square pixels, fx = fy derived from the 65° HFOV at 1280×720 (≈ 1004.6 px; the implied VFOV is ≈ 39.4°, not the rounded 40° in the datasheet). The principal point convention must match the renderer's | inf | [S-01] FOV values ✅; convention is ours | Check BlenderProc's K matrix at M2; ray ↔ z conversion unit-tested | open | §3 |
+| A-29 | Pairing: C3 and C4 share the IR-noise realisation, and all conditions share the initial pose offsets, so paired differences come only from the depth input | asm | Design choice (PLAN §5.10) | By construction (seed streams in `src/synthrgbd/seeds.py`) | accepted | §5 |
+| A-30 | Offset sweep moves translation and rotation together (2 mm/2°, 5/5, 10/10, 20/20); each offset has an exact magnitude with a uniformly random direction or axis | asm | The plan said only "2/5/10/20 mm"; this reading was chosen by the agent when closing the gaps and awaits the user's confirmation | Fixed before any data; a change before data exist is logged in PLAN §5.12 | open | §5 |
+| A-31 | 10 000 bootstrap resamples are enough for stable 95% CIs | asm | Common practice (not sourced) | Check CI stability across two bootstrap seeds | accepted | §5 |
 
 ## Hypotheses
 
