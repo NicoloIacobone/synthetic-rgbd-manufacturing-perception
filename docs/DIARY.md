@@ -116,3 +116,7 @@ This is a working log of what was done, measured, decided, and what failed. It f
 - **Consistency (20 instance-views):** masked depth back-projected through scene_gt poses lies on the CAD surface: worst median 0.023 mm, worst p95 0.047 mm (≈ the 0.1 mm depth quantisation), 0% > 1 mm; 0 visible pixels outside amodal masks; unoccluded visib_fract = 1.000 (Blender segmentation and Open3D ray casting agree to the pixel); scene_camera K = A-28 K within 4e-5 px.
 - **Determinism:** re-rendering seed 1001 gives identical scene_gt poses (max |Δ| = 0) and bit-identical depth; RGB differs by ≤ 1 grey level in 0.002% of pixels (GPU sampling).
 - Projection for 55 scenes (50 test + 5 dev) RGB/depth only: ≈ 23 min. IR stereo renders (M3) will dominate; not measured yet.
+
+## 2026-11-03 — M2 close
+
+- Re-rendered dev scenes 1000 and 1001 from the clean commit 81e583b (earlier sample renders recorded `7a7c4d0-dirty`): 4 and 6 parts, 8.36 / 8.43 s per frame, worst p95 back-projection error 0.047 mm, 0% > 1 mm, Min-Z OK. Stopped after M2 as instructed; M3 not started.
