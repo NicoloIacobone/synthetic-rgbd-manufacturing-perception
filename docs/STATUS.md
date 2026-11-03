@@ -4,11 +4,11 @@ Handoff note between sessions. **Read first.** Keep it short (≤ ~40 lines): up
 
 - **Updated:** 2026-11-03, evening
 - **Phase:** Phase 1. **M1 and M2 done** (commits 0c85357 … 81e583b). M3 not started; it starts only when the user asks.
-- **Protocol:** frozen at `protocol-v1`. Deviations: none.
+- **Protocol:** frozen at `protocol-v1`. Deviations: 1 (Task B per part type, PLAN §5.12).
 - **Gates:** M3 Wed 4 Nov, M5 Fri 6 Nov, code freeze Sat 7 Nov 20:00.
 
 ## How to run (see script docstrings)
-- BlenderProc env: `scripts/setup_blenderproc.sh` (`.venv-bproc`, blenderproc 2.8.0 + macOS patch in `patches/`). **Always run Blender through `scripts/bproc.sh`** (plain `blenderproc run` downloads a second Blender into ~/blender).
+- BlenderProc env: `scripts/setup_blenderproc.sh` (`.venv-bproc` from `requirements-bproc.lock.txt` + macOS patch in `patches/`, D14). **Always run Blender through `scripts/bproc.sh`** (plain `blenderproc run` downloads a second Blender into ~/blender).
 - Scenes: `scripts/render_scenes.sh data/m2 1000 1001` → BOP dataset in `data/m2/synthrgbd/` + logs and contact sheets in `data/m2/logs/`.
 - Checks: `scripts/check_intrinsics.py` (A-28), `scripts/check_bop_scene.py` (GT consistency). Tests: `.venv/bin/python -m pytest` (38 pass).
 
@@ -17,8 +17,7 @@ Handoff note between sessions. **Read first.** Keep it short (≤ ~40 lines): up
 - GT consistency: worst p95 back-projection error 0.047 mm; K = A-28 within 4e-5 px; re-render bit-identical in poses and depth.
 
 ## Open items waiting for the user
-1. **Task B vs part geometry (A-33):** with the 10 mm cup (frozen, A-19) no profile face can pass planarity (largest flat disk 5.5 mm side, 9.76 mm end face); only brackets can succeed. Options in the M2 report.
-2. **BlenderProc pinning:** blenderproc==2.8.0 is pinned only in `scripts/setup_blenderproc.sh`; add a `requirements-bproc.txt`? (requires approval for requirements files).
+- None. Decided 2026-11-03: Task B reported per part type too (deviation logged in PLAN §5.12); keep the local BlenderProc patch (D14); BlenderProc pinned in `requirements-bproc.txt` + lock.
 
 ## Next steps (M3, when asked)
 1. IR stereo pair + projector, linear 16-bit IR export, own SGBM in `.venv` (D13); **re-check A-32 (i–iii)** before the M3 gate; plane anchor (a); IR render benchmark per frame (decides 1280×720 vs 848×480, D8).

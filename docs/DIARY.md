@@ -120,3 +120,9 @@ This is a working log of what was done, measured, decided, and what failed. It f
 ## 2026-11-03 — M2 close
 
 - Re-rendered dev scenes 1000 and 1001 from the clean commit 81e583b (earlier sample renders recorded `7a7c4d0-dirty`): 4 and 6 parts, 8.36 / 8.43 s per frame, worst p95 back-projection error 0.047 mm, 0% > 1 mm, Min-Z OK. Stopped after M2 as instructed; M3 not started.
+
+## 2026-11-03 — User decisions after M2
+
+- A-33 / Task B: option (a), keep part geometry and the 10 mm cup; report Task B per part type in addition to the overall rate. Logged as the first deviation in PLAN §5.12 (no data existed yet).
+- Keep the local BlenderProc macOS patch rather than granting App Management permission: recorded as D14.
+- Pin BlenderProc: `requirements-bproc.txt` (blenderproc==2.8.0) + `requirements-bproc.lock.txt` (pip freeze of `.venv-bproc`, 21 packages); `scripts/setup_blenderproc.sh` now installs from the lock.

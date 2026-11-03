@@ -40,8 +40,9 @@ Authoritative requirements are in [`task_description.md`](../task_description.md
 | D12 | **C1 sanity check = zero-offset ICP test** (§5.11), replacing "A1 on C1 ≈ 0 error" | At the 10 mm/10° offset, C1 can fail for geometric reasons (ICP sliding along prisms, §5.9), so it cannot serve as a bug detector | — |
 
 | D13 | **SGBM runs in the analysis env (`.venv`, OpenCV 5.0), not in Blender (option B).** Blender renders and exports the left/right IR pair once (linear 16-bit, no tone mapping); our own code adds IR noise/blur, runs SGBM and converts to depth. BlenderProc's `stereo_global_matching` is not used. This replaces the "CPU stereo matching in one tool" part of D3's rationale; D3 otherwise stands | The helper hard-codes the matcher (no left-right check or speckle filter, window 5 px), maps zero disparity to max depth and is not metric with WLS on [S-11]. Option B allows re-matching without re-rendering (§5.8 check, anchor tuning), shared seeds (§5.10) and unit-tested code | [S-11] ✅ |
+| D14 | **BlenderProc env:** BlenderProc 2.8.0 in its own launcher env `.venv-bproc` (pins `requirements-bproc.txt`, lock `requirements-bproc.lock.txt`), with our local macOS patch (`patches/blenderproc-2.8.0-macos-app-bundle.patch`, applied by `scripts/setup_blenderproc.sh`) instead of granting the terminal App Management permission. Blender always via `scripts/bproc.sh` (repo-local `blender/`) | Keeps `.venv` equal to its lock; no OS permission change needed; reproducible on macOS. On Linux the patch is not applied | [S-10] ✅ |
 
-D10–D12 were decided by the user on 2026-11-03, before any data existed, to close gaps in the protocol. D13 was decided by the user on 2026-11-03; **its feasibility is re-checked at M3** (A-32): if the linear IR export fails or the round trip is too slow by the M3 gate, the fallback is the BlenderProc helper copied into our code and patched (left-right check on, zero disparity → invalid, no WLS), run inside Blender.
+D10–D12 were decided by the user on 2026-11-03, before any data existed, to close gaps in the protocol. D13 and D14 were decided by the user on 2026-11-03 (D14 after M1); **its feasibility is re-checked at M3** (A-32): if the linear IR export fails or the round trip is too slow by the M3 gate, the fallback is the BlenderProc helper copied into our code and patched (left-right check on, zero disparity → invalid, no WLS), run inside Blender.
 
 ## 3. Scope
 
@@ -166,7 +167,7 @@ Null results are reported as results.
 
 | Date | Deviation | Reason |
 |---|---|---|
-| — | none yet | — |
+| 2026-11-03 | §5.3/§5.4 Task B: success rate is reported **per part type (profiles, brackets) in addition to** the pre-specified overall rate; definition, thresholds and cup radius unchanged. Approved by the user (option a) | With the frozen 10 mm cup no profile face can pass the planarity check (largest flat disk 5.5 mm side, 9.76 mm end face, A-33), so profiles fail for geometric reasons in every condition; the overall rate alone would mix this with the camera effect. Found at M2, before any Task B data |
 
 ## 6. Minimum deliverable and optional work
 

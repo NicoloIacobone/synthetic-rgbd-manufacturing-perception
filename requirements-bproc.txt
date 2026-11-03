@@ -1,0 +1,4 @@
+# BlenderProc launcher env (.venv-bproc, Python 3.11), separate from the analysis env (D14).
+# Full resolved set: requirements-bproc.lock.txt. Set up with scripts/setup_blenderproc.sh,
+# which also applies patches/blenderproc-2.8.0-macos-app-bundle.patch on macOS.
+blenderproc==2.8.0
