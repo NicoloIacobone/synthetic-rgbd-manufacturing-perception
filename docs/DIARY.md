@@ -130,3 +130,9 @@ This is a working log of what was done, measured, decided, and what failed. It f
 ## 2026-11-03 — D415 projector details from the datasheet [S-01]
 
 - Full-text search of the D400 datasheet Rev 013 (153 pages). Table 3-16 (p. 40): static pattern, VCSEL + optics, PWM, 360 mW average optical power, 850 ± 10 nm, field of projection H 64° ± 3° / V 41° ± 3° / D 72° ± 3°. Tables 3-11 (p. 37) and 3-48 (p. 64) give H 67 / V 41 / D 75 instead: an internal inconsistency. Laser power 0–360 mW in 30 mW steps (p. 88); specs measured at 150 mW, auto exposure (p. 81). Dot count, size, density and layout are not given anywhere in the datasheet; another source is needed for the projector model at M3.
+
+## 2026-11-03 — End-of-session review before handoff
+
+- Re-checked: 38 tests pass; all scripts compile (`py_compile`, `bash -n`); no leftovers of removed options; the macOS patch applies to a freshly downloaded blenderproc-2.8.0 wheel; `requirements-bproc.lock.txt` resolves in a fresh venv (pip dry run); no generated data, Blender, venvs or .DS_Store tracked; `protocol-v1` tag unchanged (4f52c67).
+- **Inconsistency found:** since `protocol-v1`, commits 348d49c and b6c5b00 (earlier session) edited comments only in frozen files (`configs/default.yaml` offset_sweep comment; PLAN §5.2 A1 line, "A-30 confirmed") without a §5.12 row. No value changed. Not logged unilaterally; raised in STATUS for the user.
+- Stale docs fixed: CLAUDE.md Environment now names `.venv-bproc` and the `scripts/bproc.sh` rule; PLAN status line; A-16 (Min-Z check implemented, OK on dev scenes); STATUS adds the projector-FOV choice (64° vs 67°) for M3.

@@ -3,7 +3,7 @@
 Handoff note between sessions. **Read first.** Keep it short (≤ ~40 lines): update it at the end of every task, and overwrite outdated content rather than appending (history goes to DIARY.md and git).
 
 - **Updated:** 2026-11-03, evening
-- **Phase:** Phase 1. **M1 and M2 done** (commits 0c85357 … 81e583b). M3 not started; it starts only when the user asks.
+- **Phase:** Phase 1. **M1 and M2 done** (commits 0c85357 … HEAD on 2026-11-03, pushed to origin/main). M3 not started; it starts only when the user asks.
 - **Protocol:** frozen at `protocol-v1`. Deviations: 1 (Task B per part type, PLAN §5.12).
 - **Gates:** M3 Wed 4 Nov, M5 Fri 6 Nov, code freeze Sat 7 Nov 20:00.
 
@@ -17,11 +17,12 @@ Handoff note between sessions. **Read first.** Keep it short (≤ ~40 lines): up
 - GT consistency: worst p95 back-projection error 0.047 mm; K = A-28 within 4e-5 px; re-render bit-identical in poses and depth.
 
 ## Open items waiting for the user
-- None. Decided 2026-11-03: Task B reported per part type too (deviation logged in PLAN §5.12); keep the local BlenderProc patch (D14); BlenderProc pinned in `requirements-bproc.txt` + lock.
+- **Frozen-file edits not logged in §5.12 (found in the post-M2 review):** commits 348d49c and b6c5b00 (earlier session) changed comments only in `configs/default.yaml` (`offset_sweep` comment) and PLAN §5.2 (A1 line: "A-30; confirmed by the user, …"). No protocol value changed. Ask the user whether to log them as an editorial row in PLAN §5.12.
+- Decided 2026-11-03: Task B reported per part type too (deviation logged in PLAN §5.12); keep the local BlenderProc patch (D14); BlenderProc pinned in `requirements-bproc.txt` + lock.
 
 ## Next steps (M3, when asked)
 1. IR stereo pair + projector, linear 16-bit IR export, own SGBM in `.venv` (D13); **re-check A-32 (i–iii)** before the M3 gate; plane anchor (a); IR render benchmark per frame (decides 1280×720 vs 848×480, D8).
-2. Research when needed: D415 dot count/density/layout (**not in the datasheet** [S-01]; projector FOV, power and wavelength are, see SOURCES); aluminium reflectance near 850 nm (A-11).
+2. Research when needed: D415 dot count/density/layout (**not in the datasheet** [S-01]; projector FOV, power and wavelength are, see SOURCES; the datasheet gives the projector HFOV as both 64° and 67°: choose one in a new assumption row); aluminium reflectance near 850 nm (A-11).
 3. M5: re-check A-30 when implementing the offset sweep.
 
 ## Where things are
