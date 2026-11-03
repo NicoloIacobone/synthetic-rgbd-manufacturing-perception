@@ -94,3 +94,9 @@ This is a working log of what was done, measured, decided, and what failed. It f
 - **Surprise:** Open3D 0.20 `RaycastingScene.compute_distance` (float32) reports up to 0.02 mm for points that lie exactly on the profile mesh (identity transform), so it cannot verify symmetries at a 1e-3 mm tolerance. Replaced it in the test with an exact float64 closest-point-on-triangle routine (Ericson), with its own unit test.
 - Also `geometry.plane_depth` (analytic z-depth of a plane for a given K) + test, for the A-28 check.
 - **Finding for Task B:** with these dimensions the largest flat disk is 5.5 mm radius on profile side strips and 9.76 mm on end faces, both below the frozen 10 mm cup (A-19). Suction can only succeed on brackets (≤ 15 mm). Recorded in A-33; decision left to the user.
+
+## 2026-11-03 — M2b K-matrix check against A-28
+
+- `scripts/bproc_check_intrinsics.py` (Blender) renders the depth of a 4 m plane at 0.8 m, tilted 30° about x and 15° about y, camera K = intrinsics_from_hfov(1280, 720, 65°) = fx = fy = 1004.599 px, cx = 639.5, cy = 359.5. `scripts/check_intrinsics.py` (.venv) compares it to the analytic depth.
+- K read back from BlenderProc: max |Δ| = 4.2e-5 px. Depth residual: mean −0.0004 mm, std 0.0002 mm, max 0.0016 mm over 100% of pixels. Grid search (Δc ±1 px in 0.25 px steps, f ×0.998–1.002): best at Δcx = Δcy = 0, f ×1.000. Ray-distance hypothesis: off by up to 325 mm, so the output is z-depth. Render 10.1 s (1 sample, depth only).
+- A-28 → tested-ok.
