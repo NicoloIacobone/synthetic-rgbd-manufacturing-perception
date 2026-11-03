@@ -64,3 +64,18 @@ def test_ray_distance_invalids_map_to_zero():
     t[1, 1] = 1.0
     z = ray_distance_to_z(t, intrinsics_from_hfov(5, 4, 65.0))
     assert z[0, 0] == 0 and z[2, 2] == 0 and 0 < z[1, 1] <= 1.0
+
+
+def test_plane_depth_backprojects_onto_the_plane():
+    from synthrgbd.geometry import plane_depth
+    K = intrinsics_from_hfov(64, 36, 65.0)
+    n = np.array([0.3, -0.5, -1.0])
+    n /= np.linalg.norm(n)
+    p = np.array([0.02, -0.01, 0.8])
+    z = plane_depth(K, n, p, 36, 64)
+    assert (z > 0).all()
+    u, v = np.meshgrid(np.arange(64), np.arange(36))
+    X = np.stack([(u - K[0, 2]) / K[0, 0] * z, (v - K[1, 2]) / K[1, 1] * z, z], -1)
+    np.testing.assert_allclose((X - p) @ n, 0.0, atol=1e-12)
+    # At the principal point the ray is the optical axis.
+    assert np.isclose(plane_depth(np.eye(3), [0, 0, -1], [0, 0, 0.8], 1, 1)[0, 0], 0.8)

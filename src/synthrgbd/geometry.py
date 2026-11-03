@@ -68,3 +68,20 @@ def z_to_ray_distance(z: np.ndarray, K: np.ndarray) -> np.ndarray:
     """z-depth -> distance along the camera ray."""
     z = np.asarray(z, dtype=np.float64)
     return z * _ray_norm(K, *z.shape)
+
+
+def plane_depth(K: np.ndarray, normal, point, height: int, width: int) -> np.ndarray:
+    """Analytic z-depth image of the plane {X : n.(X - p) = 0} (OpenCV camera frame, metres).
+
+    Pixel (u, v) back-projects to X = z * K^-1 [u, v, 1]^T, so z = (n.p) / (n.K^-1[u, v, 1]).
+    Pixels whose ray misses the plane (or hits it behind the camera) are 0.
+    """
+    n = np.asarray(normal, dtype=np.float64)
+    p = np.asarray(point, dtype=np.float64)
+    u, v = np.meshgrid(np.arange(width), np.arange(height))
+    rays = np.stack([(u - K[0, 2]) / K[0, 0], (v - K[1, 2]) / K[1, 1], np.ones_like(u, float)], -1)
+    denom = rays @ n
+    with np.errstate(divide="ignore", invalid="ignore"):
+        z = (n @ p) / denom
+    z[~np.isfinite(z) | (z <= 0)] = 0.0
+    return z
