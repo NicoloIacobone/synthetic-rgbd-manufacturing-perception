@@ -2,7 +2,7 @@ import blenderproc as bproc  # noqa: I001  (BlenderProc requires this to be the 
 
 """A-28 check, Blender side: render the depth of a tilted plane at a known pose with our K.
 
-Run:  .venv-bproc/bin/blenderproc run scripts/bproc_check_intrinsics.py <out_dir>
+Run:  scripts/bproc.sh scripts/bproc_check_intrinsics.py <out_dir>
 Then: .venv/bin/python scripts/check_intrinsics.py <out_dir>
 
 Writes depth.npy (BlenderProc depth output, metres), plane.json (plane in the OpenCV camera frame)

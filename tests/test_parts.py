@@ -4,6 +4,7 @@ import numpy as np
 import open3d as o3d
 import pytest
 
+from synthrgbd.meshdist import surface_distance
 from synthrgbd.mssd import _rot, equal_leg_bracket_symmetries, mssd, profile_symmetries
 from synthrgbd.parts import (
     PART_CATALOGUE, BracketSpec, ProfileSpec, bracket_cross_section, cross_section_area, diameter,
@@ -19,42 +20,8 @@ def _apply(T, pts):
     return pts @ T[:3, :3].T + T[:3, 3]
 
 
-def _closest_on_triangles(p, a, b, c):
-    """Exact float64 closest point on triangles (Ericson, Real-Time Collision Detection §5.1.5).
-    p: (N, 3); a, b, c: (F, 3) -> (N, F, 3). Open3D's float32 query was off by ~0.02 mm."""
-    p = p[:, None, :]
-    ab, ac = b - a, c - a
-    ap, bp, cp = p - a, p - b, p - c
-    d1, d2 = (ab * ap).sum(-1), (ac * ap).sum(-1)
-    d3, d4 = (ab * bp).sum(-1), (ac * bp).sum(-1)
-    d5, d6 = (ab * cp).sum(-1), (ac * cp).sum(-1)
-    va, vb, vc = d3 * d6 - d5 * d4, d5 * d2 - d1 * d6, d1 * d4 - d3 * d2
-    with np.errstate(divide="ignore", invalid="ignore"):
-        denom = va + vb + vc
-        v, w = vb / denom, vc / denom
-        out = a + v[..., None] * ab + w[..., None] * ac                      # interior
-        t_ab, t_ac = d1 / (d1 - d3), d2 / (d2 - d6)
-        t_bc = (d4 - d3) / ((d4 - d3) + (d5 - d6))
-    regions = [                                                              # later wins
-        (vc <= 0) & (d1 >= 0) & (d3 <= 0), a + t_ab[..., None] * ab,         # edge ab
-        (vb <= 0) & (d2 >= 0) & (d6 <= 0), a + t_ac[..., None] * ac,         # edge ac
-        (va <= 0) & (d4 - d3 >= 0) & (d5 - d6 >= 0), b + t_bc[..., None] * (c - b),  # edge bc
-        (d1 <= 0) & (d2 <= 0), np.broadcast_to(a, out.shape),                # vertex a
-        (d3 >= 0) & (d4 <= d3), np.broadcast_to(b, out.shape),               # vertex b
-        (d6 >= 0) & (d5 <= d6), np.broadcast_to(c, out.shape),               # vertex c
-    ]
-    for mask, q in zip(regions[::2], regions[1::2]):
-        out = np.where(mask[..., None], q, out)
-    return out
-
-
-def _surface_distance(mesh, pts, chunk=500):
-    t = mesh.triangles
-    d = []
-    for i in range(0, len(pts), chunk):
-        q = _closest_on_triangles(pts[i:i + chunk], t[:, 0], t[:, 1], t[:, 2])
-        d.append(np.linalg.norm(q - pts[i:i + chunk, None, :], axis=-1).min(1))
-    return np.concatenate(d)
+def _surface_distance(mesh, pts):
+    return surface_distance(mesh.triangles, pts)
 
 
 def test_exact_surface_distance_helper():
