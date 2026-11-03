@@ -39,7 +39,9 @@ Authoritative requirements are in [`task_description.md`](../task_description.md
 | D11 | **Suction planarity tolerance = 1.0 mm** (A-19, §5.3) | Rejects T-slot openings and edges; tolerant of mesh tessellation | — |
 | D12 | **C1 sanity check = zero-offset ICP test** (§5.11), replacing "A1 on C1 ≈ 0 error" | At the 10 mm/10° offset, C1 can fail for geometric reasons (ICP sliding along prisms, §5.9), so it cannot serve as a bug detector | — |
 
-D10–D12 were decided by the user on 2026-11-03, before any data existed, to close gaps in the protocol.
+| D13 | **SGBM runs in the analysis env (`.venv`, OpenCV 5.0), not in Blender (option B).** Blender renders and exports the left/right IR pair once (linear 16-bit, no tone mapping); our own code adds IR noise/blur, runs SGBM and converts to depth. BlenderProc's `stereo_global_matching` is not used. This replaces the "CPU stereo matching in one tool" part of D3's rationale; D3 otherwise stands | The helper hard-codes the matcher (no left-right check or speckle filter, window 5 px), maps zero disparity to max depth and is not metric with WLS on [S-11]. Option B allows re-matching without re-rendering (§5.8 check, anchor tuning), shared seeds (§5.10) and unit-tested code | [S-11] ✅ |
+
+D10–D12 were decided by the user on 2026-11-03, before any data existed, to close gaps in the protocol. D13 was decided by the user on 2026-11-03; **its feasibility is re-checked at M3** (A-32): if the linear IR export fails or the round trip is too slow by the M3 gate, the fallback is the BlenderProc helper copied into our code and patched (left-right check on, zero disparity → invalid, no WLS), run inside Blender.
 
 ## 3. Scope
 
@@ -78,8 +80,9 @@ D10–D12 were decided by the user on 2026-11-03, before any data existed, to cl
 3. **Renders per frame:**
    - RGB + ideal depth + instance masks (BOP writer);
    - left/right IR with projected pattern, metal materials;
-   - left/right IR, matte materials with matched brightness.
-4. **IR post-processing:** add sensor noise and blur, then run SGBM tuned to D415 geometry (baseline 55 mm; disparity search 126 px, implemented as `num_disparities=128` plus masking of d > 126, A-25). The BlenderProc defaults for WLS filtering and depth completion are **off** [S-11]. Convert disparity to depth, taking care of units, z-depth vs ray distance, and OpenCV's ×16 disparity scaling.
+   - left/right IR, matte materials with matched brightness;
+   - IR pairs exported as linear 16-bit images (view transform "Standard", no tone mapping), so saturation is decided by our exposure model, not by Blender's display transform (D13, A-32).
+4. **IR post-processing (in `.venv`, D13):** add sensor noise and blur, then run our own SGBM tuned to D415 geometry (baseline 55 mm; disparity search 126 px, implemented as `num_disparities=128` plus masking of d > 126, A-25). No WLS filtering and no depth completion; invalid pixels (including zero disparity) are 0. BlenderProc's stereo helper is not used [S-11]. Convert disparity to depth, taking care of units, z-depth vs ray distance, and OpenCV's ×16 disparity scaling.
 5. **Datasheet noise layer for C2**, at two levels: the formula level and the Carfagni-matched level.
 
 ## 5. Experiment protocol (pre-specified)

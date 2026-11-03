@@ -37,6 +37,6 @@ ETH Zurich PhD application assignment: synthetic RGB-D of aluminium profiles and
 ## Environment
 
 - Apple M2, 8 GB RAM, macOS 27.2. Render one process at a time.
-- BlenderProc runs scripts inside Blender's bundled Python. Analysis code runs in the **separate** env `.venv` (Python 3.11, pins in `requirements.txt`, lock in `requirements.lock.txt`); the system Python is 3.14 and is not used.
+- BlenderProc runs scripts inside Blender's bundled Python. Analysis code, including IR noise and SGBM stereo matching (D13), runs in the **separate** env `.venv` (Python 3.11, pins in `requirements.txt`, lock in `requirements.lock.txt`); the system Python is 3.14 and is not used.
 - Package code lives in `src/synthrgbd/`, protocol parameters in `configs/default.yaml`, tests in `tests/` (`.venv/bin/python -m pytest`). Run the tests before every commit that touches `src/`.
 - Seeds follow PLAN §5.10 (`src/synthrgbd/seeds.py`) and are logged for every generated dataset and experiment run.

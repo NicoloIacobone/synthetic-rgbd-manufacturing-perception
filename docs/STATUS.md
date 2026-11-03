@@ -10,11 +10,16 @@ Handoff note between sessions. **Read first.** Keep it short (≤ ~40 lines): up
 ## Next steps
 1. M1: install BlenderProc 2.8 (PyPI) and run its quickstart. Time-box 1 h, then fall back to Open3D raycasting (D3, R1). This Mac runs macOS 27.2, so expect issue #768 (grant terminal permission).
 2. M2: procedural profile and bracket meshes in the model frames fixed in A-20 (`src/synthrgbd/mssd.py`); check BlenderProc's K matrix against A-28.
-3. M3: IR stereo pair + projector + SGBM, plane anchor (a), render benchmark per frame.
+3. M3: IR stereo pair + projector, linear 16-bit IR export, our own SGBM in `.venv` (D13), plane anchor (a), render benchmark per frame. **Re-check D13 feasibility (A-32 checks i–iii)** before the M3 gate; fallback in PLAN D13.
 4. M5: when implementing the A1 offset sweep, re-check A-30 (confirmed 2026-11-03).
 
 ## Open items waiting for the user
-- Design choice for M3: run SGBM inside Blender's Python (BlenderProc's `stereo_global_matching`) or in `.venv` (OpenCV 5.0). The BlenderProc helper hard-codes its matcher settings (see S-11 notes). Not decided yet.
+- None.
+
+## Research to do when the milestone needs it (not blocking)
+- M3: D415 projector pattern (dot density, projector FOV) for the projector model; check the datasheet first [S-01].
+- M3/M4: aluminium reflectance near 850 nm, to set the IR material (A-11).
+- M6: report tooling (LaTeX/Typst/pandoc) and a short related-work paragraph (depth-sensor simulation); not adopted yet.
 
 ## Environment
 - Analysis env: `.venv` (Python 3.11.6), pins in `requirements.txt`, full lock in `requirements.lock.txt`. Recreate: `python3.11 -m venv .venv && .venv/bin/pip install -r requirements.lock.txt`.
