@@ -11,10 +11,10 @@ Handoff note between sessions. **Read first.** Keep it short (≤ ~40 lines): up
 1. M1: install BlenderProc 2.8 (PyPI) and run its quickstart. Time-box 1 h, then fall back to Open3D raycasting (D3, R1). This Mac runs macOS 27.2, so expect issue #768 (grant terminal permission).
 2. M2: procedural profile and bracket meshes in the model frames fixed in A-20 (`src/synthrgbd/mssd.py`); check BlenderProc's K matrix against A-28.
 3. M3: IR stereo pair + projector + SGBM, plane anchor (a), render benchmark per frame.
+4. M5: when implementing the A1 offset sweep, re-check A-30 (confirmed 2026-11-03).
 
 ## Open items waiting for the user
-- A-30 (offset sweep moves mm and degrees together) was chosen by the agent; confirm or change it before the first experiment run.
-- Design choice for M3: run SGBM inside Blender's Python (BlenderProc's `stereo_global_matching`, S-11) or in `.venv` (OpenCV 5.0, with full control over IR noise and invalidation; the ×16 scaling is unit-tested there). Not decided yet.
+- Design choice for M3: run SGBM inside Blender's Python (BlenderProc's `stereo_global_matching`) or in `.venv` (OpenCV 5.0). The BlenderProc helper hard-codes its matcher settings (see S-11 notes). Not decided yet.
 
 ## Environment
 - Analysis env: `.venv` (Python 3.11.6), pins in `requirements.txt`, full lock in `requirements.lock.txt`. Recreate: `python3.11 -m venv .venv && .venv/bin/pip install -r requirements.lock.txt`.

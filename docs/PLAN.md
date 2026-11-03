@@ -96,7 +96,7 @@ These are paired: same scenes, same poses.
 
 ### 5.2 Task A: pose estimation
 - Inputs: ground-truth instance mask → masked depth points → point-to-plane ICP against the CAD model.
-- **A1 (primary):** start from the ground-truth pose with a 10 mm / 10° offset. Sweep the offset over 2/5/10/20 mm as a secondary result, with the rotation swept together (n mm and n°, A-30).
+- **A1 (primary):** start from the ground-truth pose with a 10 mm / 10° offset. Sweep the offset over 2/5/10/20 mm as a secondary result, with the rotation swept together (n mm and n°, A-30; confirmed by the user, to be re-checked when the sweep is implemented at M5).
 - **Offset definition:** a translation of exactly the stated magnitude in a uniformly random direction, composed with a rotation of exactly the stated angle about a uniformly random axis. The offsets are drawn once per instance and are **identical across conditions** (§5.10).
 - **A2 (optional):** global registration (FPFH + RANSAC) followed by ICP.
 - Hyperparameters are fixed once on the dev split (§5.10) and are identical across conditions.

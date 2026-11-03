@@ -27,7 +27,7 @@ noise:
 
 task_a:                      # PLAN §5.2
   init_offset: {mm: 10, deg: 10}
-  offset_sweep: [[2, 2], [5, 5], [10, 10], [20, 20]]   # [mm, deg] (A-30)
+  offset_sweep: [[2, 2], [5, 5], [10, 10], [20, 20]]   # [mm, deg] (A-30, confirmed; re-check at M5)
   recall_threshold_mm: 5.0   # primary endpoint
   secondary_threshold_mm: 2.0
 
