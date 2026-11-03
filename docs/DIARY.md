@@ -126,3 +126,7 @@ This is a working log of what was done, measured, decided, and what failed. It f
 - A-33 / Task B: option (a), keep part geometry and the 10 mm cup; report Task B per part type in addition to the overall rate. Logged as the first deviation in PLAN §5.12 (no data existed yet).
 - Keep the local BlenderProc macOS patch rather than granting App Management permission: recorded as D14.
 - Pin BlenderProc: `requirements-bproc.txt` (blenderproc==2.8.0) + `requirements-bproc.lock.txt` (pip freeze of `.venv-bproc`, 21 packages); `scripts/setup_blenderproc.sh` now installs from the lock.
+
+## 2026-11-03 — D415 projector details from the datasheet [S-01]
+
+- Full-text search of the D400 datasheet Rev 013 (153 pages). Table 3-16 (p. 40): static pattern, VCSEL + optics, PWM, 360 mW average optical power, 850 ± 10 nm, field of projection H 64° ± 3° / V 41° ± 3° / D 72° ± 3°. Tables 3-11 (p. 37) and 3-48 (p. 64) give H 67 / V 41 / D 75 instead: an internal inconsistency. Laser power 0–360 mW in 30 mW steps (p. 88); specs measured at 150 mW, auto exposure (p. 81). Dot count, size, density and layout are not given anywhere in the datasheet; another source is needed for the projector model at M3.

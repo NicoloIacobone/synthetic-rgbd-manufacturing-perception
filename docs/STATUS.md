@@ -21,7 +21,7 @@ Handoff note between sessions. **Read first.** Keep it short (≤ ~40 lines): up
 
 ## Next steps (M3, when asked)
 1. IR stereo pair + projector, linear 16-bit IR export, own SGBM in `.venv` (D13); **re-check A-32 (i–iii)** before the M3 gate; plane anchor (a); IR render benchmark per frame (decides 1280×720 vs 848×480, D8).
-2. Research when needed: D415 projector pattern [S-01]; aluminium reflectance near 850 nm (A-11).
+2. Research when needed: D415 dot count/density/layout (**not in the datasheet** [S-01]; projector FOV, power and wavelength are, see SOURCES); aluminium reflectance near 850 nm (A-11).
 3. M5: re-check A-30 when implementing the offset sweep.
 
 ## Where things are
