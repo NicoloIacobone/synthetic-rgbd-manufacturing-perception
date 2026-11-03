@@ -136,3 +136,7 @@ This is a working log of what was done, measured, decided, and what failed. It f
 - Re-checked: 38 tests pass; all scripts compile (`py_compile`, `bash -n`); no leftovers of removed options; the macOS patch applies to a freshly downloaded blenderproc-2.8.0 wheel; `requirements-bproc.lock.txt` resolves in a fresh venv (pip dry run); no generated data, Blender, venvs or .DS_Store tracked; `protocol-v1` tag unchanged (4f52c67).
 - **Inconsistency found:** since `protocol-v1`, commits 348d49c and b6c5b00 (earlier session) edited comments only in frozen files (`configs/default.yaml` offset_sweep comment; PLAN §5.2 A1 line, "A-30 confirmed") without a §5.12 row. No value changed. Not logged unilaterally; raised in STATUS for the user.
 - Stale docs fixed: CLAUDE.md Environment now names `.venv-bproc` and the `scripts/bproc.sh` rule; PLAN status line; A-16 (Min-Z check implemented, OK on dev scenes); STATUS adds the projector-FOV choice (64° vs 67°) for M3.
+
+## 2026-11-03 — protocol-v1 tag published
+
+- At the user's request, pushed the annotated tag `protocol-v1` (tag object 35ca9bf → commit 4f52c67, tagged 2026-11-03 16:35:08 +0100) to origin, so the pre-data protocol freeze is visible on GitHub. The tag was not moved.
