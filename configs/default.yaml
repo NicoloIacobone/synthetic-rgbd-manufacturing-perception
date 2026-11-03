@@ -1,0 +1,46 @@
+# Protocol parameters. Frozen at git tag protocol-v1 together with docs/PLAN.md §5.
+# Any change after the tag is a deviation: log it in docs/PLAN.md §5.12.
+
+camera:                      # Intel RealSense D415 geometry (docs/SOURCES.md S-01, S-04)
+  width: 1280
+  height: 720
+  hfov_deg: 65.0             # depth FOV (HD); fx = fy derived from it (A-28)
+  baseline_m: 0.055
+  disparity_search_px: 126   # D415 matcher range (S-04 Eq. 3)
+  sgbm_num_disparities: 128  # must be divisible by 16; d > 126 is masked (A-25)
+  min_z_m: 0.45              # datasheet Min-Z at 1280x720 (A-16)
+
+scene:
+  camera_height_m: [0.65, 0.95]
+  max_tilt_deg: 30
+  parts_per_scene: [3, 6]
+  views_per_scene: 2
+
+seeds:                       # PLAN §5.10, D10
+  master: 0
+  test_scenes: {start: 0, count: 50}
+  dev_scenes: {start: 1000, count: 5}
+
+noise:
+  c2a_eps_d_px: 0.08         # S-03, A-13
+  # c2b: Carfagni-matched level, fitted at M4 (A-14)
+
+task_a:                      # PLAN §5.2
+  init_offset: {mm: 10, deg: 10}
+  offset_sweep: [[2, 2], [5, 5], [10, 10], [20, 20]]   # [mm, deg] (A-30)
+  recall_threshold_mm: 5.0   # primary endpoint
+  secondary_threshold_mm: 2.0
+
+task_b:                      # PLAN §5.3, A-19
+  cup_radius_mm: 10.0
+  max_point_to_surface_mm: 2.0
+  max_normal_error_deg: 15.0
+  planarity_tolerance_mm: 1.0
+
+sanity:                      # PLAN §5.11, D12, A-27
+  c1_zero_offset_max_mssd_mm: 0.5
+  c1_zero_offset_min_fraction: 0.99
+
+statistics:                  # PLAN §5.5
+  ci: 0.95
+  bootstrap_resamples: 10000 # A-31

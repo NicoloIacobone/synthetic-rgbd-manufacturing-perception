@@ -1,0 +1,9 @@
+# Analysis environment (Python 3.11). Top-level pins; the full resolved set is in requirements.lock.txt.
+# BlenderProc runs inside Blender's bundled Python and is NOT installed here.
+numpy==2.4.6
+scipy==1.17.1
+opencv-contrib-python==5.0.0.93
+open3d==0.20.0
+PyYAML==6.0.3
+matplotlib==3.11.2
+pytest==9.2.0

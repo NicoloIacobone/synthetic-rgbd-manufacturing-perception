@@ -1,1 +1,21 @@
+# OS / editor
 .DS_Store
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+
+# Blender (downloaded by BlenderProc) and Blender autosaves
+blender/
+*.blend1
+
+# Generated data: datasets, renders, experiment outputs (never committed)
+data/
+outputs/
+renders/
+*.hdf5
+*.exr
+*.npz

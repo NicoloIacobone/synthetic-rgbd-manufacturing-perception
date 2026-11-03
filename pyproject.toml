@@ -1,0 +1,10 @@
+[project]
+name = "synthrgbd"
+version = "0.1.0"
+description = "Synthetic D415-like RGB-D of aluminium profiles and brackets, and its effect on pose estimation and suction grasping"
+requires-python = ">=3.11,<3.13"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-p no:dash"  # open3d pulls in dash, whose pytest plugin emits a deprecation warning
