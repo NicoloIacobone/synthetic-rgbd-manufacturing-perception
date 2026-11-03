@@ -1,0 +1,35 @@
+--- a/blenderproc/python/utility/SetupUtility.py
++++ b/blenderproc/python/utility/SetupUtility.py
+@@ -110,6 +110,15 @@
+             python_bin_folder = os.path.join(blender_path, "..", "Resources", major_version, "python", "bin")
+             python_bin = os.path.join(python_bin_folder, current_python_version)
+             packages_path = os.path.abspath(os.path.join(blender_path, "custom-python-packages"))
++            # synthrgbd patch (after upstream PR #1231, issue #768): the signed .app bundle is
++            # read-only on recent macOS, so keep custom packages next to the bundle instead.
++            if not os.path.exists(packages_path) and not os.access(os.path.dirname(packages_path), os.W_OK):
++                _path = os.path.abspath(blender_path)
++                while _path != os.path.dirname(_path):
++                    if _path.endswith('.app'):
++                        packages_path = os.path.join(os.path.dirname(_path), "custom-python-packages")
++                        break
++                    _path = os.path.dirname(_path)
+             packages_import_path = os.path.join(packages_path, "lib", current_python_version, "site-packages")
+             pre_python_package_path = os.path.join(blender_path, "..", "Resources", major_version, "python",
+                                                    "lib", current_python_version, "site-packages")
+@@ -315,9 +324,13 @@
+             SetupUtility.installed_packages = {}
+             # pylint: disable=consider-using-with
+             subprocess.Popen([python_bin, "-m", "ensurepip"], env=dict(os.environ, PYTHONPATH="")).wait()
+-            # Make sure pip is up-to-date
+-            subprocess.Popen([python_bin, "-m", "pip", "install", "--upgrade", "pip"],
+-                             env=dict(os.environ, PYTHONPATH="")).wait()
++            # Make sure pip is up-to-date.
++            # synthrgbd patch: skip the self-upgrade if Blender's site-packages is read-only (signed
++            # macOS .app bundle). There the upgrade uninstalls pip, cannot reinstall it and cannot
++            # roll back, which leaves Blender's Python without pip (seen on macOS 27.2).
++            if os.access(pre_python_package_path, os.W_OK):
++                subprocess.Popen([python_bin, "-m", "pip", "install", "--upgrade", "pip"],
++                                 env=dict(os.environ, PYTHONPATH="")).wait()
+             # pylint: enable=consider-using-with
+ 
+             # Make sure to not install into the default site-packages path, as this would overwrite
