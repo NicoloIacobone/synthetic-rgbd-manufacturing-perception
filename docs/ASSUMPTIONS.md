@@ -85,6 +85,13 @@ One line per knob. "May look at" is the only statistic the choice may use. Ties 
 | CAD samples per model | A-46 | M4 step 1 | Zero-offset ICP drift on **ideal ray-cast views** (unit tests), no dev outcome | 6 000 → 50 000 (drift 0.07–0.10 mm → ≤ 0.02 mm with 60 000) |
 | Suction cup-fit test | A-44 | M4 step 1 | Disk overhang on ideal ray-cast views; pixel spacing on tilted faces | Rim test: 32 rim points each within 1.5 mm of a measured point (< the ~1.6 mm erosion margin at 0.8 m). Disclosure: dev C1 grasp *availability* (not success) was looked at twice to check the test still finds grasps (sectors 16/[0.9 r, r] found none on tilted faces) |
 | Suction: grasp-point definition, normal-estimation radius | A-44 | M4 step 3, all conditions on dev | Dev Task B bracket success in each condition | Same worst-case rule as ICP; ties → plane-fit centre. Cup radius and success thresholds are frozen (A-19) |
+| Exposure setpoint (done) | A-42 | M4 step 2 | Saturation only | **10 DN** (20 DN: 0.106% saturated C4 pixels); the low mean is the dot pattern (dots ≈ 3% of pixels), peaks already reach 255 on near matte surfaces |
+| IR noise (done) | A-12 | M4 step 2 | Anchor (a) only | **e_per_dn 0.12** (effective, lumps unmodelled sources), read 1 DN, no extra blur → median subpixel RMS 0.090 px (0.05–0.26 by z); central ROI = 15% of the image area; plane noise seeds 7000 + z in cm |
+| C4 part albedo (done) | A-24 | M4 step 2 | Radiance only | **0.085** by **mean** matching (agent: median is degenerate, median metal radiance = 0); per-frame ratio median 0.05, range 0.04–0.63 |
+| C3 metal diffuse lobe (done) | A-11 | M4 step 2 | Source only | **D = 0.015**, the Lambertian term of the same S-16 GGX + Lambertian fit (without it 87% of metal-part pixels had zero radiance) |
+| ICP candidates and pick (done) | A-46 | M4 step 3 | Dev A1 recall@5 mm in C1, C2a, C2b, C3, C4 | Candidates H0 single 15/5, H1 coarse-to-fine 20/10/5, H2 + ray-cast visibility (0.5 mm), H3 + 5 mm / 5° step clamp; erosion fixed at 2 px. Maximin degenerate (C3 = 0 for all), so **leximin** (sorted recall vectors) → **H3** (C1 0.70, C2a 0.78, C2b 0.55, C3 0.00, C4 0.23); sanity passes for all. A damped LM solver was tried on C1 and not adopted |
+| Grasp point (done) | A-44 | M4 step 3 | Dev bracket success per condition | Leximin → **plane_fit** (C1 0.75, C2a 0.75, C2b 0.58, C3 0.00, C4 0.25) |
+| Step-2 order (done) | — | M4 step 2 | — | Roughness first: A-24 and the exposure gain depend on the C3 image |
 
 ## Hypotheses
 

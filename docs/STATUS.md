@@ -3,8 +3,8 @@
 Handoff note between sessions. **Read first.** Keep it short (≤ ~40 lines): update it at the end of every task, and overwrite outdated content rather than appending (history goes to DIARY.md and git).
 
 - **Updated:** 2026-11-04, late
-- **Phase:** Phase 1. M1–M3 done (M3 with the marginal gate failure A-38 iii, option 3a). **Pre-M4 design review done; decisions recorded** (ASSUMPTIONS A-11, A-14, A-15, A-18, A-24, A-42, A-43, new A-44–A-47 and the **tuning ledger**; SOURCES S-05, S-13, new S-14). **M4 in progress: step 1 done and follow-ups closed** (commits 0ebdbac, 11cfe42, 2723650, 880bf32; pushed). C1 sanity (§5.11): 20/20 < 0.5 mm → pass. A1 on C1 (10/10, report-only): recall@5 mm 40%, mostly wrong-minimum convergence (DIARY). A-48 confirmed; A-50 final (first-surface two-sided check, flagged). **Step 2 started (90c3595, not pushed), stopped at the roughness choice** (A-11: the only source gives roughness ≈ 0.13–0.15, below the pre-declared 0.2 / 0.4); order changed to roughness first (A-24 and exposure depend on C3).
-- **Protocol:** frozen at `protocol-v1`. **Pending: two §5.12 rows** awaiting the user's OK on their text: (1) H-1 uses C2b at ε_d = 0.26 px, "C1 ≥ C2" descriptive, fixed sequence C1–C3 → C2b–C3 → C3–C4 at α = 0.05; (2) instance inclusion visib_fract ≥ 0.1 (A-49).
+- **Phase:** Phase 1, M4. Steps 1–2 done; step 3 harness selection and pilot done on dev. **STOPPED (criterion b): C3 at floor** (A1 recall 0.00 at every offset; Task B 0.00). Waiting for the user's decision (options in the chat report).
+- **Protocol:** frozen at `protocol-v1`. §5.12: 4 rows (latest: C2b + fixed sequence; instance inclusion), logged 2026-11-04.
 - **Gates:** M5 Fri 6 Nov (A metrics); code freeze Sat 7 Nov 20:00. Report skeleton starts Thu evening.
 
 ## M4 order (user, 2026-11-04)

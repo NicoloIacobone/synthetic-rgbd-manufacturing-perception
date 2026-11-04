@@ -2,10 +2,13 @@
 # PROVISIONAL defaults (M4 step 1): fixed later on the dev split by the A-45 pooled worst-case rule,
 # identical across conditions (PLAN §5.2). Changing a value: record it in ASSUMPTIONS (A-45/A-46) and DIARY.
 
-icp:                         # synthrgbd.pose.IcpParams (A-46)
+icp:                         # synthrgbd.pose.IcpParams (A-46). SELECTED on dev 1000-1004 (A-45 pooled rule, leximin): H3
   mask_erosion_px: 2         # GT visible mask eroded before back-projection (A-07)
-  max_corr_mm: 15.0          # > the 10 mm primary offset
-  tukey_k_mm: 5.0            # robust kernel on point-to-plane residuals; 0 = none
+  max_corr_mm: 15.0          # unused when stages is set
+  tukey_k_mm: 5.0            # unused when stages is set
+  stages: [[20, 20], [10, 10], [5, 5]]   # coarse-to-fine (max correspondence mm, Tukey scale mm)
+  visibility: raycast        # model points that are the first hit from the camera (self-occlusion)
+  o3d_step_clamp: true       # single iterations, each clamped to 5 mm / 5 deg
   outer_iters: 5             # back-face culling refreshes
   inner_iters: 30
   min_points: 30             # fewer valid scene points -> no estimate (counted as failure)

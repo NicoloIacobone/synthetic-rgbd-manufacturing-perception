@@ -253,3 +253,20 @@ This is a working log of what was done, measured, decided, and what failed. It f
   - MERL "aluminium" GGX α = 0.0044 / 0.0218 / 0.0201 / 0.0164 (Bieron & Peers 2020 supplement, S-16), i.e. roughness ≈ 0.13–0.15 for the non-L2 fits;
   - no source for extruded or anodised profiles; the TU Delft supplement host refused connections; the Bieron PDF is 99 MB at ~110 KB/s.
 - Open for the user: the roughness value, which lies below the pre-declared 0.2 / 0.4 pair; then the noise-model free parameters.
+
+## 2026-11-05 ~00:30 — M4 steps 2–3 on dev; STOP (b): C3 at floor
+- Decided by the agent (ledger rows):
+  - setpoint 10 DN;
+  - e_per_dn 0.12 (effective);
+  - A-24 albedo 0.085 by mean matching;
+  - metal diffuse lobe D = 0.015 (S-16);
+  - ICP H3 by leximin;
+  - grasp point plane_fit.
+- Numbers (dev 1000–1004, master 0, commits 08eeb9a…):
+  - anchor (a): (i), (ii), (iv) pass; median subpixel RMS 0.090 px; (iii) 6.35 / 6.59% valid below Min-Z (accepted 3a);
+  - locking 64% within ±2/16 px vs 31% uniform; sawtooth −0.08…+0.13 px;
+  - part errors, median signed: C4 profiles +1.1 mm, brackets +4.3 mm; C3 profiles +4.1 mm, brackets +19 mm;
+  - A1 recall@5 mm, H3, 40 instance-views per condition: C1 0.70, C2a 0.78, C2b 0.55, **C3 0.00**, C4 0.23;
+  - sweep C1 0.975 / 0.875 / 0.60 at 2 / 5 / 20; C3 0.05 / 0.00 / 0.00 (median MSSD 22–30 mm); C4 0.35 / 0.25 / 0.15;
+  - Task B brackets: C1 0.75, **C3 0.00**, C4 0.25.
+- Failed / surprised: C3 metal (roughness 0.15) biases depth far by ~+19 mm on brackets, so ICP fails from every offset. C4 is weak because brightness-matched parts are dark (0.085) and noisy. Stop criterion (b).
