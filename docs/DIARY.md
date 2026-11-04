@@ -146,3 +146,27 @@ This is a working log of what was done, measured, decided, and what failed. It f
 - Dot-pattern research (A-37): no verifiable D415 dot count. Datasheet Rev 013 is silent; Intel projector white paper Rev 1.0 [S-13] gives the D435 count (~5000), says the D415 uses two Heptagon projectors emitting at 68 × 43°, and gives density guidance (1–10% of image resolution near-ideal; D435 test: > 10K dots desirable, diminishing after 30K). Default chosen: 30 000 dots → ~27 700 in the 1280×720 image (3.0% of pixels, spacing ≈ 5.8 px). Rejected: a 30K-dot figure from an iPhone X teardown (different product).
 - Surprise: OpenCV 5.0.0 StereoSGBM leaves the first num_disparities = 128 columns invalid even when the true disparity is 55 px, so the D415 band B·f/Z (55 px at 1 m) would come out at 128 px. Synthetic test (random texture, d = 55/110 px, blockSize 7, LR check 1): padding the left image by 128 px + a right image 128 px wider + masking x − d < 0 gives first valid column 55/110, 99.9–100% valid right of the band (A-40). StereoSGBM.compute also rejects non-8-bit input.
 - Derived numbers: f = 1004.6 px, f·B = 55.25 px·m, Min-Z by 126 px search = 438.5 mm; per-frame budget 8 h / 110 frames = 262 s.
+
+## 2026-11-04 — M3 stereo route: implementation, plane gate (A-38), benchmark (A-39)
+
+**Code (commit 044ee81).** New non-frozen camera config `configs/camera_d415_ir.yaml`. `synthrgbd.projector` (30 000 Poisson-disk dots, seed 415, σ = 0.7 px, pattern 2660 × 1502 texels over 67° × 41°), `synthrgbd.bproc_ir` (own spot-light projector at the baseline midpoint, shadows on, linear float pattern; IR pair rendered 1408 px wide with cx + 128; EXR, no denoiser/adaptive sampling/clamping, 32 samples), `synthrgbd.stereo` (fixed exposure → 8 bit, SGBM on the extended pair, invalidate no-match / d > 126 / x − d < 0, z = fB/d). Scripts: `bproc_ir_plane.py`, `plane_gate.py`, `stereo_scene.py`, `benchmark_m3.sh`, `--ir` in `bproc_render_scene.py`. Tests 38 → 54 pass.
+- BlenderProc's `setup_as_projector` not used: it copies the camera pose and FOV, sets `use_shadow = False` and loads the pattern into an 8-bit sRGB image.
+- Pitfall: a second `render()` with OPEN_EXR fails ("Can not have two output entries with the same key/path") after the PNG RGB pass; fixed with its own output key/prefix (`ir_`).
+- Pitfall (shell): `rm -rf data/m3/_tmp_*` with no match aborts the zsh `&&` chain, so the first benchmark rerun never started.
+- Exposure gain calibrated once: p99.9 radiance of the albedo-0.5 plane at 0.45 m = 0.04037 → gain 5700 (230 DN).
+
+**Plane gate A-38** (z 0.50…1.00 m, matte albedo 0.5, no IR noise; clean rerun at 044ee81 reproduces the first run to 1e-4 mm):
+- (i) bias −0.19 / +0.24 / −0.59 / +0.33 / +2.60 / +2.25 mm = max 0.29% z ✅; (ii) 100.00% valid at every z ✅; (iv) band 111 / 93 / 79 / 70 / 62 / 56 px vs fB/z 110.5 / 92.1 / 78.9 / 69.1 / 61.4 / 55.3 ✅.
+- **(iii) ❌:** valid 5.03% (0.42 m), 5.07% (0.43 m), 100% at 0.44 / 0.45 / 0.46 m. Limit ≤ 5% at ≤ 0.43 m, so the gate fails by 0.03–0.07 pp. The step is where designed (fB/126 = 438.5 mm). Valid pixels below Min-Z are false matches: ~310 connected blobs, median 120 px, disparities 1–124 px; they survive the 100 px speckle window. Not a pipeline bug.
+- Diagnostics only (not adopted, `data/m3/logs/gate_variants_diagnostic.log`): our SGBM with speckle window 200 → (iii) 0.34 / 0.41%, (i)/(ii)/(iv) unchanged; uniqueness 15 → 3.09 / 3.12%; BlenderProc helper matcher (block 5, HH, uniqueness 15, no speckle) with the LR check on → (iii) 16.5 / 16.2%, and without the A-40 fix its band is 128 px at every z (fails iv) and valid drops to 94.3–94.8% at 0.9–1.0 m (fails ii). So the patched-helper fallback would not fix the failure.
+- Noise-free plane: SGBM pixel-locking, plane-fit residual 0.10–1.02 mm (equivalent ε_d 0.011–0.23 px depending on the fractional disparity). Not gated (M4).
+- Projector geometry: rendered left IR vs numpy forward model r = 0.980 / 0.980 / 0.968 (0.5 / 0.7 / 1.0 m); r ≈ 0.003 without the offset or mirrored. Unlit left strip 30 / 14 / 2 px, inside the invalid band.
+- A-32: (i) power ×2 → summed radiance ×1.9997; mean radiance ∝ z^−2.003; (ii) metal sphere peak 28.8 = 1159× matte max, unclipped, 15 px saturate only after exposure; float16 rel. err ≤ 4.9e-4.
+
+**Benchmark A-39** (dev scenes 1000–1001, 2 views each, RGB 64 + IR 32 samples, metal pass = M2 placeholder aluminium as timing proxy). Per scene wall time: first run (uncommitted tree) 66.9 / 69.3 s; clean run at 044ee81 103.0 / 71.9 s (Blender 98.5 / 66.8 s; RGB 15.8 / 13.7 s per frame vs 8.4 at M2; same code, so machine load/thermal). Per frame median 43.7 s (clean run) ≤ 262 s → 110 frames ≈ 1.3–1.6 h, keep 1280×720. SGBM 0.2–0.4 s per pair; IR ≈ 5 MB per scene.
+
+**Surprises for M4 (scene stereo, matte pass, informative only):**
+- Scenes are dark with the fixed gain: mean 3.6–8.6 DN (tray albedo 0.3, z up to 1.24 m).
+- Pixel-locking dominates the scene error: 58–64% of stereo disparities within ±0.125 px of an integer (uniform would be 25%); disparity error MAD 0.12 px, p95 0.28–0.30 px; striped ±5–10 mm depth error on the tilted view 1 of scene 1000; part MAE 1.95–4.29 mm matte, 2.30–8.64 mm metal proxy; part pixels invalid 0.15–6.5%.
+
+**Status:** M3 gate not passed on (iii). Per D15, stopped and presented the options to the user; no route switch, no matcher change.

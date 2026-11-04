@@ -2,30 +2,31 @@
 
 Handoff note between sessions. **Read first.** Keep it short (≤ ~40 lines): update it at the end of every task, and overwrite outdated content rather than appending (history goes to DIARY.md and git).
 
-- **Updated:** 2026-11-04, morning
-- **Phase:** Phase 1. M1 and M2 done (2026-11-03). **Pre-M3 decisions closed** (2026-11-04, D15). M3 not started; it starts only when the user asks.
-- **Protocol:** frozen at `protocol-v1`. §5.12 rows: 1 deviation (Task B per part type) + 1 editorial (348d49c / b6c5b00, no value changed).
-- **Gates:** **M3 today, Wed 4 Nov, end of day**; M5 Fri 6 Nov; code freeze Sat 7 Nov 20:00.
+- **Updated:** 2026-11-04, afternoon
+- **Phase:** Phase 1. M1, M2 done (2026-11-03). **M3 run 2026-11-04: stereo route implemented; gate NOT passed** (A-38 (iii) fails marginally). **Route decision pending with the user**; do not start M4 or switch route before it.
+- **Protocol:** frozen at `protocol-v1`, unchanged by M3 (camera model in the separate `configs/camera_d415_ir.yaml`). §5.12: 1 deviation + 1 editorial.
+- **Gates:** M3 Wed 4 Nov end of day (pending decision); M5 Fri 6 Nov; code freeze Sat 7 Nov 20:00.
+
+## M3 results (commit 044ee81, dev seeds 1000–1001, 1280×720)
+- Gate A-38 on matte plane: (i) bias ≤ 0.29% z ✅; (ii) 100% valid ✅; (iv) band within 1 px of f·B/z ✅; **(iii) ❌ 5.03% / 5.07% valid at 0.42 / 0.43 m (limit ≤ 5%)**, 100% at 0.44–0.46 m. Valid pixels below Min-Z are false-match blobs (~120 px) passing the 100 px speckle window.
+- Diagnostics (not adopted): speckle window 200 → (iii) 0.34 / 0.41%, (i)(ii)(iv) unchanged; BlenderProc helper matcher with LR check → (iii) 16%, band fixed at 128 px without the A-40 fix.
+- A-32: (i) linear (power ×2 → 1.9997, radiance ∝ z^−2.003); (ii) metal peak 1159× matte max, unclipped; (iii) export 0.13 s/image, SGBM 0.2–0.36 s/pair ✅.
+- A-39: **median 43.7 s/frame end to end** (worst 51.5 s; limit 262 s) → 110 frames ≈ 1.3–1.6 h; keep 1280×720. ~8.5 MB/scene IR.
+- Flags for M4: fixed exposure leaves scenes dark (mean 3.6–8.6 DN); SGBM pixel-locking (58–64% of disparities within ±0.125 px of an integer; striped ±5–10 mm error on tilted views).
+
+## Decisions pending for the user
+1. M3 gate route (A-38 iii): Route 2 (D7) / patched helper (D13) / keep stereo route with a logged deviation (accept as-is, or speckle window 200).
+2. If the stereo route is kept: M4 handling of exposure (auto exposure?) and pixel-locking.
 
 ## How to run (see script docstrings)
-- BlenderProc env: `scripts/setup_blenderproc.sh` (`.venv-bproc` from `requirements-bproc.lock.txt` + macOS patch in `patches/`, D14). **Always run Blender through `scripts/bproc.sh`** (plain `blenderproc run` downloads a second Blender into ~/blender).
-- Scenes: `scripts/render_scenes.sh data/m2 1000 1001` → BOP dataset in `data/m2/synthrgbd/` + logs and contact sheets in `data/m2/logs/`.
-- Checks: `scripts/check_intrinsics.py` (A-28), `scripts/check_bop_scene.py` (GT consistency). Tests: `.venv/bin/python -m pytest` (38 pass).
+- BlenderProc env: `scripts/setup_blenderproc.sh` (D14). **Always run Blender through `scripts/bproc.sh`.**
+- Planes + gate: `scripts/bproc.sh scripts/bproc_ir_plane.py --out data/m3/plane`, then `.venv/bin/python scripts/plane_gate.py data/m3/plane`.
+- Scenes with IR + stereo + timing: `scripts/benchmark_m3.sh data/m3 1000 1001` (RGB-only: `scripts/render_scenes.sh`).
+- Tests: `.venv/bin/python -m pytest` (54 pass).
 
-## Measured (dev seeds 1000–1001, 1280×720, Metal GPU + CPU)
-- RGB + depth + segmentation: 8.4–8.6 s/frame at 64 samples; 25 s per 2-view scene end to end; 2 MB/scene. IR renders not measured yet.
-- GT consistency: worst p95 back-projection error 0.047 mm; K = A-28 within 4e-5 px.
-
-## M3 inputs, fixed before any M3 data (D15)
-- Projector 67° × 41° (A-36). Dot pattern: static, semi-random, 30 000 dots by default, uniform envelope, no speckle; seed is a camera constant (A-37, source [S-13]).
-- **Gate pass criteria A-38** (matte plane, z = 0.5…1.0 m: bias < 1% z, ≥ 95% valid, left band within ±10% of f·B/z; Min-Z bracket 0.43/0.45 m). Noise level is M4. **If any criterion fails: stop and present Route 2 (D7) or the patched helper (D13) to the user. No automatic switch.**
-- **Resolution rule A-39:** keep 1280×720 if ≤ 262 s per frame end to end (110 frames ≤ 8 h); otherwise propose a lower resolution to the user.
-- **Pitfall A-40:** OpenCV SGBM invalidates the first 128 columns whatever the depth, and accepts only 8-bit input. Proposed fix (tested on synthetic texture): render the right IR 128 px wider, pad the left image, then invalidate x − d < 0.
-- Put new camera-model parameters (projector, dots, exposure, SGBM) in a separate config file, not in the frozen `configs/default.yaml`.
-
-## Next steps (M3, when asked)
-1. IR stereo pair + projector, linear 16-bit export, own SGBM in `.venv` (D13); re-check A-32 (i–iii); plane anchor + gate A-38; benchmark A-39.
-2. M4: metal/matte + brightness matching (A-24), aluminium reflectance near 850 nm (A-11), IR noise tuning (A-12, target 0.07–0.11 px [S-13]); optional dot-density sensitivity (A-37).
+## Next steps
+1. User decision above, then close M3 (log deviation in PLAN §5.12 / ASSUMPTIONS if the route stays).
+2. M4: metal/matte + brightness matching (A-24), A-11, IR noise tuning (A-12, target 0.07–0.11 px [S-13]), exposure (A-42), pixel-locking (A-43), dev pilot; optional dot density (A-37).
 3. M5: re-check A-30 when implementing the offset sweep.
 
 ## Where things are
@@ -33,6 +34,7 @@ Handoff note between sessions. **Read first.** Keep it short (≤ ~40 lines): up
 |---|---|
 | Requirements | `task_description.md` |
 | Decisions, protocol, milestones, risks | `docs/PLAN.md` |
-| Assumptions and hypotheses (A-36…A-40 new) | `docs/ASSUMPTIONS.md` |
-| Sources and verification status (S-13 new) | `docs/SOURCES.md` |
-| Report page budget and reflection outline | `docs/REPORT_PLAN.md` |
+| Assumptions (A-41…A-43 new; A-38 tested-failed) | `docs/ASSUMPTIONS.md` |
+| Camera-model parameters (not frozen) | `configs/camera_d415_ir.yaml` |
+| Sources | `docs/SOURCES.md` |
+| Report page budget | `docs/REPORT_PLAN.md` |
