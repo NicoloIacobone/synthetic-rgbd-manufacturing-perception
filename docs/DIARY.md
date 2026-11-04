@@ -225,3 +225,21 @@ This is a working log of what was done, measured, decided, and what failed. It f
 - Report note:
   - §5: back-face culling and CAD normals;
   - "what did not work": sparse-target drift; the over-broad suction check caught by the smoke run.
+
+## 2026-11-04 night — M4 step 1 follow-ups (user answers)
+- Decided (user):
+  - A-48 pivot confirmed (bounding-box centre, directions shared by conditions and sweep levels);
+  - A-49 visibility ≥ 0.1 approved in principle (§5.12 row drafted, awaiting approval);
+  - A-50 option (a), cap = cup radius, all parts, two-sided.
+- Verified: the BOP 10% rule in the BOP 2020 paper, Table 1 caption ("at least 10% of the projected surface area is visible"); bop_toolkit default now −1, with the filtering in the test targets (S-07).
+- Code (2723650, 880bf32):
+  - suction check 3 is now a first-surface two-sided ray-cast over the disk (A-50). A literal "every surface point in the cylinder" check would fail every bracket on its own back face 4 mm below, so the first-surface reading is flagged to the user;
+  - planner cup-fit is now a rim test (32 points, gap ≤ 1.5 mm). 8 sectors / 0.7 let the disk overhang 0.83 mm on an ideal view; 16 sectors / 0.9 found no fit on tilted dev faces;
+  - pose_eval adds axial / across-axis centre error;
+  - 75 tests pass.
+- Numbers (dev 1000–1001, C1, commit 2723650 for Task A, 880bf32 for Task B; master seed 0):
+  - sanity unchanged (20/20 < 0.5 mm, max 0.28 mm);
+  - **A1 10 mm/10° on C1, report-only: recall@5 mm 8/20 = 40% (brackets 4/8, profiles 4/12); @2 mm 5/20 = 25% (brackets 2/8, profiles 3/12).** Profile failures: 2 axial slides (axial 9.0/9.5 mm, across < 0.5 mm), 6 wrong-minimum across the axis (across 12–24 mm, rotation 10–35°). Brackets: 1 no correspondences, 1 in-plane slide (t 9.8 mm, R 0°), 2 at 5.7 and 52.8 mm;
+  - Task B C1 smoke run: brackets 5/8 succeed (6 with a grasp), profiles 0/12.
+- Failed / surprised: **C1 is far from the ceiling at the frozen 10/10 offset (40%)**, mostly from wrong-minimum convergence, not sliding. Hypothesis (untested): Tukey k = 5 mm discards most correspondences at the start of a 10 mm offset. No harness change made (user: tuning waits for the pooled rule).
+- Report note: "what did not work": the over-broad suction check and the overhanging planner, both caught by tests or the smoke run; C1 at 40% under A1 (§6).
