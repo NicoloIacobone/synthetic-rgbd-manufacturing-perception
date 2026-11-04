@@ -1,0 +1,48 @@
+# Active-stereo camera model (D13, D15; milestone M3). NOT part of the frozen protocol.
+# Geometry (resolution, HFOV, baseline, 126 px search range, Min-Z) is read from configs/default.yaml;
+# this file holds the projector, dot pattern, IR rendering, exposure and matcher settings.
+# Changing a value here is a camera-model change: record it in docs/ASSUMPTIONS.md and docs/DIARY.md.
+
+projector:
+  fov_deg: [67.0, 41.0]        # H x V field of projection (A-36, S-01 Tables 3-11/3-48)
+  position_x_m: 0.0275         # in the left-imager frame, between the imagers: baseline midpoint (A-41)
+  power_w: 1.0                 # Blender spot power; absolute scale is irrelevant, exposure.gain sets DN
+
+dots:                          # A-37 (D415 pattern not published)
+  count: 30000                 # over the whole 67 x 41 deg field
+  seed: 415                    # camera constant: one fixed pattern for all frames (not a §5.10 stream)
+  min_spacing_frac: 0.6        # Poisson-disk (dart throwing) minimum distance / mean spacing
+  sigma_cam_px: 0.7            # Gaussian dot sigma, in left-camera pixels (set at M3, A-37)
+  oversample: 2.0              # pattern texels per left-camera pixel (pattern focal = 2 f)
+
+ir_render:
+  samples: 32                  # Cycles samples per IR image, no adaptive sampling, no denoiser
+  pad_px: 128                  # both IR images rendered 128 px wider on the left (cx + 128), A-40
+  clamp: 0.0                   # Cycles direct/indirect sample clamping off (no hidden saturation, A-32 ii)
+  ambient: 0.0                 # world background in the IR passes: projector only (A-03, A-42)
+  storage: float16             # linear radiance, unclipped (A-32); npz per frame
+
+materials_matte:               # Lambertian (Principled: metallic 0, specular IOR level 0, roughness 1)
+  plane_albedo: 0.5            # gate plane
+  part_albedo: 0.5             # M3 matte parts; M4 brightness matching (A-24) may change it
+  tray_albedo: 0.3
+  table_albedo: 0.4
+
+exposure:                      # linear radiance -> 8-bit DN (OpenCV SGBM accepts only 8-bit, A-40)
+  mode: fixed                  # same gain for left and right and for all frames (no auto exposure at M3)
+  gain: 5700.0                 # DN per unit radiance; calibrated once at M3 (2026-11-04: 230 / 0.04037), then fixed
+  calib_target_dn: 230         # gain chosen so the 99.9th-percentile pixel of the albedo-0.5 plane at
+  calib_z_m: 0.45              #   Min-Z (0.45 m) is 230 DN: no saturation on matte at any valid range
+
+sgbm:                          # OpenCV StereoSGBM (5.0.0) in .venv, D13. "strict" = M3 default (§5.8)
+  block_size: 7
+  p1_per_px: 8                 # P1 = p1_per_px * block_size^2 (grey input, 1 channel)
+  p2_per_px: 32                # P2 = p2_per_px * block_size^2
+  num_disparities: 128         # configs/default.yaml camera.sgbm_num_disparities; d > 126 masked (A-25)
+  min_disparity: 0
+  uniqueness_ratio: 10
+  disp12_max_diff: 1           # left-right check on
+  speckle_window_size: 100
+  speckle_range: 2             # x16 internally
+  pre_filter_cap: 63
+  mode: SGBM                   # SGBM (5 paths) | HH (8 paths) | SGBM_3WAY

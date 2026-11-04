@@ -9,6 +9,13 @@ Output: <out>/synthrgbd/{camera.json, train_pbr/<scene_seed:06d>/...} in BOP for
 in units of 0.1 mm, visible instance masks, 6D poses, intrinsics), plus scene_meta.json in the scene folder
 with seeds, commit, versions, layout and per-stage timings.
 
+With --ir (milestone M3): after the BOP output, the IR stereo pair with the dot projector
+(synthrgbd.bproc_ir, configs/camera_d415_ir.yaml) is rendered for every view, twice: parts matte
+(albedo from the IR config) and parts with the M2 placeholder aluminium material ("metalproxy",
+used at M3 only to time the metal pass for the A-39 benchmark; the M4 metal model replaces it).
+Tray and table are matte in both. Output: <scene>/ir/<im_id:06d>_<matte|metalproxy>.npz
+(left, right: float16 linear radiance, both extended by pad px on the left, A-40).
+
 Conventions:
 - Units are metres in Blender; BOP annotations are written in mm (annotation_unit="mm").
 - Part meshes come from synthrgbd.parts, in the model frames of A-20, so the object pose in
@@ -61,6 +68,8 @@ def parse_args():
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--config", type=Path, default=REPO / "configs" / "default.yaml")
     ap.add_argument("--samples", type=int, default=64, help="Cycles max samples for RGB")
+    ap.add_argument("--ir", action="store_true", help="also render the IR stereo pairs (M3)")
+    ap.add_argument("--ir-config", type=Path, default=REPO / "configs" / "camera_d415_ir.yaml")
     return ap.parse_args()
 
 
@@ -153,6 +162,39 @@ def sample_camera(g, cfg):
         "roll_deg": float(np.rad2deg(roll)), "poi_m": poi.tolist(), "position_m": pos.tolist()}
 
 
+def render_ir_passes(cfg, ir, area_light, mats, T_cams, K, scene_dir):
+    """IR stereo pairs for all views, metal-proxy then matte parts (see module docstring)."""
+    from synthrgbd.bproc_ir import add_ir_frames, extended_K, ir_render_settings, make_projector, matte, render_ir
+    from synthrgbd.projector import make_pattern
+
+    out = {}
+    t = time.perf_counter()
+    area_light.delete()
+    ir_render_settings(ir)
+    W, H, pad = cfg["camera"]["width"], cfg["camera"]["height"], ir["ir_render"]["pad_px"]
+    pattern, _, _ = make_pattern(cfg["camera"], ir)
+    proj = make_projector(pattern, ir["projector"]["fov_deg"], ir["projector"]["power_w"])
+    mm = ir["materials_matte"]
+    matte(mats["tray"], mm["tray_albedo"])
+    matte(mats["table"], mm["table_albedo"])
+    add_ir_frames(T_cams, cfg["camera"]["baseline_m"], ir["projector"]["position_x_m"], proj,
+                  extended_K(K, pad), W + pad, H)
+    (scene_dir / "ir").mkdir(exist_ok=True)
+    out["ir_setup_s"] = time.perf_counter() - t
+    for name in ("metalproxy", "matte"):
+        if name == "matte":
+            matte(mats["parts"], mm["part_albedo"])
+        t = time.perf_counter()
+        imgs = render_ir()
+        out[f"ir_render_{name}_s"] = time.perf_counter() - t
+        t = time.perf_counter()
+        for v in range(len(T_cams)):
+            np.savez_compressed(scene_dir / "ir" / f"{v:06d}_{name}.npz", left=imgs[2 * v].astype(np.float16),
+                                right=imgs[2 * v + 1].astype(np.float16))
+        out[f"ir_export_{name}_s"] = time.perf_counter() - t
+    return out
+
+
 def main():
     args = parse_args()
     cfg = load_config(args.config)
@@ -230,11 +272,12 @@ def main():
     W, H = cfg["camera"]["width"], cfg["camera"]["height"]
     K = intrinsics_from_hfov(W, H, cfg["camera"]["hfov_deg"])
     bproc.camera.set_intrinsics_from_K_matrix(K, W, H)
-    cams = []
+    cams, T_cams = [], []
     for _ in range(cfg["scene"]["views_per_scene"]):
         T_cam, info = sample_camera(g, cfg)
         bproc.camera.add_camera_pose(T_cam)
         cams.append(info)
+        T_cams.append(np.asarray(T_cam))
 
     # Render RGB + z-depth (no antialiasing on depth) + instance segmentation.
     bproc.renderer.set_max_amount_of_samples(args.samples)
@@ -287,6 +330,15 @@ def main():
         np.savez_compressed(dst_scene / "segmap" / f"{im_id:06d}.npz", instance=np.asarray(segmap, np.int32))
     (dst_scene / "segmap" / "index.json").write_text(json.dumps(seg_index))
 
+    ir_meta = None
+    if args.ir:
+        ir_cfg = load_config(args.ir_config)
+        timings.update(render_ir_passes(cfg, ir_cfg, light, {"parts": alu, "tray": grey, "table": table_mat},
+                                        T_cams, K, dst_scene))
+        ir_meta = {"config": str(args.ir_config.relative_to(REPO)), "samples": ir_cfg["ir_render"]["samples"],
+                   "pad_px": ir_cfg["ir_render"]["pad_px"], "dot_seed": ir_cfg["dots"]["seed"],
+                   "passes": ["metalproxy", "matte"], "frame_order": "L0 R0 L1 R1 ..."}
+
     timings["total_s"] = time.perf_counter() - t0
     meta = {
         "scene_seed": args.scene_seed, "master_seed": master, "rng_stream": "scene (view 0)",
@@ -294,7 +346,7 @@ def main():
         "platform": platform.platform(), "cycles_device": bpy.context.scene.cycles.device,
         "samples": args.samples, "resolution": [W, H], "K": K.tolist(),
         "n_parts": n_parts, "layout": layout, "cameras": cams, "timings": timings,
-        "mask_visib_source": "blender instance segmentation",
+        "mask_visib_source": "blender instance segmentation", "ir": ir_meta,
     }
     (dst_scene / "scene_meta.json").write_text(json.dumps(meta, indent=1))
     print("SCENE_META", json.dumps({"scene_seed": args.scene_seed, "timings": timings,
