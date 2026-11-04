@@ -20,7 +20,25 @@ import cv2
 import numpy as np
 import open3d as o3d
 
-from synthrgbd.parts import Mesh
+from synthrgbd.mssd import equal_leg_bracket_symmetries, profile_symmetries
+from synthrgbd.parts import PART_CATALOGUE, Mesh, ProfileSpec, make_part
+
+
+def load_part_models(n_pts: int, seed: int) -> dict:
+    """Per obj_id: mesh, CAD samples + normals (seed: harness constant), unique vertices (MSSD),
+    bounding-box centre (offset pivot) and symmetries (A-20)."""
+    models = {}
+    for obj_id, (name, spec) in PART_CATALOGUE.items():
+        mesh = make_part(spec)
+        pts, nrm = sample_with_normals(mesh, n_pts, np.random.default_rng([seed, obj_id]))
+        verts = unique_vertices(mesh)
+        is_profile = isinstance(spec, ProfileSpec)
+        models[obj_id] = {
+            "name": name, "mesh": mesh, "pts": pts, "nrm": nrm, "verts": verts,
+            "centre": (verts.min(0) + verts.max(0)) / 2,
+            "syms": profile_symmetries() if is_profile else equal_leg_bracket_symmetries(),
+            "type": "profile" if is_profile else "bracket"}
+    return models
 
 
 def erode_mask(mask: np.ndarray, px: int) -> np.ndarray:

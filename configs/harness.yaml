@@ -17,3 +17,11 @@ model_sampling:
 
 instances:
   min_visib_fract: 0.1       # PROVISIONAL inclusion rule, awaits the user's decision (BOP-style; verify source)
+
+suction:                     # synthrgbd.suction.SuctionParams (PLAN §5.3; cup + thresholds frozen in default.yaml)
+  mask_erosion_px: 2
+  candidate_voxel_mm: 2.0    # candidate grasp centres: one measured point per 2 mm voxel
+  coverage_sectors: 8        # the cup "fits" if the plane-projected neighbours cover all 8 sectors
+  coverage_inner_frac: 0.7   #   of the outer annulus [0.7 r, r]
+  min_neighbours: 20
+  grasp_point: plane_fit     # raw | plane_fit (A-44: chosen on dev by the A-45 rule)

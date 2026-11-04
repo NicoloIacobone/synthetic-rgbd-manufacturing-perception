@@ -23,29 +23,13 @@ import numpy as np
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
 from synthrgbd.config import load_config  # noqa: E402
-from synthrgbd.mssd import equal_leg_bracket_symmetries, mssd, profile_symmetries  # noqa: E402
-from synthrgbd.parts import PART_CATALOGUE, ProfileSpec, make_part  # noqa: E402
+from synthrgbd.mssd import mssd  # noqa: E402
 from synthrgbd.pose import (IcpParams, apply_offset, backproject, draw_offset_directions,  # noqa: E402
-                            erode_mask, icp_refine, rotation_error_deg, sample_with_normals,
-                            unique_vertices)
+                            erode_mask, icp_refine, load_part_models, rotation_error_deg)
 from synthrgbd.seeds import rng  # noqa: E402
 
 DEPTH_DIRS = {"C1": "depth"}
 DEPTH_SCALE_MM = 0.1
-
-
-def load_models(n_pts: int, seed: int) -> dict:
-    models = {}
-    for obj_id, (name, spec) in PART_CATALOGUE.items():
-        mesh = make_part(spec)
-        pts, nrm = sample_with_normals(mesh, n_pts, np.random.default_rng([seed, obj_id]))
-        verts = unique_vertices(mesh)
-        models[obj_id] = {
-            "name": name, "pts": pts, "nrm": nrm, "verts": verts,
-            "centre": (verts.min(0) + verts.max(0)) / 2,          # bounding-box centre (offset pivot)
-            "syms": profile_symmetries() if isinstance(spec, ProfileSpec) else equal_leg_bracket_symmetries(),
-            "axis": np.array([0.0, 0.0, 1.0]) if isinstance(spec, ProfileSpec) else None}
-    return models
 
 
 def main():
@@ -59,7 +43,7 @@ def main():
     args = ap.parse_args()
     cfg, hcfg = load_config(), load_config(args.harness)
     p = IcpParams.from_cfg(hcfg["icp"])
-    models = load_models(hcfg["model_sampling"]["points_per_model"], hcfg["model_sampling"]["seed"])
+    models = load_part_models(hcfg["model_sampling"]["points_per_model"], hcfg["model_sampling"]["seed"])
     min_vis = hcfg["instances"]["min_visib_fract"]
     commit = subprocess.check_output(["git", "-C", str(REPO), "rev-parse", "HEAD"], text=True).strip()
     dirty = bool(subprocess.check_output(["git", "-C", str(REPO), "status", "--porcelain", "src", "scripts",
