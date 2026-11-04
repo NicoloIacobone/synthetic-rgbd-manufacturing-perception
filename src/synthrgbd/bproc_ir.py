@@ -25,6 +25,14 @@ def matte(material, albedo: float) -> None:
     material.set_principled_shader_value("Specular IOR Level", 0.0)
 
 
+def metal(material, base: float, roughness: float) -> None:
+    """IR metal for the C3 pass (A-11): Principled BSDF, metallic 1, grey base colour = normal-incidence
+    reflectance at 850 nm, Cycles GGX roughness (alpha = roughness^2)."""
+    material.set_principled_shader_value("Base Color", [base, base, base, 1.0])
+    material.set_principled_shader_value("Metallic", 1.0)
+    material.set_principled_shader_value("Roughness", roughness)
+
+
 def ir_render_settings(ir_cfg: dict) -> None:
     r = ir_cfg["ir_render"]
     bproc.renderer.set_denoiser(None)

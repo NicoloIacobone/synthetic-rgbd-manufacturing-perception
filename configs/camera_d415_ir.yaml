@@ -28,6 +28,11 @@ materials_matte:               # Lambertian (Principled: metallic 0, specular IO
   tray_albedo: 0.3
   table_albedo: 0.4
 
+materials_metal:               # C3 parts (A-11): Principled BSDF, metallic 1
+  base_reflectance: 0.868      # aluminium normal-incidence reflectance at 848 nm from n, k of Rakic et al. 1998 (LD fit,
+                               #   refractiveindex.info); 0.915 at 550 nm (the M2 RGB placeholder used 0.91)
+  roughness: null              # NOT SET: fixed by rationale/source only (A-11, A-45); awaits the user's decision
+
 exposure:                      # linear radiance -> 8-bit DN (OpenCV SGBM accepts only 8-bit, A-40)
   mode: fixed                  # same gain for left and right and for all frames (no auto exposure at M3)
   gain: 5700.0                 # DN per unit radiance; calibrated once at M3 (2026-11-04: 230 / 0.04037), then fixed

@@ -49,7 +49,7 @@ def main():
         gt = cv2.imread(str(scene / "depth" / f"{int(im_id):06d}.png"), cv2.IMREAD_UNCHANGED) * DEPTH_SCALE_MM * 1e-3
         seg = np.load(scene / "segmap" / f"{int(im_id):06d}.npz")["instance"]
         parts = np.isin(seg, [i for i in seg_index[im_id] if i >= 0])
-        for name in ("metalproxy", "matte"):
+        for name in ("metal", "metalproxy", "matte"):
             f = scene / "ir" / f"{int(im_id):06d}_{name}.npz"
             if not f.exists():
                 continue

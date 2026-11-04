@@ -9,12 +9,12 @@ Output: <out>/synthrgbd/{camera.json, train_pbr/<scene_seed:06d>/...} in BOP for
 in units of 0.1 mm, visible instance masks, 6D poses, intrinsics), plus scene_meta.json in the scene folder
 with seeds, commit, versions, layout and per-stage timings.
 
-With --ir (milestone M3): after the BOP output, the IR stereo pair with the dot projector
-(synthrgbd.bproc_ir, configs/camera_d415_ir.yaml) is rendered for every view, twice: parts matte
-(albedo from the IR config) and parts with the M2 placeholder aluminium material ("metalproxy",
-used at M3 only to time the metal pass for the A-39 benchmark; the M4 metal model replaces it).
-Tray and table are matte in both. Output: <scene>/ir/<im_id:06d>_<matte|metalproxy>.npz
-(left, right: float16 linear radiance, both extended by pad px on the left, A-40).
+With --ir: after the BOP output, the IR stereo pair with the dot projector (synthrgbd.bproc_ir,
+configs/camera_d415_ir.yaml) is rendered for every view, twice: parts metal ("metal", C3; materials_metal,
+A-11) and parts matte ("matte", C4; materials_matte.part_albedo, A-24). Tray and table are matte in both.
+--metal-roughness / --matte-part-albedo override the config (pre-declared robustness check, A-11).
+Output: <scene>/ir/<im_id:06d>_<metal|matte>.npz (left, right: float16 linear radiance, both extended by
+pad px on the left, A-40). M3 renders used the M2 RGB placeholder instead of "metal" ("metalproxy").
 
 Conventions:
 - Units are metres in Blender; BOP annotations are written in mm (annotation_unit="mm").
@@ -70,6 +70,8 @@ def parse_args():
     ap.add_argument("--samples", type=int, default=64, help="Cycles max samples for RGB")
     ap.add_argument("--ir", action="store_true", help="also render the IR stereo pairs (M3)")
     ap.add_argument("--ir-config", type=Path, default=REPO / "configs" / "camera_d415_ir.yaml")
+    ap.add_argument("--metal-roughness", type=float, help="override materials_metal.roughness (A-11)")
+    ap.add_argument("--matte-part-albedo", type=float, help="override materials_matte.part_albedo (A-24)")
     return ap.parse_args()
 
 
@@ -163,8 +165,8 @@ def sample_camera(g, cfg):
 
 
 def render_ir_passes(cfg, ir, area_light, mats, T_cams, K, scene_dir):
-    """IR stereo pairs for all views, metal-proxy then matte parts (see module docstring)."""
-    from synthrgbd.bproc_ir import add_ir_frames, extended_K, ir_render_settings, make_projector, matte, render_ir
+    """IR stereo pairs for all views, metal then matte parts (see module docstring)."""
+    from synthrgbd.bproc_ir import add_ir_frames, extended_K, ir_render_settings, make_projector, matte, metal, render_ir
     from synthrgbd.projector import make_pattern
 
     out = {}
@@ -181,8 +183,13 @@ def render_ir_passes(cfg, ir, area_light, mats, T_cams, K, scene_dir):
                   extended_K(K, pad), W + pad, H)
     (scene_dir / "ir").mkdir(exist_ok=True)
     out["ir_setup_s"] = time.perf_counter() - t
-    for name in ("metalproxy", "matte"):
-        if name == "matte":
+    mt = ir["materials_metal"]
+    if mt.get("roughness") is None:
+        raise SystemExit("materials_metal.roughness is not set (A-11): pass --metal-roughness or set it in the IR config")
+    for name in ("metal", "matte"):
+        if name == "metal":
+            metal(mats["parts"], mt["base_reflectance"], mt["roughness"])
+        else:
             matte(mats["parts"], mm["part_albedo"])
         t = time.perf_counter()
         imgs = render_ir()
@@ -333,11 +340,16 @@ def main():
     ir_meta = None
     if args.ir:
         ir_cfg = load_config(args.ir_config)
+        if args.metal_roughness is not None:
+            ir_cfg["materials_metal"]["roughness"] = args.metal_roughness
+        if args.matte_part_albedo is not None:
+            ir_cfg["materials_matte"]["part_albedo"] = args.matte_part_albedo
         timings.update(render_ir_passes(cfg, ir_cfg, light, {"parts": alu, "tray": grey, "table": table_mat},
                                         T_cams, K, dst_scene))
         ir_meta = {"config": str(args.ir_config.relative_to(REPO)), "samples": ir_cfg["ir_render"]["samples"],
                    "pad_px": ir_cfg["ir_render"]["pad_px"], "dot_seed": ir_cfg["dots"]["seed"],
-                   "passes": ["metalproxy", "matte"], "frame_order": "L0 R0 L1 R1 ..."}
+                   "passes": ["metal", "matte"], "frame_order": "L0 R0 L1 R1 ...",
+                   "materials_metal": ir_cfg["materials_metal"], "materials_matte": ir_cfg["materials_matte"]}
 
     timings["total_s"] = time.perf_counter() - t0
     meta = {

@@ -99,3 +99,27 @@ def test_expose_to_uint8_clips_and_rounds():
     out = expose_to_uint8(np.array([-1.0, 0.0, 0.0024, 0.0026, 1.0, 10.0]), 200.0)
     assert out.dtype == np.uint8
     assert out.tolist() == [0, 0, 0, 1, 200, 255]
+
+
+# --- Step 2 (A-42 auto exposure, A-12 sensor noise) -------------------------------------------------
+
+def test_auto_exposure_hits_setpoint_and_ignores_left_band():
+    from synthrgbd.stereo import auto_exposure_gain, exposure_roi_x0
+    x0 = exposure_roi_x0(1004.6, 0.055, 0.45)
+    assert x0 == 123                                  # ceil(f·B / Min-Z)
+    L = np.full((10, 300), 0.02)
+    L[:, :x0] = 5.0                                   # bright junk inside the band must not matter
+    g = auto_exposure_gain(L, x0, 60.0)
+    assert np.mean(L[:, x0:] * g) == pytest.approx(60.0)
+
+
+def test_sensor_noise_shared_draws_and_variance():
+    from synthrgbd.stereo import add_sensor_noise
+    rng = np.random.default_rng(0)
+    z = rng.normal(size=200_000)
+    a = add_sensor_noise(np.full(z.shape, 100.0), z, e_per_dn=4.0, read_noise_dn=1.0)
+    assert np.var(a) == pytest.approx(100 / 4 + 1, rel=0.02)          # shot (DN / e_per_dn) + read^2
+    b = add_sensor_noise(np.full(z.shape, 100.0), z, e_per_dn=4.0, read_noise_dn=1.0)
+    assert np.array_equal(a, b)                                       # same draws -> identical (pairing A-29)
+    dark = add_sensor_noise(np.zeros(5), np.ones(5), e_per_dn=4.0, read_noise_dn=2.0)
+    assert np.allclose(dark, 2.0)                                     # only read noise in the dark

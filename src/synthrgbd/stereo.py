@@ -25,6 +25,34 @@ def expose_to_uint8(radiance: np.ndarray, gain: float) -> np.ndarray:
     return np.clip(np.rint(np.asarray(radiance, np.float64) * gain), 0, 255).astype(np.uint8)
 
 
+def exposure_roi_x0(fx: float, baseline_m: float, z_min_m: float) -> int:
+    """First column of the auto-exposure ROI (A-42): right of the widest invalid left band, f·B/Z at Min-Z."""
+    return int(np.ceil(fx * baseline_m / z_min_m))
+
+
+def auto_exposure_gain(left_radiance: np.ndarray, x0: int, setpoint_dn: float) -> float:
+    """Per-frame auto exposure (A-42): gain such that the mean DN over columns >= x0 of the D415 left image
+    (radiance, unpadded, before noise) equals setpoint_dn. Computed on the C3 (metal) left image and shared
+    with C4 and the right image."""
+    m = float(np.mean(np.asarray(left_radiance, np.float64)[:, x0:]))
+    if m <= 0:
+        raise ValueError("left image has no signal in the auto-exposure ROI")
+    return setpoint_dn / m
+
+
+def add_sensor_noise(dn: np.ndarray, z: np.ndarray, e_per_dn: float, read_noise_dn: float) -> np.ndarray:
+    """Shot + read noise on an exposed image in DN (float, before clipping and quantisation, A-12):
+    DN + sqrt(max(DN, 0) / e_per_dn + read_noise_dn^2) · z, with z ~ N(0, 1) drawn once per frame and
+    image and **shared by C3 and C4** (A-29). e_per_dn = electrons per DN (conversion gain)."""
+    dn = np.asarray(dn, np.float64)
+    return dn + np.sqrt(np.maximum(dn, 0.0) / e_per_dn + read_noise_dn ** 2) * z
+
+
+def quantise_uint8(dn: np.ndarray) -> np.ndarray:
+    """Clip to [0, 255] and round to 8 bits (SGBM input, A-40). Saturation happens only here."""
+    return np.clip(np.rint(dn), 0, 255).astype(np.uint8)
+
+
 def make_sgbm(cfg: dict) -> cv2.StereoSGBM:
     """StereoSGBM from the `sgbm` section of configs/camera_d415_ir.yaml."""
     b = cfg["block_size"]
