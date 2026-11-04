@@ -31,7 +31,13 @@ materials_matte:               # Lambertian (Principled: metallic 0, specular IO
 materials_metal:               # C3 parts (A-11): Principled BSDF, metallic 1
   base_reflectance: 0.868      # aluminium normal-incidence reflectance at 848 nm from n, k of Rakic et al. 1998 (LD fit,
                                #   refractiveindex.info); 0.915 at 550 nm (the M2 RGB placeholder used 0.91)
-  roughness: null              # NOT SET: fixed by rationale/source only (A-11, A-45); awaits the user's decision
+  roughness: 0.15              # MERL "aluminium" GGX fit alpha 0.016-0.022 -> sqrt = 0.13-0.15 (S-16); user option (a)
+                               #   2026-11-04; robustness 0.2 / 0.4 pre-declared (A-11)
+
+sensor_noise:                  # A-12 (user-approved model, 2026-11-04): shot + read noise in DN, shared draws C3/C4
+  extra_blur_px: 0.0           # none beyond Blender's 1.5 px Blackman-Harris pixel filter
+  read_noise_dn: 1.0
+  e_per_dn: null               # calibrated on anchor (a): median over z of the central-ROI plane-fit RMS = 0.09 px [S-13]
 
 exposure:                      # linear radiance -> 8-bit DN (OpenCV SGBM accepts only 8-bit, A-40)
   mode: fixed                  # same gain for left and right and for all frames (no auto exposure at M3)

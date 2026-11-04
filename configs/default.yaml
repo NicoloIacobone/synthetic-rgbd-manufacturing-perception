@@ -23,7 +23,7 @@ seeds:                       # PLAN §5.10, D10
 
 noise:
   c2a_eps_d_px: 0.08         # S-03, A-13
-  # c2b: Carfagni-matched level, fitted at M4 (A-14)
+  c2b_eps_d_px: 0.262        # Carfagni-matched level from the 1 m point, 4.74 mm x 55.25 px m / (1 m)^2 (A-14, PLAN 5.12 row 2026-11-04)
 
 task_a:                      # PLAN §5.2
   init_offset: {mm: 10, deg: 10}
