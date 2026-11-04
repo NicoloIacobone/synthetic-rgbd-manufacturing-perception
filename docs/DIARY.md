@@ -178,3 +178,31 @@ This is a working log of what was done, measured, decided, and what failed. It f
 - Placement: not a PLAN §5.12 deviation (the gate criteria are in A-38 / D15 / PLAN §7, outside the frozen §5 and `configs/default.yaml`); recorded in ASSUMPTIONS A-38, PLAN §7 (M3 row) and here.
 - Open for M4, nothing chosen: dark IR at fixed exposure (mean 3.6–8.6 DN on dev scenes); SGBM pixel-locking (58–64% of disparities within ±0.125 px of an integer). M4 waits for the user's design review.
 - Process note: the user asked that at a gate the agent stops there and proposes further measurements instead of running them (the A-39 benchmark had been run after the gate failure).
+
+## 2026-11-04 evening — Pre-M4 design review (external reviewer claims tested)
+- Done: tested 7 claims from an external Claude review (docs only, commit 5706022) against docs, sources, code and the dev data. One fresh adversarial subagent reviewed the lead agent's conclusions. Memo given in chat; decisions recorded in ASSUMPTIONS / SOURCES (commit below).
+- Numbers (dev 1000–1001, commit 044ee81, matte pass, own analysis):
+  - pixel-locking: 65% of disparities within ±2/16 px of an integer (31% uniform at OpenCV's 1/16 px step; A-43's 25% is the continuous baseline);
+  - sawtooth of the mean disparity error vs the true fractional disparity, −0.11 to +0.18 px; half-integer bin 1%;
+  - matte mean error per part (interior pixels): median |·| ≈ 0.4 mm, worst 2.7 mm;
+  - metal proxy (roughness 0.3): invalid on parts 0–8% (no holes); brackets in 1000 view 1 +5/+10/+13 mm interior mean; other views: medians ≈ 0, heavy tails (21–30% of interior pixels > 5 mm);
+  - left IR median 0–2 DN, p99 30–60 DN.
+- Sources:
+  - ROBI's D415 working distance is 243–638 mm (S-05, verified in the PDF), against our 0.61–1.24 m;
+  - Intel subpixel-linearity white paper (S-14, read in full): D4 ASIC pixel-locking ±0.5% at ~1 m (D435, High Density), D415 "almost identical", default A = 0. Our locking is of comparable magnitude, so it is kept.
+- Decided (user):
+  - 1(b): keep §5.6. Fixed-sequence order C1–C3 → C2b–C3 → C3–C4; C2b at 0.26 px; "C1 ≥ C2" descriptive. The §5.12 row text awaits the user's OK;
+  - 2(b): ROBI after Friday;
+  - 3(c): keep pixel-locking;
+  - 4(a): per-frame AE on the C3 left image, gain shared with C4; A-24 defined first;
+  - Task B: no deviation; grasp point fixed on dev;
+  - roughness by rationale + 0.2/0.4 robustness check;
+  - tuning ledger (A-45); ICP normals from the CAD model, pooled worst-case rule (A-46); reporting additions (A-47).
+  - M4 order changed by the user: harness first.
+- Failed / surprised:
+  - the metal proxy gives biased or heavy-tailed depth, not holes, so the "holes vs smoothing" framing was wrong;
+  - S-13's 0.07–0.11 px is a plane-fit RMS and cannot see locking.
+- Report note:
+  - §4: locking "comparable magnitude to D4 at default firmware" [S-14];
+  - §5: fixed-sequence testing and the tuning ledger as judgement examples;
+  - §6: ROBI range mismatch.

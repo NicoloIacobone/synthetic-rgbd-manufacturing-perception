@@ -31,3 +31,12 @@ Useful context, but **not** user corrections.
 
 - An append-only diary file (`DIARY.md`) for notes that feed the final report, never read by default, to protect the agent's context window.
 - An explicit assumptions and hypotheses register (`ASSUMPTIONS.md`).
+
+### Added 2026-11-04 (pre-M4 design review)
+
+| # | Date | AI suggestion | User's response | Outcome |
+|---|---|---|---|---|
+| 8 | 2026-11-04 | Fixed-sequence testing in the frozen §5.6 order: C1 vs C3 → C3 vs C4 → C2b vs C3 (C2b vs C3 last, as an add-on to H-1) | Reordered to C1 vs C3 → **C2b vs C3** → C3 vs C4: C2b vs C3 answers the task's question directly, and C3 vs C4 depends most on the unsourced metal roughness, so it goes last | Adopted in the pending §5.12 row |
+| 9 | 2026-11-04 | M4 order: camera model first (albedo matching, exposure, IR noise, roughness), then the ICP/suction harness, then the pilot | Moved the harness to the front: it is the critical path and does not depend on the camera model; tuning still waits until all conditions exist on dev | M4 step 1 = harness + C1 sanity check |
+
+AI-on-AI (section B), same review: the adversarial subagent reversed two of the lead agent's proposals. (i) The exposure gain was to be computed on the matte (C4) image; it was changed to the metal (C3) image, so the headline camera's auto exposure reacts to metal. (ii) Holm correction over three tests was replaced by fixed-sequence testing, so the first test keeps α = 0.05. It also corrected an over-generalisation from a single tilted view (metal "bias" is mostly a heavy tail).
