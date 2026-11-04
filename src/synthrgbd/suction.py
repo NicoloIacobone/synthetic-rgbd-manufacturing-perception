@@ -3,9 +3,10 @@
 Planner (measured data only; cup radius and thresholds from configs/default.yaml task_b, A-19):
 - candidate centres = the instance's scene points on a `candidate_voxel_mm` grid (first point per voxel);
 - for each candidate, the measured points within the cup radius r (3D ball) are fitted with a plane (PCA);
-  the normal is oriented towards the camera. The candidate "fits the cup" if the plane-projected
-  neighbours reach the rim everywhere: at least one point in each of `coverage_sectors` angular sectors
-  of the outer annulus [coverage_inner_frac·r, r];
+  the normal is oriented towards the camera. The candidate "fits the cup" if the measured surface supports
+  the whole disk: each of `rim_samples` points on the rim (radius r, in the fitted plane) has a measured
+  point (from the ball of radius r + `rim_gap_mm`, projected onto the plane) within `rim_gap_mm`. With the
+  mask erosion keeping measured points ≥ ~1.6 mm inside a true edge at 0.8 m, this keeps the disk on the part;
 - the flattest fitting candidate (lowest RMS plane residual) is chosen. Its grasp point is either the raw
   measured point ("raw") or that point projected onto the fitted plane ("plane_fit"); A-44 chooses on dev.
 
@@ -37,8 +38,8 @@ class SuctionParams:
 
     mask_erosion_px: int = 2
     candidate_voxel_mm: float = 2.0
-    coverage_sectors: int = 16
-    coverage_inner_frac: float = 0.9
+    rim_samples: int = 32
+    rim_gap_mm: float = 1.5
     min_neighbours: int = 20
     grasp_point: str = "plane_fit"       # "raw" | "plane_fit" (A-44)
 
@@ -63,7 +64,8 @@ def plan_suction(pts: np.ndarray, cup_radius_mm: float, p: SuctionParams) -> dic
     cand = np.sort(first)
     tree = cKDTree(pts)
     best = None
-    sector_w = 2 * np.pi / p.coverage_sectors
+    a = np.linspace(0, 2 * np.pi, p.rim_samples, endpoint=False)
+    rim_xy = cup_radius_mm * np.stack([np.cos(a), np.sin(a)], 1)
     for i in cand:
         nb = tree.query_ball_point(pts[i], cup_radius_mm)
         if len(nb) < p.min_neighbours:
@@ -75,13 +77,9 @@ def plan_suction(pts: np.ndarray, cup_radius_mm: float, p: SuctionParams) -> dic
         if n @ c > 0:                     # orient towards the camera (camera at the origin)
             n = -n
         u, v = _plane_basis(n)
-        d = q - pts[i]
-        x, y = d @ u, d @ v
-        rad = np.hypot(x, y)
-        ring = rad >= p.coverage_inner_frac * cup_radius_mm
-        sectors = np.unique(np.floor((np.arctan2(y[ring], x[ring]) + np.pi) / sector_w).astype(int)
-                            % p.coverage_sectors)
-        if len(sectors) < p.coverage_sectors:
+        d = pts[tree.query_ball_point(pts[i], cup_radius_mm + p.rim_gap_mm)] - pts[i]
+        gap, _ = cKDTree(np.stack([d @ u, d @ v], 1)).query(rim_xy)
+        if gap.max() > p.rim_gap_mm:
             continue
         rms = float(s[2] / np.sqrt(len(q)))
         if best is None or rms < best[0]:
