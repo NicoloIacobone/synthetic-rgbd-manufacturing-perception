@@ -137,6 +137,7 @@ def main():
     ap.add_argument("root", type=Path)
     ap.add_argument("scenes", type=int, nargs="+")
     ap.add_argument("--out", type=Path, required=True)
+    ap.add_argument("--observe-only", action="store_true", help="skip the matcher interventions (convergence checks)")
     args = ap.parse_args()
     cfg, ir = load_config(), load_config(REPO / "configs" / "camera_d415_ir.yaml")
     cam, sn, B = cfg["camera"], ir["sensor_noise"], cfg["camera"]["baseline_m"]
@@ -247,6 +248,11 @@ def main():
             row["biased_median_abs_disp_err_px"] = float(np.median(np.abs(d_c3 - d_gt)[biased])) if biased.any() else None
             row["tol_5mm_in_px"] = float(np.median((d_gt - fx * B * 1e3 / (z_gt + TOL_MM))[parts]))
 
+            if args.observe_only:
+                per_view.append(row)
+                print(json.dumps({k: row[k] for k in ("scene", "im_id", "reproduced_max_diff_mm", "class_frac")}), flush=True)
+                continue
+
             # Intervention: blank the parts in both images
             l_b, r_b = l8.copy(), r8.copy()
             l_b[mL], r_b[mR] = 0, 0
@@ -311,6 +317,11 @@ def main():
                 "dn_clean_tray_p99", "gap_surface_to_bg_px", "biased_median_abs_disp_err_px", "tol_5mm_in_px"):
         summary[key] = pool([key])
     summary["towards_bg_rho_p50_median_over_views"] = float(np.median([r["towards_bg_rho"]["p50"] for r in per_view if r["towards_bg_rho"]]))
+    if args.observe_only:
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(json.dumps({"summary": summary, "per_view": per_view}, indent=1))
+        print("SUMMARY", json.dumps(summary))
+        return
     summary["blank"] = {k: pool(["blank", k]) for k in ("part_valid", "biased_still_valid", "biased_same_disparity_1px", "correct_same_disparity_1px")}
     summary["blank"]["class_frac"] = {k: pool(["blank", "class_frac", k]) for k in per_view[0]["blank"]["class_frac"]}
     summary["bgcut"] = {"class_frac": {k: pool(["bgcut", "class_frac", k]) for k in per_view[0]["bgcut"]["class_frac"]},

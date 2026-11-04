@@ -104,6 +104,8 @@ One line per knob. "May look at" is the only statistic the choice may use. Ties 
 | Bright-matte pass (M5) | A-52 | Decided 2026-11-04 | — | Part albedo 0.5, descriptive only |
 | Freeze before test data | A-53 | From the first test render | — | Material (roughness 0.15, D 0.015, base 0.868), C4 albedo 0.085, setpoint 10 DN, e_per_dn 0.12, harness H3 + plane-fit grasp point: no change once test data exist |
 | Cycles glossy_bounces | A-57 | **Awaiting the user** (no test data yet) | Render radiance only until decided; no A1 or Task B on glossy > 0 | If reflections are enabled: A-24 mean matching breaks (albedo 1.90, > 1; per-frame metal/C4 ratio 0.93–68.5, median 4.0; glints: top 1% of pixels hold up to 87% of the sum), clipped-at-saturation matching gives 0.317 (0.077 at glossy 0); setpoint and harness rules re-run on dev |
+| IR samples, convergence check (M5) | A-57 | Rule fixed before the run, 2026-11-04 | C3 sensor classes on metal-part pixels of dev scene 1001 (both views; most part pixels), 32 vs 128 samples; no A1 or Task B | Keep 32 unless 128 moves the correct or the behind-the-surface share by > 2 percentage points; then use 128 and re-check A-39 |
+| Cycles bounces, convergence check (M5) | A-57 | Rule fixed before the run, 2026-11-04 | C3 sensor classes on metal-part pixels, 10 dev views, pooled; no A1 or Task B | Keep glossy 3 / max 3 unless glossy 3 / max 12 moves the correct or the behind-the-surface share by > 2 percentage points; then use max 12. Glossy 1 is reported only. A changed setting re-derives the C4 albedo by the clipped rule; otherwise 0.317 stands |
 
 ## Hypotheses
 

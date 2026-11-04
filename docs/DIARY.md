@@ -291,3 +291,6 @@ This is a working log of what was done, measured, decided, and what failed. It f
 **What did not work:** the ±8 px background shift lacks power (blanked control slope 0.54–0.60), replaced by ±3 px. The mirror-prediction match is weak evidence on its own: 12.7% of biased pixels match where no mirror image exists. The shifted-pixel null (0.8%) badly understates that floor. A-24 mean matching breaks with glints (albedo 1.90).
 **Unexplained:** at glossy 3, biased pixels on faces whose first-order mirror ray sees nothing also stop following the background (slope 0.02–0.07).
 **State:** stopped for the user's decision; no test data; Steps 2–5 not started. Seeds: master 0, ir_noise stream as in M4.
+
+## 2026-11-04 (M5, user decisions after the Step 1 stop)
+User accepted all three suggestions: (1) enable reflections, re-run the dev rules, new pilot, then M5, with reflections off as a descriptive pass; (2) C4 albedo 0.317 by clipped-at-saturation matching (0.3169 when C4's own clipping is included); (3) run both convergence checks first. Rules for the checks written into the ledger and committed before any check render.

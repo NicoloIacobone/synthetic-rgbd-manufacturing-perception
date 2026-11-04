@@ -72,7 +72,9 @@ def parse_args():
     ap.add_argument("--ir-config", type=Path, default=REPO / "configs" / "camera_d415_ir.yaml")
     ap.add_argument("--metal-roughness", type=float, help="override materials_metal.roughness (A-11)")
     ap.add_argument("--matte-part-albedo", type=float, help="override materials_matte.part_albedo (A-24)")
-    ap.add_argument("--glossy-bounces", type=int, help="override Cycles glossy_bounces for the IR passes (mechanism check)")
+    ap.add_argument("--glossy-bounces", type=int, help="override ir_render.glossy_bounces (convergence checks, A-57)")
+    ap.add_argument("--max-bounces", type=int, help="override ir_render.max_bounces (convergence checks, A-57)")
+    ap.add_argument("--ir-samples", type=int, help="override ir_render.samples (convergence checks, A-57)")
     return ap.parse_args()
 
 
@@ -345,8 +347,9 @@ def main():
             ir_cfg["materials_metal"]["roughness"] = args.metal_roughness
         if args.matte_part_albedo is not None:
             ir_cfg["materials_matte"]["part_albedo"] = args.matte_part_albedo
-        if args.glossy_bounces is not None:
-            ir_cfg["ir_render"]["glossy_bounces"] = args.glossy_bounces
+        for key, val in (("glossy_bounces", args.glossy_bounces), ("max_bounces", args.max_bounces), ("samples", args.ir_samples)):
+            if val is not None:
+                ir_cfg["ir_render"][key] = val
         timings.update(render_ir_passes(cfg, ir_cfg, light, {"parts": alu, "tray": grey, "table": table_mat},
                                         T_cams, K, dst_scene))
         ir_meta = {"config": str(args.ir_config.relative_to(REPO)), "samples": ir_cfg["ir_render"]["samples"],
