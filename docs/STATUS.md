@@ -2,10 +2,17 @@
 
 Handoff note between sessions. **Read first**, then CLAUDE.md's other context files (task_description, PLAN, ASSUMPTIONS). Keep it short; overwrite outdated content (history is in DIARY.md and git).
 
-- **Updated:** 2026-11-04, evening CET (Wednesday). About one day ahead of plan.
-- **Phase:** Phase 1. **M1–M4 done. M5 running:** the reflection bug is fixed (A-57), dev rules re-run, test render of scenes 0–49 started. Do not edit tracked files during the render: scene_meta logs a dirty commit.
+- **Updated:** 2026-11-04, ~18:55 CET (Wednesday). About one day ahead of plan.
+- **Phase:** Phase 1. **M1–M4 done. M5 PAUSED by the user mid test render (computer shut down); restart only when the user says so.** The reflection bug is fixed (A-57) and the dev rules are re-run. Scenes 0–2 of 0–49 are rendered; no test metric has been computed yet.
 - **Protocol:** frozen at tag `protocol-v1`; 4 rows in PLAN §5.12, none added. Primary endpoint unchanged: A1 recall at MSSD < 5 mm, offset 10 mm / 10°; fixed-sequence testing C1 vs C3 → C2b vs C3 → C3 vs C4 at α = 0.05; unit = instance-view, visib_fract ≥ 0.1, a missing estimate = failure.
 - **Gates:** A metrics by Fri 6 Nov; code freeze Sat 7 Nov 20:00; target submission Sun 8 Nov 18:00. Report skeleton: Thursday evening. Push at the end of each milestone.
+
+## How to resume (nothing is running; all state is on disk)
+1. **Render:** `scripts/render_test.sh data/m5 0 49 > data/m5/logs/render_test.log 2>&1` in the background. It keeps finished scenes (0–2), renders the other 47 one at a time (105–130 s each, about 1.6 h), then writes C2 depth. Do not edit tracked files while it runs: scene_meta would log a dirty commit. Scenes 0–2 record commit 73f0305; later scenes record the docs-only commit that added this note; the code is identical.
+2. **ROBI subset (can run alongside):** `.venv/bin/python -I scripts/robi_fetch.py 1lc2yNZo2W8cnd8oUe6Vb5cdUnR1t8YTK data/robi/subset --views-per-scene 12` (Zigzag, keeps the 24 files already there), then the same with `1qqG0KVW6_Upxc95Wuk9HecR0JrxGZSd4` (Chrome screw). Whole-file Drive downloads return "Quota exceeded"; range requests work. CAD models are in `data/robi/cad/`, camera files in `data/robi/toolkit/cam/`. The 3 h box has hardly started.
+3. **Before evaluating, commit the three untracked scripts** (`scripts/fig_results.py`, `scripts/robi_fetch.py`, `scripts/robi_compare.py`), since `pose_eval.py` flags untracked files in `scripts/` as a dirty tree. `robi_compare.py` is untested: check the pose convention and CAD units with `--overlay` first.
+4. **Then steps 4–7 below.** Also planned: a descriptive noise-redraw bound on C3 recall on seeds 0–9 (A-59), which needs a small `stereo_scene.py` option, added after the render.
+5. **Tell the user at the end:** C4 albedo 0.247 and H2 differ from what was approved or expected (A-24, ledger); the approved rule moved them.
 
 ## Decision taken (A-57, A-58)
 BlenderProc's default Cycles `glossy_bounces = 0` was never overridden, so no IR render before the fix had a reflected image on metal. User decision 2026-11-04: fix it (glossy 3; max 12 and 32 samples by the ledger rules), re-run the dev rules, keep reflections off as a descriptive pass, C4 albedo by clipped-at-saturation matching.
