@@ -243,3 +243,13 @@ This is a working log of what was done, measured, decided, and what failed. It f
   - Task B C1 smoke run: brackets 5/8 succeed (6 with a grasp), profiles 0/12.
 - Failed / surprised: **C1 is far from the ceiling at the frozen 10/10 offset (40%)**, mostly from wrong-minimum convergence, not sliding. Hypothesis (untested): Tukey k = 5 mm discards most correspondences at the start of a 10 mm offset. No harness change made (user: tuning waits for the pooled rule).
 - Report note: "what did not work": the over-broad suction check and the overhanging planner, both caught by tests or the smoke run; C1 at 40% under A1 (§6).
+
+## 2026-11-04 night — M4 step 2 started; stopped at the roughness choice
+- Done:
+  - order changed to roughness → A-24 → exposure → noise, because A-24 and the exposure gain depend on the C3 metal image (flagged to the user);
+  - code 90c3595: C3 "metal" pass from `materials_metal` (render refuses to run while roughness is null); auto-exposure gain over columns ≥ ceil(f·B/Min-Z) = 123; shot + read noise with shared draws; 77 tests pass.
+- Sources:
+  - Al reflectance at 848 nm = 0.868 from Rakić 1998 n, k (S-15), against 0.915 at 550 nm;
+  - MERL "aluminium" GGX α = 0.0044 / 0.0218 / 0.0201 / 0.0164 (Bieron & Peers 2020 supplement, S-16), i.e. roughness ≈ 0.13–0.15 for the non-L2 fits;
+  - no source for extruded or anodised profiles; the TU Delft supplement host refused connections; the Bieron PDF is 99 MB at ~110 KB/s.
+- Open for the user: the roughness value, which lies below the pre-declared 0.2 / 0.4 pair; then the noise-model free parameters.
