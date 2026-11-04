@@ -270,3 +270,16 @@ This is a working log of what was done, measured, decided, and what failed. It f
   - sweep C1 0.975 / 0.875 / 0.60 at 2 / 5 / 20; C3 0.05 / 0.00 / 0.00 (median MSSD 22–30 mm); C4 0.35 / 0.25 / 0.15;
   - Task B brackets: C1 0.75, **C3 0.00**, C4 0.25.
 - Failed / surprised: C3 metal (roughness 0.15) biases depth far by ~+19 mm on brackets, so ICP fails from every offset. C4 is weak because brightness-matched parts are dark (0.085) and noisy. Stop criterion (b).
+
+## 2026-11-04 ~16:45 CET — M4 closed; first M5 start stopped and undone
+- M4 done: camera model (roughness 0.15 + D 0.015, albedo 0.085, setpoint 10 DN, e_per_dn 0.12), harness H3 + plane-fit grasp, dev pilot (C3 at floor). Details in the entries above and the ASSUMPTIONS ledger.
+- Correction: the previous entry's heading "2026-11-05 ~00:30" is wrong. That work happened on Wednesday 2026-11-04, early afternoon CET; the agent misstated the date and time.
+- User decisions for M5 (A-51…A-56): (B) roughness 0.2 / 0.4 on all 50 test scenes as a dose–response curve; (D) a bright-matte pass at albedo 0.5, descriptive; (C) rejected; nothing changes once test data exist; a pre-render check figure; ROBI mandatory after M5; operating mode.
+- **M5 start stopped by the user (to continue in a fresh session) and undone.** No commits had been made after c18ea50 and no test scene was rendered. Removed:
+  - uncommitted edits (`stereo_scene.py --suffix`, `pose_eval.py` / `suction_eval.py --depth-dir`);
+  - the new `scripts/fig_specular_check.py` (a copy is kept outside the repo in the agent scratchpad);
+  - `data/m4/figs/specular_*.png` (4);
+  - `depth_stereo_{metal,matte}_nonoise/` and `stereo_meta_nonoise.json` in dev scenes 1000–1004;
+  - `data/tmp/{diag_depth_stereo_metal_nonoise.jsonl, ir_nonoise.yaml, spec_small.png}`.
+  - The noise-off diagnostic was deleted unread.
+- Preliminary, not a result (to redo in M5, A-54): on dev views the metal parts were near-black in the left IR image, and 83–89% of biased C3 pixels lay between the true surface and the tray behind it. A mirror-image prediction explained only 15–28% of them (C4 control 9–13%). This points to texture loss + SGBM fill more than to reflected dots; no sign of a bug.
