@@ -2,7 +2,7 @@
 
 Handoff note between sessions. **Read first.** Keep it short (≤ ~40 lines): update it at the end of every task, and overwrite outdated content rather than appending (history goes to DIARY.md and git).
 
-- **Updated:** 2026-11-04, late
+- **Updated:** 2026-11-05, 00:30
 - **Phase:** Phase 1, M4. Steps 1–2 done; step 3 harness selection and pilot done on dev. **STOPPED (criterion b): C3 at floor** (A1 recall 0.00 at every offset; Task B 0.00). Waiting for the user's decision (options in the chat report).
 - **Protocol:** frozen at `protocol-v1`. §5.12: 4 rows (latest: C2b + fixed sequence; instance inclusion), logged 2026-11-04.
 - **Gates:** M5 Fri 6 Nov (A metrics); code freeze Sat 7 Nov 20:00. Report skeleton starts Thu evening.
