@@ -20,10 +20,11 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[1]
 CONDITIONS = ["C1", "C2a", "C2b", "C3", "C4"]
 C2F = [[20, 20], [10, 10], [5, 5]]
-CANDIDATES = {          # simpler first
-    "H0_single_15_5": {},
-    "H1_c2f": {"stages": C2F},
-    "H2_c2f_raycast": {"stages": C2F, "visibility": "raycast"},
+# Simpler first. Every candidate states all three knobs, since configs/harness.yaml now holds the selected harness.
+CANDIDATES = {
+    "H0_single_15_5": {"stages": None, "visibility": "backface", "o3d_step_clamp": False},
+    "H1_c2f": {"stages": C2F, "visibility": "backface", "o3d_step_clamp": False},
+    "H2_c2f_raycast": {"stages": C2F, "visibility": "raycast", "o3d_step_clamp": False},
     "H3_c2f_raycast_clamp": {"stages": C2F, "visibility": "raycast", "o3d_step_clamp": True},
 }
 GRASP_POINTS = ["plane_fit", "raw"]   # tie -> plane_fit (ledger)
