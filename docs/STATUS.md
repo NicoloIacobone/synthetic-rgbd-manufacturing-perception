@@ -2,17 +2,20 @@
 
 Handoff note between sessions. **Read first**, then CLAUDE.md's other context files (task_description, PLAN, ASSUMPTIONS). Keep it short; overwrite outdated content (history is in DIARY.md and git).
 
-- **Updated:** 2026-11-04, ~18:55 CET (Wednesday). About one day ahead of plan.
-- **Phase:** Phase 1. **M1–M4 done. M5 PAUSED by the user mid test render (computer shut down); restart only when the user says so.** The reflection bug is fixed (A-57) and the dev rules are re-run. Scenes 0–2 of 0–49 are rendered; no test metric has been computed yet.
+- **Updated:** 2026-11-04, evening CET (Wednesday). About one day ahead of plan.
+- **Phase:** Phase 1. **M1–M4 done. M5 STOPPED at a failed gate: the §5.11 sanity check on the test scenes. Waiting for the user's decision; run nothing further until then.** The test render is complete (scenes 0–49, all passes, C2 depth). No recall at a real offset has been computed.
 - **Protocol:** frozen at tag `protocol-v1`; 4 rows in PLAN §5.12, none added. Primary endpoint unchanged: A1 recall at MSSD < 5 mm, offset 10 mm / 10°; fixed-sequence testing C1 vs C3 → C2b vs C3 → C3 vs C4 at α = 0.05; unit = instance-view, visib_fract ≥ 0.1, a missing estimate = failure.
 - **Gates:** A metrics by Fri 6 Nov; code freeze Sat 7 Nov 20:00; target submission Sun 8 Nov 18:00. Report skeleton: Thursday evening. Push at the end of each milestone.
 
-## How to resume (nothing is running; all state is on disk)
-1. **Render:** `scripts/render_test.sh data/m5 0 49 > data/m5/logs/render_test.log 2>&1` in the background. It keeps finished scenes (0–2), renders the other 47 one at a time (105–130 s each, about 1.6 h), then writes C2 depth. Do not edit tracked files while it runs: scene_meta would log a dirty commit. Scenes 0–2 record commit 73f0305; later scenes record the docs-only commit that added this note; the code is identical.
-2. **ROBI subset (can run alongside):** `.venv/bin/python -I scripts/robi_fetch.py 1lc2yNZo2W8cnd8oUe6Vb5cdUnR1t8YTK data/robi/subset --views-per-scene 12` (Zigzag, keeps the 24 files already there), then the same with `1qqG0KVW6_Upxc95Wuk9HecR0JrxGZSd4` (Chrome screw). Whole-file Drive downloads return "Quota exceeded"; range requests work. CAD models are in `data/robi/cad/`, camera files in `data/robi/toolkit/cam/`. The 3 h box has hardly started.
-3. **Before evaluating, commit the three untracked scripts** (`scripts/fig_results.py`, `scripts/robi_fetch.py`, `scripts/robi_compare.py`), since `pose_eval.py` flags untracked files in `scripts/` as a dirty tree. `robi_compare.py` is untested: check the pose convention and CAD units with `--overlay` first.
-4. **Then steps 4–7 below.** Also planned: a descriptive noise-redraw bound on C3 recall on seeds 0–9 (A-59), which needs a small `stereo_scene.py` option, added after the render.
-5. **Tell the user at the end:** C4 albedo 0.247 and H2 differ from what was approved or expected (A-24, ledger); the approved rule moved them.
+## The stop: §5.11 sanity failed
+C1 ideal depth, ICP started at GT, harness H2: **416/459 = 90.63% < 0.5 mm, required ≥ 99%** (dev was 40/40). 10 failures at ≥ 5 mm (9 at 40–119 mm, most about 90° rotated), 33 at 0.5–5 mm (median 0.72°). All profiles; brackets 0/117. Details in `data/m5/results/sanity_C1_zero.jsonl` and DIARY. §5.11: "treat it as a bug: fix, rerun all conditions". This conflicts with A-53 (no harness change once test data exist), so the choice is the user's.
+**Proposed to the user, not run:** on C1 at zero offset only, test sanity for H0, H1, H3 and the damped `solver: lm`, plus the normal-matrix conditioning of failing vs passing instances.
+
+## After the decision
+1. Fix the harness as decided and log it (PLAN §5.12, ledger). Rendering is not affected and Task B does not use ICP.
+2. Steps 5–7 below (`scripts/` are committed, e293e31; a harness fix needs a new commit first). §5.8 and noise-redraw depth for seeds 0–9 is already written (`depth_stereo_metal_{loose,nouniq,nolr,nospeckle,redraw1,redraw2}`, `depth_stereo_matte_loose`).
+3. ROBI: one retry of the fetch (Zigzag remainder, Chrome screw `1qqG0KVW6_Upxc95Wuk9HecR0JrxGZSd4`); Drive refused range requests after 60 MB. Zigzag results so far in `data/m5/robi/zigzag.json` (26 views). `scripts/ir_appearance.py` and `scripts/fig_robi.py` still need the test `sensor.json`.
+4. **Tell the user at the end:** C4 albedo 0.247 and H2 differ from what was approved or expected (A-24, ledger); the approved rule moved them.
 
 ## Decision taken (A-57, A-58)
 BlenderProc's default Cycles `glossy_bounces = 0` was never overridden, so no IR render before the fix had a reflected image on metal. User decision 2026-11-04: fix it (glossy 3; max 12 and 32 samples by the ledger rules), re-run the dev rules, keep reflections off as a descriptive pass, C4 albedo by clipped-at-saturation matching.
@@ -28,8 +31,8 @@ Decide implementation details yourself and log each in **one line** (ASSUMPTIONS
 ## M5 steps after the decision (user decisions 2026-11-04: A-51…A-55)
 1. **Mechanism check (A-54):** done on the final dev render (A-58; `scripts/mechanism_check.py`, `scripts/fig_mechanism.py`).
 2. **Extra passes:** done (`ir_render.extra_passes`).
-3. **Render test scenes 0–49** one at a time (8 GB): `scripts/benchmark_m3.sh data/m5 <seed>` per seed, about 105 s/scene; then `.venv/bin/python scripts/c2_depth.py data/m5 0 … 49`.
-4. **Sanity first:** `scripts/pose_eval.py data/m5 <seeds> --condition C1 --offset 0 0` must pass (≥ 99% < 0.5 mm, §5.11).
+3. **Render test scenes 0–49:** done (commits 73f0305 and 8ccbd95).
+4. **Sanity first:** `scripts/pose_eval.py data/m5 <seeds> --condition C1 --offset 0 0` must pass (≥ 99% < 0.5 mm, §5.11). **Failed with H2, see above.**
 5. **Metrics:** `scripts/run_eval.py data/m5 data/m5/results 0 49 --conditions C1 C2a C2b C3 C4 C3r02 C3r04 C3nogloss C4bright` (sanity first, then A1, sweep, Task B); `scripts/stats_m5.py` (bootstrap, McNemar, fixed sequence, MDE; rule A-60); `scripts/sensor_metrics.py` (A-61); §5.8 on seeds 0–9: `scripts/stereo_scene.py <seed> --variant loose --passes metal matte`, then `run_eval.py` with C3loose, C4loose, reporting filled vs invalid metal pixels, C3 A1 recall and whether the ranking flips.
 6. **Push** at the end of M5.
 7. **Then ROBI (A-55):** 3 h time box, one figure (ROBI-D415 vs C3 0.15 / 0.2 / 0.4 vs C4; mm and px; range mismatch stated), framed on the mechanism: on metal, does the real D415 fill (smooth or bias towards the background) or leave holes?
@@ -50,7 +53,7 @@ Decide implementation details yourself and log each in **one line** (ASSUMPTIONS
 | Test data and results | `data/m5/` (scenes 0–49), `data/m5/results/` |
 | Mechanism results and figure | `data/m5/mechanism/`, `data/m5/figures/mechanism_dev_1001_0.png` |
 | Planes / anchor (a) | `data/m3/plane/` (`anchor_a.json`, `anchor_a_calibration.json`) |
-| Scripts | `scripts/` (docstrings give usage): `bproc_render_scene.py` (Blender, via `scripts/bproc.sh` only), `benchmark_m3.sh`, `stereo_scene.py`, `c2_depth.py`, `pose_eval.py`, `suction_eval.py`, `anchor_a.py`, `select_setpoint.py`, `select_harness.py`, `mechanism_check.py`, `mechanism_compare_render.py`, `fig_mechanism.py`, `run_eval.py`, `stats_m5.py`, `sensor_metrics.py` |
+| Scripts | `scripts/` (docstrings give usage): `bproc_render_scene.py` (Blender, via `scripts/bproc.sh` only), `benchmark_m3.sh`, `stereo_scene.py`, `c2_depth.py`, `pose_eval.py`, `suction_eval.py`, `anchor_a.py`, `select_setpoint.py`, `select_harness.py`, `mechanism_check.py`, `mechanism_compare_render.py`, `fig_mechanism.py`, `run_eval.py`, `stats_m5.py`, `sensor_metrics.py`, `fig_results.py`, `robi_fetch.py`, `robi_compare.py`, `ir_appearance.py`, `fig_robi.py` |
 | Code / tests | `src/synthrgbd/` (pose, suction, stereo, …); `.venv/bin/python -m pytest` (94 pass) |
 | Decisions, assumptions, ledger, sources | `docs/PLAN.md`, `docs/ASSUMPTIONS.md` (ledger under A-45), `docs/SOURCES.md` |
 
