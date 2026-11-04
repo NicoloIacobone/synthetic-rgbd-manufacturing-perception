@@ -4,7 +4,7 @@ Usage:
   .venv/bin/python scripts/suction_eval.py <dataset_root> <scene_seed>... --condition C1 --out <jsonl>
 
 Same dataset layout, condition folders and instance inclusion rule as scripts/pose_eval.py. Planner
-settings: configs/harness.yaml `suction` (PROVISIONAL, A-44/A-45); cup and thresholds: configs/default.yaml
+settings: configs/harness.yaml `suction` (A-44/A-45); cup and thresholds: configs/default.yaml
 task_b (frozen, A-19). Reported per part type as well as overall (§5.12 row 1).
 """
 

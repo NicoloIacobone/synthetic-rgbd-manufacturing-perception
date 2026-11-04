@@ -1,14 +1,14 @@
 # Task A / Task B harness hyperparameters. NOT part of the frozen protocol.
-# PROVISIONAL defaults (M4 step 1): fixed later on the dev split by the A-45 pooled worst-case rule,
-# identical across conditions (PLAN §5.2). Changing a value: record it in ASSUMPTIONS (A-45/A-46) and DIARY.
+# Fixed on the dev split by the A-45 pooled worst-case rule, identical across conditions (PLAN §5.2).
+# Selection re-run after the reflection fix (A-57): data/m5_dev/selection. Changing a value: record it in ASSUMPTIONS and DIARY.
 
-icp:                         # synthrgbd.pose.IcpParams (A-46). SELECTED on dev 1000-1004 (A-45 pooled rule, leximin): H3
+icp:                         # synthrgbd.pose.IcpParams (A-46). SELECTED on dev 1000-1004 (A-45 pooled rule, leximin): H2
   mask_erosion_px: 2         # GT visible mask eroded before back-projection (A-07)
   max_corr_mm: 15.0          # unused when stages is set
   tukey_k_mm: 5.0            # unused when stages is set
   stages: [[20, 20], [10, 10], [5, 5]]   # coarse-to-fine (max correspondence mm, Tukey scale mm)
   visibility: raycast        # model points that are the first hit from the camera (self-occlusion)
-  o3d_step_clamp: true       # single iterations, each clamped to 5 mm / 5 deg
+  o3d_step_clamp: false      # H3 (single iterations clamped to 5 mm / 5 deg) lost to H2 on the leximin rule after the fix
   outer_iters: 5             # back-face culling refreshes
   inner_iters: 30
   min_points: 30             # fewer valid scene points -> no estimate (counted as failure)
@@ -19,7 +19,7 @@ model_sampling:
   seed: 0                    # harness constant (not a §5.10 stream): same model samples everywhere
 
 instances:
-  min_visib_fract: 0.1       # PROVISIONAL inclusion rule, awaits the user's decision (BOP-style; verify source)
+  min_visib_fract: 0.1       # BOP convention, verified (A-49); PLAN 5.12 row 2026-11-04
 
 suction:                     # synthrgbd.suction.SuctionParams (PLAN §5.3; cup + thresholds frozen in default.yaml)
   mask_erosion_px: 2

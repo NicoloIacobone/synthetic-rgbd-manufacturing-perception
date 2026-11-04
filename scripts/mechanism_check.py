@@ -18,6 +18,8 @@ Interventions on the 8-bit SGBM input (same noise draws, same matcher):
   stays (slope 0). Large k can push the fill onto textured tray, so "blank + bgshift" is the positive control.
 - bgcut: background pixels of the right image permuted, which removes the left-right correspondence of the background
   while keeping its brightness and the dark part silhouette. A fill loses its source; own-content matches do not.
+- blank mirror faces: faces whose first-order mirror ray hits the scene set to 0 DN in both images; the classes are then
+  read on the other faces, to see whether their fill comes from the reflecting faces next to them.
 """
 
 import argparse
@@ -88,6 +90,20 @@ def part_mask_ext(full, n_parts, K, W_ext, H, pad, origin_mm):
     """Mask of part pixels in an image extended by `pad` columns, seen from `origin_mm` (A-40 geometry)."""
     gid = cast(full, origin_mm, pixel_rays(K, W_ext, H, pad))["geometry_ids"].numpy().astype(np.int64)
     return (gid < n_parts).reshape(H, W_ext)
+
+
+def mirror_face_mask_ext(full, n_parts, K, W_ext, H, pad, origin_mm):
+    """Part pixels whose first-order mirror ray hits the scene, in an image extended by `pad`, seen from `origin_mm`."""
+    d = pixel_rays(K, W_ext, H, pad)
+    ans = cast(full, origin_mm, d)
+    t = ans["t_hit"].numpy().astype(np.float64)
+    n = ans["primitive_normals"].numpy().astype(np.float64)
+    n[(n * d).sum(1) > 0] *= -1
+    is_part = ans["geometry_ids"].numpy().astype(np.int64) < n_parts
+    p = origin_mm + d * np.where(np.isfinite(t), t, 0.0)[:, None]
+    m = d - 2 * (d * n).sum(1, keepdims=True) * n
+    hit = full.cast_rays(o3d.core.Tensor(np.hstack([p + 0.05 * n, m]).astype(np.float32)))["t_hit"].numpy()
+    return (is_part & np.isfinite(hit)).reshape(H, W_ext)
 
 
 def texture_snr(dn_clean, e_per_dn, read_dn, w=7):
@@ -265,6 +281,15 @@ def main():
             cb = classes(disparity_to_depth(d_blank, fx, B, maxd) * 1e3, z_gt, z_bg, parts)
             row["blank"]["class_frac"] = {k: frac(v, parts) for k, v in cb.items()}
 
+            # Intervention: blank only the faces that can show a mirror image, then look at the other faces. If their bias
+            # falls, the fill on dark faces comes from the reflecting faces next to them rather than from the tray.
+            l_mf, r_mf = l8.copy(), r8.copy()
+            l_mf[mirror_face_mask_ext(full, len(gt), K, Wext, Hext, pad, np.zeros(3))] = 0
+            r_mf[mirror_face_mask_ext(full, len(gt), K, Wext, Hext, pad, np.array([B * 1e3, 0.0, 0.0]))] = 0
+            d_mf = match_extended(l_mf, r_mf, pad, sgbm, maxd)
+            cmf = classes(disparity_to_depth(d_mf, fx, B, maxd) * 1e3, z_gt, z_bg, parts & ~has_mirror)
+            row["blank_mirror_faces"] = {"class_frac_mirror_sees_nothing": {k: frac(v, parts & ~has_mirror) for k, v in cmf.items()}}
+
             # Intervention: remove the left-right correspondence of the background (right image only)
             perm = np.random.default_rng([seed, int(im), 77]).permutation(int((~mR).sum()))
             r_c = r8.copy()
@@ -329,6 +354,8 @@ def main():
                         "correct_same_disparity_1px": pool(["bgcut", "correct_same_disparity_1px"]),
                         "class_frac_mirror_sees_scene": {k: pool(["bgcut", "class_frac_mirror_sees_scene", k]) for k in per_view[0]["bgcut"]["class_frac"]},
                         "class_frac_mirror_sees_nothing": {k: pool(["bgcut", "class_frac_mirror_sees_nothing", k]) for k in per_view[0]["bgcut"]["class_frac"]}}
+    summary["blank_mirror_faces"] = {"class_frac_mirror_sees_nothing": {k: pool(["blank_mirror_faces", "class_frac_mirror_sees_nothing", k])
+                                                                        for k in per_view[0]["blank_mirror_faces"]["class_frac_mirror_sees_nothing"]}}
     metrics = ("still_valid", "followed_shift_half_px", "stayed_half_px", "median_slope")
     summary["bgshift"] = {str(k): {n: {m: pool(["bgshift", str(k), n, m]) for m in metrics} for n in ("biased", "biased_mirror_scene", "biased_mirror_nothing", "correct", "tray")} for k in SHIFTS}
     summary["blank_bgshift"] = {str(k): {m: pool(["blank_bgshift", str(k), "parts", m]) for m in metrics} for k in SHIFTS}
