@@ -72,6 +72,7 @@ def parse_args():
     ap.add_argument("--ir-config", type=Path, default=REPO / "configs" / "camera_d415_ir.yaml")
     ap.add_argument("--metal-roughness", type=float, help="override materials_metal.roughness (A-11)")
     ap.add_argument("--matte-part-albedo", type=float, help="override materials_matte.part_albedo (A-24)")
+    ap.add_argument("--glossy-bounces", type=int, help="override Cycles glossy_bounces for the IR passes (mechanism check)")
     return ap.parse_args()
 
 
@@ -344,11 +345,14 @@ def main():
             ir_cfg["materials_metal"]["roughness"] = args.metal_roughness
         if args.matte_part_albedo is not None:
             ir_cfg["materials_matte"]["part_albedo"] = args.matte_part_albedo
+        if args.glossy_bounces is not None:
+            ir_cfg["ir_render"]["glossy_bounces"] = args.glossy_bounces
         timings.update(render_ir_passes(cfg, ir_cfg, light, {"parts": alu, "tray": grey, "table": table_mat},
                                         T_cams, K, dst_scene))
         ir_meta = {"config": str(args.ir_config.relative_to(REPO)), "samples": ir_cfg["ir_render"]["samples"],
                    "pad_px": ir_cfg["ir_render"]["pad_px"], "dot_seed": ir_cfg["dots"]["seed"],
                    "passes": ["metal", "matte"], "frame_order": "L0 R0 L1 R1 ...",
+                   "light_paths": {k: getattr(bpy.context.scene.cycles, k) for k in ("max_bounces", "diffuse_bounces", "glossy_bounces")},
                    "materials_metal": ir_cfg["materials_metal"], "materials_matte": ir_cfg["materials_matte"]}
 
     timings["total_s"] = time.perf_counter() - t0

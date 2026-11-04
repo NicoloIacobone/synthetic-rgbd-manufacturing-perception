@@ -68,6 +68,8 @@ def ir_render_settings(ir_cfg: dict) -> None:
     sc.cycles.use_adaptive_sampling = False
     sc.cycles.sample_clamp_direct = r["clamp"]
     sc.cycles.sample_clamp_indirect = r["clamp"]
+    if r.get("glossy_bounces") is not None:   # BlenderProc's default is 0: no reflected image on metal (mechanism check)
+        sc.cycles.glossy_bounces = r["glossy_bounces"]
     bproc.renderer.set_world_background([r["ambient"]] * 3, strength=1.0)
     bproc.renderer.set_output_format(file_format="OPEN_EXR", color_depth=32, view_transform="Standard")
 
