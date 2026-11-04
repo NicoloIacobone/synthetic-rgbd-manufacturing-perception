@@ -170,3 +170,11 @@ This is a working log of what was done, measured, decided, and what failed. It f
 - Pixel-locking dominates the scene error: 58–64% of stereo disparities within ±0.125 px of an integer (uniform would be 25%); disparity error MAD 0.12 px, p95 0.28–0.30 px; striped ±5–10 mm depth error on the tilted view 1 of scene 1000; part MAE 1.95–4.29 mm matte, 2.30–8.64 mm metal proxy; part pixels invalid 0.15–6.5%.
 
 **Status:** M3 gate not passed on (iii). Per D15, stopped and presented the options to the user; no route switch, no matcher change.
+
+## 2026-11-04 — M3 closed: user decision on gate (iii)
+
+- **User decision (option 3a):** keep the stereo route and the matcher settings of commit 044ee81. A-38 (iii) is recorded as a marginal failure: 5.03% / 5.07% valid at 0.42 / 0.43 m against ≤ 5%. Cause: out-of-range false matches (true disparity 131.6 / 128.5 px > 126 px search range) in clumps of ≈ 120 px that pass the 100 px speckle window. Expected effect on the experiment nil: nearest scene pixel 0.609 m (A-16), camera 0.65–0.95 m. **REPORT §6 "what did not work".**
+- **Option 3b rejected by the user:** speckle window 200 px was tried as a diagnostic only (`data/m3/logs/gate_variants_diagnostic.log`: (iii) 0.34 / 0.41% valid, (i)/(ii)/(iv) unchanged) and not adopted. Reason: tuned after seeing the gate result, and it may remove small true surfaces such as bracket edges. Speckle window stays 100 px.
+- Placement: not a PLAN §5.12 deviation (the gate criteria are in A-38 / D15 / PLAN §7, outside the frozen §5 and `configs/default.yaml`); recorded in ASSUMPTIONS A-38, PLAN §7 (M3 row) and here.
+- Open for M4, nothing chosen: dark IR at fixed exposure (mean 3.6–8.6 DN on dev scenes); SGBM pixel-locking (58–64% of disparities within ±0.125 px of an integer). M4 waits for the user's design review.
+- Process note: the user asked that at a gate the agent stops there and proposes further measurements instead of running them (the A-39 benchmark had been run after the gate failure).
