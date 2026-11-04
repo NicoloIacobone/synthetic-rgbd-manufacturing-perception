@@ -1,0 +1,19 @@
+# Task A / Task B harness hyperparameters. NOT part of the frozen protocol.
+# PROVISIONAL defaults (M4 step 1): fixed later on the dev split by the A-45 pooled worst-case rule,
+# identical across conditions (PLAN §5.2). Changing a value: record it in ASSUMPTIONS (A-45/A-46) and DIARY.
+
+icp:                         # synthrgbd.pose.IcpParams (A-46)
+  mask_erosion_px: 2         # GT visible mask eroded before back-projection (A-07)
+  max_corr_mm: 15.0          # > the 10 mm primary offset
+  tukey_k_mm: 5.0            # robust kernel on point-to-plane residuals; 0 = none
+  outer_iters: 5             # back-face culling refreshes
+  inner_iters: 30
+  min_points: 30             # fewer valid scene points -> no estimate (counted as failure)
+
+model_sampling:
+  points_per_model: 50000    # area-uniform CAD samples with CAD normals; 6000 gave 0.07-0.10 mm zero-offset drift on
+                             #   ideal ray-cast views (sparse targets), 60000 gave 0.006-0.019 mm (M4 step 1, unit tests)
+  seed: 0                    # harness constant (not a §5.10 stream): same model samples everywhere
+
+instances:
+  min_visib_fract: 0.1       # PROVISIONAL inclusion rule, awaits the user's decision (BOP-style; verify source)
