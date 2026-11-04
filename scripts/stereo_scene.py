@@ -12,6 +12,8 @@ Exposure (A-42): metal and matte share the gain of the C3 left image. Each descr
 left image, as a real camera would on that scene. All passes of a view use the same noise draws (A-12).
 --variant applies the §5.8 matcher variants (strict settings with filters switched off) and writes
 depth_stereo_<pass>_<variant>/ and stereo_meta_<variant>.json; the IR images are not re-rendered.
+--noise-redraw k (A-59, descriptive) repeats the matching with the k-th independent sensor-noise draw, written to
+depth_stereo_<pass>_redraw<k>/: same IR images, same gain, same matcher. Protocol depth always uses k = 0.
 """
 
 import argparse
@@ -46,6 +48,7 @@ def main():
     ap.add_argument("--sheet", type=Path)
     ap.add_argument("--variant", default="strict", choices=sorted(VARIANTS))
     ap.add_argument("--passes", nargs="+", help="only these IR passes (default: all rendered ones)")
+    ap.add_argument("--noise-redraw", type=int, default=0, help="k > 0: independent noise draw for the A-59 bound; view ids + 1000 k are never real views")
     args = ap.parse_args()
     cam = load_config()["camera"]
     ir = load_config(args.ir_config)
@@ -54,12 +57,12 @@ def main():
     seg_index = json.loads((scene / "segmap" / "index.json").read_text())
     cfg_all = load_config()
     sgbm = make_sgbm({**ir["sgbm"], **VARIANTS[args.variant]})
-    suffix = "" if args.variant == "strict" else f"_{args.variant}"
+    suffix = ("" if args.variant == "strict" else f"_{args.variant}") + (f"_redraw{args.noise_redraw}" if args.noise_redraw else "")
     pad, gain = ir["ir_render"]["pad_px"], float(ir["exposure"]["gain"])
     auto = ir["exposure"].get("mode") == "auto"
     meta = {"commit": subprocess.check_output(["git", "-C", str(REPO), "rev-parse", "HEAD"], text=True).strip(),
             "ir_config": str(args.ir_config.relative_to(REPO)), "exposure": ir["exposure"],
-            "sensor_noise": ir.get("sensor_noise"), "variant": args.variant, "frames": []}
+            "sensor_noise": ir.get("sensor_noise"), "variant": args.variant, "noise_redraw": args.noise_redraw, "frames": []}
     sheet = []
     for im_id in sorted(cams, key=int):
         K = np.array(cams[im_id]["cam_K"]).reshape(3, 3)
@@ -70,7 +73,7 @@ def main():
             Lm = np.load(scene / "ir" / f"{int(im_id):06d}_metal.npz")["left"].astype(np.float32)
             g_frame = auto_exposure_gain(Lm[:, pad:], exposure_roi_x0(K[0, 0], cam["baseline_m"], cam["min_z_m"]),
                                          float(ir["exposure"]["setpoint_dn"]))
-            r = rng(cfg_all["seeds"]["master"], args.scene_seed, int(im_id), "ir_noise")
+            r = rng(cfg_all["seeds"]["master"], args.scene_seed, int(im_id) + 1000 * args.noise_redraw, "ir_noise")
             zl, zr = r.standard_normal(Lm.shape), r.standard_normal(Lm.shape)
         rendered = sorted(p.stem.split("_", 1)[1] for p in (scene / "ir").glob(f"{int(im_id):06d}_*.npz"))
         shared = [n for n in ("metal", "metalproxy", "matte") if n in rendered]
