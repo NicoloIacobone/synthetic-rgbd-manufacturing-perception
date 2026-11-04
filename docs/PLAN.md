@@ -33,16 +33,16 @@ Authoritative requirements are in [`task_description.md`](../task_description.md
 | D5 | **External anchors:** (a) sensor-level plane check vs. datasheet formula and Carfagni (mandatory); (c) BOP symmetry-aware metrics (mandatory); (b) ROBI comparison (first optional) | Results can be compared with published references even though our parts differ from published datasets | [S-02][S-04][S-07] |
 | D6 | **Camera model: Route 3 hybrid.** Physics-based active stereo (left/right IR + projected pattern + PBR materials → OpenCV SGBM) is *the camera model*. A datasheet-noise layer is the naive baseline | Material-specific effects emerge from rendering rather than being hand-coded; precedent in [S-09] | [S-09][S-11] ✅ |
 | D7 | **Fallback:** if the stereo route isn't plausible by the Wed 4 Nov gate, switch to Route 2, a rule-based image-space model (z² noise, occlusion invalidation, edge flying pixels, specular dropout) | Time risk | — |
-| D8 | **Resolution and placement:** 1280×720; camera 0.65–0.95 m above the table; tilt ≤ 30°. Fallback: 848×480 if the day-1 render benchmark is too slow | 1280×720 is Intel's recommended D415 resolution and matches ROBI. Datasheet Min-Z = 450 mm at 1280×720 (A-16) | [S-01][S-03][S-05] ✅ |
+| D8 | **Resolution and placement:** 1280×720; camera 0.65–0.95 m above the table; tilt ≤ 30°. Fallback: a lower resolution (848×480 is the D415's other native mode) **proposed to the user** if the projected full render exceeds 8 h (rule fixed 2026-11-04, A-39) | 1280×720 is Intel's recommended D415 resolution and matches ROBI. Datasheet Min-Z = 450 mm at 1280×720 (A-16) | [S-01][S-03][S-05] ✅ |
 | D9 | **Experiment design:** as in §5, after an adversarial review. All review changes accepted; suggestions to use forum images and the MP6D dataset rejected | Avoids C2 being trivially null by construction, A1 sitting at its ceiling, and pseudo-replication | [S-04] |
 | D10 | **Dev/test split:** the 5-scene M4 pilot is the dev split (disjoint seed range), excluded from the ~50 test scenes (§5.10) | Hyperparameters are never tuned on test scenes; no extra render cost | — |
 | D11 | **Suction planarity tolerance = 1.0 mm** (A-19, §5.3) | Rejects T-slot openings and edges; tolerant of mesh tessellation | — |
 | D12 | **C1 sanity check = zero-offset ICP test** (§5.11), replacing "A1 on C1 ≈ 0 error" | At the 10 mm/10° offset, C1 can fail for geometric reasons (ICP sliding along prisms, §5.9), so it cannot serve as a bug detector | — |
-
 | D13 | **SGBM runs in the analysis env (`.venv`, OpenCV 5.0), not in Blender (option B).** Blender renders and exports the left/right IR pair once (linear 16-bit, no tone mapping); our own code adds IR noise/blur, runs SGBM and converts to depth. BlenderProc's `stereo_global_matching` is not used. This replaces the "CPU stereo matching in one tool" part of D3's rationale; D3 otherwise stands | The helper hard-codes the matcher (no left-right check or speckle filter, window 5 px), maps zero disparity to max depth and is not metric with WLS on [S-11]. Option B allows re-matching without re-rendering (§5.8 check, anchor tuning), shared seeds (§5.10) and unit-tested code | [S-11] ✅ |
 | D14 | **BlenderProc env:** BlenderProc 2.8.0 in its own launcher env `.venv-bproc` (pins `requirements-bproc.txt`, lock `requirements-bproc.lock.txt`), with our local macOS patch (`patches/blenderproc-2.8.0-macos-app-bundle.patch`, applied by `scripts/setup_blenderproc.sh`) instead of granting the terminal App Management permission. Blender always via `scripts/bproc.sh` (repo-local `blender/`) | Keeps `.venv` equal to its lock; no OS permission change needed; reproducible on macOS. On Linux the patch is not applied | [S-10] ✅ |
+| D15 | **M3 set-up, fixed before any M3 data:** projector field of projection 67° × 41° (A-36); static semi-random dot pattern, 30 000 dots by default (A-37); quantitative M3 gate pass criteria on a matte plane (A-38); resolution rule "1280×720 if the projected full render fits in 8 h" (A-39). If a gate criterion fails, the agent stops and presents the options (Route 2 per D7, or the patched-helper fallback per D13) to the user rather than switching | Makes the M3 go/no-go and the resolution choice pre-specified rather than judged after the results. The D415 dot pattern is not published, so its density follows Intel's projector guidance | [S-01][S-13] ✅ |
 
-D10–D12 were decided by the user on 2026-11-03, before any data existed, to close gaps in the protocol. D13 and D14 were decided by the user on 2026-11-03 (D14 after M1); **its feasibility is re-checked at M3** (A-32): if the linear IR export fails or the round trip is too slow by the M3 gate, the fallback is the BlenderProc helper copied into our code and patched (left-right check on, zero disparity → invalid, no WLS), run inside Blender.
+D10–D12 were decided by the user on 2026-11-03, before any data existed, to close gaps in the protocol. D13 and D14 were decided by the user on 2026-11-03 (D14 after M1); **its feasibility is re-checked at M3** (A-32): if the linear IR export fails or the round trip is too slow by the M3 gate, the fallback is the BlenderProc helper copied into our code and patched (left-right check on, zero disparity → invalid, no WLS), run inside Blender. D15 was decided by the user on 2026-11-04 (projector FOV, gate criteria and resolution rule as stated by the user; dot-pattern defaults and the operational details of the criteria proposed by the agent from the research, see A-37/A-38).
 
 ## 3. Scope
 
@@ -63,6 +63,7 @@ D10–D12 were decided by the user on 2026-11-03, before any data existed, to cl
 - RGB imperfections: both tasks use depth only.
 - Explicit multipath: not modelled on purpose; some interreflection may emerge from path tracing (A-22).
 - Temporal noise and multi-frame filtering: single-frame setting.
+- Projector non-uniformity (central hot spot) and laser speckle: not quantified in any source we found; the pattern envelope is uniform (A-37).
 
 **Non-goals**
 - Object detection or segmentation (ground-truth masks are given, A-07).
@@ -168,6 +169,7 @@ Null results are reported as results.
 | Date | Deviation | Reason |
 |---|---|---|
 | 2026-11-03 | §5.3/§5.4 Task B: success rate is reported **per part type (profiles, brackets) in addition to** the pre-specified overall rate; definition, thresholds and cup radius unchanged. Approved by the user (option a) | With the frozen 10 mm cup no profile face can pass the planarity check (largest flat disk 5.5 mm side, 9.76 mm end face, A-33), so profiles fail for geometric reasons in every condition; the overall rate alone would mix this with the camera effect. Found at M2, before any Task B data |
+| 2026-11-04 | **Editorial, no protocol value changed.** Commit 348d49c (2026-11-03) changed the comment of `task_a.offset_sweep` in `configs/default.yaml` (added "confirmed; re-check at M5") and the wording of the A1 line in §5.2 (added "confirmed by the user, to be re-checked when the sweep is implemented at M5", A-30). Commit b6c5b00 (2026-11-03) edited only PLAN §2 (D13) and §4, outside the frozen scope; listed for completeness. Approved by the user | Found in the post-M2 review; logged at the user's request so every post-tag edit of a frozen file is traceable. Thresholds, conditions, endpoints and statistics are unchanged |
 
 ## 6. Minimum deliverable and optional work
 
@@ -196,7 +198,7 @@ Work proceeds as fast as it goes. Dates are **latest-by** gates, not planned slo
 |---|---|---|
 | M1 Environment | BlenderProc quickstart runs | 1 h of trying → Open3D fallback |
 | M2 Scenes + labels | Procedural parts, physics scenes, BOP output | — |
-| M3 Stereo route | IR pair + projector + SGBM; plane anchor; render benchmark per frame | **Wed 4 Nov end of day** → Route 2 if implausible; 848×480 if too slow |
+| M3 Stereo route | IR pair + projector + SGBM; plane anchor; render benchmark per frame | **Wed 4 Nov end of day.** Pass criteria fixed in advance (A-38); if any fails, stop and present Route 2 (D7) or the patched helper (D13) to the user. Resolution rule A-39 (projected full render > 8 h → propose a lower resolution) |
 | M4 Camera model done | Metal/matte, IR noise and blur, SGBM tuning, 5-scene pilot on the dev split (ceiling/floor check; power estimate A-18; tune hyperparameters; log any design change as a deviation, §5.12) | — |
 | M5 Experiment | Full renders, A1 + B, sensor metrics, statistics, invalidation check | **A metrics by Fri 6 Nov end of day** → otherwise freeze B |
 | M6 Report | Skeleton → figures → text → reflection → AI note; README | **Code freeze Sat 7 Nov 20:00. Target submission Sun 8 Nov 18:00** |

@@ -140,3 +140,9 @@ This is a working log of what was done, measured, decided, and what failed. It f
 ## 2026-11-03 — protocol-v1 tag published
 
 - At the user's request, pushed the annotated tag `protocol-v1` (tag object 35ca9bf → commit 4f52c67, tagged 2026-11-03 16:35:08 +0100) to origin, so the pre-data protocol freeze is visible on GitHub. The tag was not moved.
+
+## 2026-11-04 — Pre-M3 open points closed (D15)
+- User decisions: projector FOV 67° × 41° (A-36); M3 gate criteria (A-38); resolution rule "1280×720 if the projected full render ≤ 8 h" (A-39); editorial row for commits 348d49c / b6c5b00 logged in PLAN §5.12. Checking the diffs showed that only 348d49c touched frozen content (config comment + §5.2 wording); b6c5b00 edited PLAN §2/§4 only.
+- Dot-pattern research (A-37): no verifiable D415 dot count. Datasheet Rev 013 is silent; Intel projector white paper Rev 1.0 [S-13] gives the D435 count (~5000), says the D415 uses two Heptagon projectors emitting at 68 × 43°, and gives density guidance (1–10% of image resolution near-ideal; D435 test: > 10K dots desirable, diminishing after 30K). Default chosen: 30 000 dots → ~27 700 in the 1280×720 image (3.0% of pixels, spacing ≈ 5.8 px). Rejected: a 30K-dot figure from an iPhone X teardown (different product).
+- Surprise: OpenCV 5.0.0 StereoSGBM leaves the first num_disparities = 128 columns invalid even when the true disparity is 55 px, so the D415 band B·f/Z (55 px at 1 m) would come out at 128 px. Synthetic test (random texture, d = 55/110 px, blockSize 7, LR check 1): padding the left image by 128 px + a right image 128 px wider + masking x − d < 0 gives first valid column 55/110, 99.9–100% valid right of the band (A-40). StereoSGBM.compute also rejects non-8-bit input.
+- Derived numbers: f = 1004.6 px, f·B = 55.25 px·m, Min-Z by 126 px search = 438.5 mm; per-frame budget 8 h / 110 frames = 262 s.
