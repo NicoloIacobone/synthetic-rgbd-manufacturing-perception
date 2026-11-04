@@ -14,6 +14,8 @@ ETH Zurich PhD application assignment: synthetic RGB-D of aluminium profiles and
 | `docs/REPORT_PLAN.md` | When choosing results or figures to produce, and during report writing | Page budget per section; reflection outline |
 | `docs/AI_USE_LOG.md` | Only when adding an entry | Append with the shell |
 | `docs/DIARY.md` | **Never**, unless the user asks or during report writing | Append-only, see below |
+| `docs/GLOSSARY.md` | When a code is unclear, and whenever you introduce or change one | The user keeps it on a second screen. Written in Italian, codes as in the project docs |
+| `docs/personal/` | **Never**, unless the user asks | The user's personal notes, not in git. Do not edit |
 
 ## Working rules
 
@@ -24,6 +26,8 @@ ETH Zurich PhD application assignment: synthetic RGB-D of aluminium profiles and
 - **Status:** at the end of every task, update `docs/STATUS.md` (overwrite outdated content; keep it short).
 - **Diary:** after each completed task or subtask, and whenever something fails or surprises, append a dated entry to `docs/DIARY.md` using `cat >> docs/DIARY.md <<'EOF'`. Do not read the file first. Record numbers with units, seeds and commit hashes.
 - **AI-use log:** when the user corrects, rejects or redirects an AI suggestion, append a real, factual entry to `docs/AI_USE_LOG.md` section A. Never invent entries.
+- **Codes in messages to the user:** never write a bare code (D1, A-53, H2, §5.8, option 3a). Pair it with its meaning in words, e.g. "H2 (the ICP variant in use)". Several codes look alike (A1 / A-01, H2 / H-2); the list is at the top of `docs/GLOSSARY.md`.
+- **Glossary:** any new or changed code (decision, assumption, condition, harness variant, option label, milestone) gets a line in `docs/GLOSSARY.md` in the same commit. If the glossary and a source file disagree, the source file wins: fix the glossary.
 - **8-page budget:** prefer results and figures that map to a report section (`docs/REPORT_PLAN.md`).
 - **Context hygiene:** run long jobs (renders) in the background with logs written to a file, and read only `tail`/`grep` excerpts. Downscale images before viewing them.
 

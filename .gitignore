@@ -13,6 +13,9 @@ __pycache__/
 blender/
 *.blend1
 
+# The user's personal notes
+docs/personal/
+
 # Generated data: datasets, renders, experiment outputs (never committed)
 data/
 outputs/

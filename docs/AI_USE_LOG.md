@@ -41,3 +41,11 @@ Useful context, but **not** user corrections.
 | 10 | 2026-11-04 | In status reports the AI twice stated the date and time as "Thursday 00:30" (and dated a diary entry 2026-11-05) | Corrected it twice: it was Wednesday ~16:20–16:30 CET, about a day ahead of plan | Diary entry corrected; the schedule reasoning uses the real date |
 
 AI-on-AI (section B), same review: the adversarial subagent reversed two of the lead agent's proposals. (i) The exposure gain was to be computed on the matte (C4) image; it was changed to the metal (C3) image, so the headline camera's auto exposure reacts to metal. (ii) Holm correction over three tests was replaced by fixed-sequence testing, so the first test keeps α = 0.05. It also corrected an over-generalisation from a single tilted view (metal "bias" is mostly a heavy tail).
+
+### Added 2026-11-04 (evening)
+
+| # | Date | AI suggestion | User's response | Outcome |
+|---|---|---|---|---|
+| 11 | 2026-11-04 | Agent status reports wrote bare project codes (D1, R5, §5.8) | Said the codes were confusing and that many prompts in one day had cost them control of the project; asked for a personal from-zero guide and a code dictionary | `docs/GLOSSARY.md` added; CLAUDE.md now requires each code to be written with its meaning |
+
+AI-on-AI (section B), same evening: a second agent re-counted the M5 stop report from the result file. All its numbers held, but it had pooled two kinds of small ICP drift under one median and had not followed up low fitness on ideal depth; its remark that short profiles failing most does not fit a lever-arm effect is only half right (DIARY, 2026-11-04 ~21:15).
