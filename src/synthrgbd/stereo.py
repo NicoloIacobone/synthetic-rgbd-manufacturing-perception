@@ -53,6 +53,18 @@ def quantise_uint8(dn: np.ndarray) -> np.ndarray:
     return np.clip(np.rint(dn), 0, 255).astype(np.uint8)
 
 
+def exposed_pair_uint8(L: np.ndarray, R: np.ndarray, gain: float, noise_cfg: dict | None,
+                       z_left: np.ndarray | None, z_right: np.ndarray | None) -> tuple[np.ndarray, np.ndarray]:
+    """Linear radiance pair -> exposed DN -> (shot + read noise with the given standard-normal draws) -> 8 bit."""
+    out = []
+    for img, z in ((L, z_left), (R, z_right)):
+        dn = np.asarray(img, np.float64) * gain
+        if noise_cfg is not None and noise_cfg.get("e_per_dn") is not None:
+            dn = add_sensor_noise(dn, z, noise_cfg["e_per_dn"], noise_cfg["read_noise_dn"])
+        out.append(quantise_uint8(dn))
+    return out[0], out[1]
+
+
 def make_sgbm(cfg: dict) -> cv2.StereoSGBM:
     """StereoSGBM from the `sgbm` section of configs/camera_d415_ir.yaml."""
     b = cfg["block_size"]

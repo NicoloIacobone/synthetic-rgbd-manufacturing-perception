@@ -24,7 +24,8 @@ ir_render:
 
 materials_matte:               # Lambertian (Principled: metallic 0, specular IOR level 0, roughness 1)
   plane_albedo: 0.5            # gate plane
-  part_albedo: 0.5             # M3 matte parts; M4 brightness matching (A-24) may change it
+  part_albedo: 0.085           # A-24: mean pre-gain radiance of C4 part pixels = that of C3 metal-part pixels, pooled over
+                               #   dev 1000-1004 (metal mean 0.169 x matte@0.5; median matching is degenerate: median metal = 0)
   tray_albedo: 0.3
   table_albedo: 0.4
 
@@ -42,7 +43,8 @@ sensor_noise:                  # A-12 (user-approved model, 2026-11-04): shot + 
   e_per_dn: null               # calibrated on anchor (a): median over z of the central-ROI plane-fit RMS = 0.09 px [S-13]
 
 exposure:                      # linear radiance -> 8-bit DN (OpenCV SGBM accepts only 8-bit, A-40)
-  mode: fixed                  # same gain for left and right and for all frames (no auto exposure at M3)
+  mode: auto                   # A-42: per-frame gain on the C3 left image, shared by C4 and right ("fixed" = M3 behaviour)
+  setpoint_dn: null            # mean DN over columns >= ceil(f B / Min-Z); fixed on dev by saturation only (ledger)
   gain: 5700.0                 # DN per unit radiance; calibrated once at M3 (2026-11-04: 230 / 0.04037), then fixed
   calib_target_dn: 230         # gain chosen so the 99.9th-percentile pixel of the albedo-0.5 plane at
   calib_z_m: 0.45              #   Min-Z (0.45 m) is 230 DN: no saturation on matte at any valid range

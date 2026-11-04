@@ -22,7 +22,10 @@ import numpy as np
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
 from synthrgbd.config import load_config  # noqa: E402
-from synthrgbd.stereo import depth_from_ir, expose_to_uint8, make_sgbm  # noqa: E402
+from synthrgbd.geometry import disparity_to_depth  # noqa: E402
+from synthrgbd.seeds import rng  # noqa: E402
+from synthrgbd.stereo import (auto_exposure_gain, depth_from_ir, expose_to_uint8, exposed_pair_uint8,  # noqa: E402
+                              exposure_roi_x0, make_sgbm, match_extended)
 
 DEPTH_SCALE_MM = 0.1
 
@@ -39,16 +42,25 @@ def main():
     scene = args.out_root / "synthrgbd" / "train_pbr" / f"{args.scene_seed:06d}"
     cams = json.loads((scene / "scene_camera.json").read_text())
     seg_index = json.loads((scene / "segmap" / "index.json").read_text())
+    cfg_all = load_config()
     sgbm = make_sgbm(ir["sgbm"])
     pad, gain = ir["ir_render"]["pad_px"], float(ir["exposure"]["gain"])
+    auto = ir["exposure"].get("mode") == "auto"
     meta = {"commit": subprocess.check_output(["git", "-C", str(REPO), "rev-parse", "HEAD"], text=True).strip(),
-            "ir_config": str(args.ir_config.relative_to(REPO)), "gain": gain, "frames": []}
+            "ir_config": str(args.ir_config.relative_to(REPO)), "exposure": ir["exposure"],
+            "sensor_noise": ir.get("sensor_noise"), "frames": []}
     sheet = []
     for im_id in sorted(cams, key=int):
         K = np.array(cams[im_id]["cam_K"]).reshape(3, 3)
         gt = cv2.imread(str(scene / "depth" / f"{int(im_id):06d}.png"), cv2.IMREAD_UNCHANGED) * DEPTH_SCALE_MM * 1e-3
         seg = np.load(scene / "segmap" / f"{int(im_id):06d}.npz")["instance"]
         parts = np.isin(seg, [i for i in seg_index[im_id] if i >= 0])
+        if auto:   # A-42: gain from the C3 (metal) left image, shared by C4 and the right image; A-12 noise, shared draws
+            Lm = np.load(scene / "ir" / f"{int(im_id):06d}_metal.npz")["left"].astype(np.float32)
+            g_frame = auto_exposure_gain(Lm[:, pad:], exposure_roi_x0(K[0, 0], cam["baseline_m"], cam["min_z_m"]),
+                                         float(ir["exposure"]["setpoint_dn"]))
+            r = rng(cfg_all["seeds"]["master"], args.scene_seed, int(im_id), "ir_noise")
+            zl, zr = r.standard_normal(Lm.shape), r.standard_normal(Lm.shape)
         for name in ("metal", "metalproxy", "matte"):
             f = scene / "ir" / f"{int(im_id):06d}_{name}.npz"
             if not f.exists():
@@ -58,7 +70,14 @@ def main():
             L, R = d["left"].astype(np.float32), d["right"].astype(np.float32)
             t_load = time.perf_counter() - t
             t = time.perf_counter()
-            z, _ = depth_from_ir(L, R, gain, pad, sgbm, K[0, 0], cam["baseline_m"], cam["disparity_search_px"])
+            if auto:
+                l8, r8 = exposed_pair_uint8(L, R, g_frame, ir.get("sensor_noise"), zl, zr)
+                disp = match_extended(l8, r8, pad, sgbm, cam["disparity_search_px"])
+                z = disparity_to_depth(disp, K[0, 0], cam["baseline_m"], cam["disparity_search_px"])
+                dn = l8[:, pad:]
+            else:
+                z, _ = depth_from_ir(L, R, gain, pad, sgbm, K[0, 0], cam["baseline_m"], cam["disparity_search_px"])
+                dn = expose_to_uint8(L[:, pad:], gain)
             t_match = time.perf_counter() - t
             t = time.perf_counter()
             out = scene / f"depth_stereo_{name}"
@@ -67,13 +86,14 @@ def main():
             t_write = time.perf_counter() - t
             v = (z > 0) & (gt > 0)
             err = np.abs(z - gt)
-            dn = expose_to_uint8(L[:, pad:], gain)
             meta["frames"].append({
                 "im_id": int(im_id), "pass": name, "t_load_s": t_load, "t_sgbm_s": t_match, "t_write_s": t_write,
                 "invalid_frac_all": float(1 - (z > 0).mean()), "invalid_frac_parts": float(1 - (z[parts] > 0).mean()),
                 "mae_mm_parts": float(1e3 * err[v & parts].mean()) if (v & parts).any() else None,
                 "frac_err_gt_5mm_parts": float((err[v & parts] > 5e-3).mean()) if (v & parts).any() else None,
-                "dn_mean": float(dn.mean()), "dn_saturated_frac": float((dn == 255).mean())})
+                "dn_mean": float(dn.mean()), "dn_saturated_frac": float((dn == 255).mean()),
+                "gain": float(g_frame) if auto else gain,
+                "median_err_mm_parts": float(1e3 * np.median((z - gt)[v & parts])) if (v & parts).any() else None})
             if name == "matte":
                 sheet.append((dn, gt, z, parts))
     (scene / "stereo_meta.json").write_text(json.dumps(meta, indent=1))
