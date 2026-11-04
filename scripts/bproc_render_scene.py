@@ -188,7 +188,7 @@ def render_ir_passes(cfg, ir, area_light, mats, T_cams, K, scene_dir):
         raise SystemExit("materials_metal.roughness is not set (A-11): pass --metal-roughness or set it in the IR config")
     for name in ("metal", "matte"):
         if name == "metal":
-            metal(mats["parts"], mt["base_reflectance"], mt["roughness"])
+            metal(mats["parts"], mt["base_reflectance"], mt["roughness"], mt["diffuse_albedo"])
         else:
             matte(mats["parts"], mm["part_albedo"])
         t = time.perf_counter()

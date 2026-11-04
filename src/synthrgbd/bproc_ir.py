@@ -17,20 +17,47 @@ import blenderproc as bproc
 import numpy as np
 
 
+def _diffuse_lobe(material) -> "bpy.types.ShaderNodeBsdfDiffuse":
+    """Principled -> Add Shader <- Diffuse BSDF -> Material Output, created once per material and reused, so
+    the metal pass can carry the Lambertian term of the S-16 fit and the matte pass can switch it off."""
+    nt = material.blender_obj.node_tree
+    for n in nt.nodes:
+        if n.bl_idname == "ShaderNodeBsdfDiffuse" and n.name == "ir_diffuse_lobe":
+            return n
+    principled = next(n for n in nt.nodes if n.bl_idname == "ShaderNodeBsdfPrincipled")
+    out = next(n for n in nt.nodes if n.bl_idname == "ShaderNodeOutputMaterial")
+    diff = nt.nodes.new("ShaderNodeBsdfDiffuse")
+    diff.name = "ir_diffuse_lobe"
+    add = nt.nodes.new("ShaderNodeAddShader")
+    for link in list(out.inputs["Surface"].links):
+        nt.links.remove(link)
+    nt.links.new(principled.outputs["BSDF"], add.inputs[0])
+    nt.links.new(diff.outputs["BSDF"], add.inputs[1])
+    nt.links.new(add.outputs["Shader"], out.inputs["Surface"])
+    return diff
+
+
 def matte(material, albedo: float) -> None:
-    """Lambertian-like Principled BSDF (metallic 0, no specular layer)."""
+    """Lambertian-like Principled BSDF (metallic 0, no specular layer); the extra diffuse lobe, if any, is off."""
     material.set_principled_shader_value("Base Color", [albedo, albedo, albedo, 1.0])
     material.set_principled_shader_value("Metallic", 0.0)
     material.set_principled_shader_value("Roughness", 1.0)
     material.set_principled_shader_value("Specular IOR Level", 0.0)
+    for n in material.blender_obj.node_tree.nodes:
+        if n.name == "ir_diffuse_lobe":
+            n.inputs["Color"].default_value = (0.0, 0.0, 0.0, 1.0)
 
 
-def metal(material, base: float, roughness: float) -> None:
-    """IR metal for the C3 pass (A-11): Principled BSDF, metallic 1, grey base colour = normal-incidence
-    reflectance at 850 nm, Cycles GGX roughness (alpha = roughness^2)."""
+def metal(material, base: float, roughness: float, diffuse: float = 0.0) -> None:
+    """IR metal for the C3 pass (A-11): GGX metal (Principled, metallic 1, grey base colour = normal-incidence
+    reflectance at 850 nm, Cycles roughness with alpha = roughness^2) plus a Lambertian lobe of albedo
+    `diffuse`, as in the GGX + Lambertian fit of [S-16]."""
     material.set_principled_shader_value("Base Color", [base, base, base, 1.0])
     material.set_principled_shader_value("Metallic", 1.0)
     material.set_principled_shader_value("Roughness", roughness)
+    d = _diffuse_lobe(material)
+    d.inputs["Color"].default_value = (diffuse, diffuse, diffuse, 1.0)
+    d.inputs["Roughness"].default_value = 0.0
 
 
 def ir_render_settings(ir_cfg: dict) -> None:

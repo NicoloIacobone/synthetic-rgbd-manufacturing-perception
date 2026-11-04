@@ -19,6 +19,7 @@ from dataclasses import dataclass
 import cv2
 import numpy as np
 import open3d as o3d
+from scipy.spatial import cKDTree
 
 from synthrgbd.mssd import equal_leg_bracket_symmetries, profile_symmetries
 from synthrgbd.parts import PART_CATALOGUE, Mesh, ProfileSpec, make_part
@@ -108,23 +109,99 @@ def rotation_error_deg(R_a: np.ndarray, R_b: np.ndarray) -> float:
 
 @dataclass(frozen=True)
 class IcpParams:
-    """Provisional until fixed by the A-45 pooled worst-case rule (configs/harness.yaml)."""
+    """Provisional until fixed by the A-45 pooled worst-case rule (configs/harness.yaml).
+
+    solver "o3d": Open3D point-to-plane (M4 step 1; diverges on near-planar views, A-46).
+    solver "lm": own damped point-to-plane (Levenberg-Marquardt) with a coarse-to-fine schedule `stages`
+    of (max correspondence distance, Tukey scale) in mm; back-face culling refreshed every iteration."""
 
     mask_erosion_px: int = 2
     max_corr_mm: float = 15.0
     tukey_k_mm: float = 5.0          # 0 = no robust kernel (plain least squares)
-    outer_iters: int = 5             # back-face culling refreshes
-    inner_iters: int = 30            # Open3D ICP iterations per outer loop
+    outer_iters: int = 5             # back-face culling refreshes ("o3d")
+    inner_iters: int = 30            # iterations per outer loop ("o3d") or per stage ("lm")
     min_points: int = 30             # fewer valid scene points -> no estimate (counted as failure)
+    solver: str = "o3d"
+    stages: tuple = ((15.0, 5.0),)   # "lm": ((max_corr_mm, tukey_k_mm), ...)
+    damping: float = 1e-3            # "lm": Tikhonov lambda = damping * sum(w), on (L·ω, v)
+    damping_len_mm: float = 30.0     # "lm": length scale L that makes rotation and translation comparable
+    max_step_mm: float = 5.0         # "lm": per-iteration clamp
+    max_step_deg: float = 5.0
+    knn: int = 8                     # "lm": nearest model points searched for a camera-facing one
 
     @classmethod
     def from_cfg(cls, cfg: dict) -> "IcpParams":
-        return cls(**{k: cfg[k] for k in cls.__dataclass_fields__ if k in cfg})
+        kw = {k: cfg[k] for k in cls.__dataclass_fields__ if k in cfg}
+        if "stages" in kw:
+            kw["stages"] = tuple(tuple(map(float, st)) for st in kw["stages"])
+        return cls(**kw)
+
+
+def _model_tree(model_pts: np.ndarray, cache: dict = {}) -> cKDTree:   # noqa: B006 (deliberate cache)
+    key = (id(model_pts), model_pts.shape)
+    if key not in cache:
+        cache[key] = cKDTree(model_pts)
+    return cache[key]
+
+
+def icp_lm(scene_pts: np.ndarray, model_pts: np.ndarray, model_nrm: np.ndarray, T_init: np.ndarray,
+           p: IcpParams) -> tuple[np.ndarray | None, dict]:
+    """Damped point-to-plane ICP. Estimates A (camera -> model) applied to the scene points; the pose is A^-1.
+    Residual r_i = n_i·(A p_i - q_i) to the nearest camera-facing model point q_i (CAD normal n_i);
+    Jacobian [x_i × n_i, n_i] for a left update A <- exp(ω, v) A; Tukey weights; Levenberg damping keeps
+    degenerate directions (sliding along a prism, in-plane on a single face) from exploding."""
+    info = {"n_scene": int(len(scene_pts))}
+    if len(scene_pts) < p.min_points:
+        info["status"] = "too_few_points"
+        return None, info
+    tree = _model_tree(model_pts)
+    A = np.linalg.inv(np.asarray(T_init, np.float64))
+    k = min(p.knn, len(model_pts))
+    n_inl = 0
+    for max_corr, tukey in p.stages:
+        for _ in range(p.inner_iters):
+            x = scene_pts @ A[:3, :3].T + A[:3, 3]
+            cam = A[:3, 3]                                             # camera centre in the model frame
+            dist, idx = tree.query(x, k=k, distance_upper_bound=max_corr)
+            idx = np.atleast_2d(idx.T).T if k == 1 else idx
+            valid = idx < len(model_pts)
+            safe = np.where(valid, idx, 0)
+            facing = valid & (np.einsum("ijk,ijk->ij", model_nrm[safe], model_pts[safe] - cam) < 0)
+            first = np.argmax(facing, axis=1)
+            ok = facing[np.arange(len(x)), first]
+            if ok.sum() < 6:
+                info.update(status="no_correspondences", fitness=0.0)
+                return None, info
+            j = safe[np.arange(len(x)), first][ok]
+            q, n, xs = model_pts[j], model_nrm[j], x[ok]
+            r = np.einsum("ij,ij->i", n, xs - q)
+            w = (1 - (r / tukey) ** 2) ** 2 * (np.abs(r) < tukey) if tukey > 0 else np.ones_like(r)
+            J = np.hstack([np.cross(xs, n), n])
+            H = J.T @ (J * w[:, None])
+            g = J.T @ (w * r)
+            H += p.damping * w.sum() * np.diag([p.damping_len_mm ** 2] * 3 + [1.0] * 3)
+            delta = -np.linalg.solve(H, g)
+            om, v = delta[:3], delta[3:]
+            ang = np.linalg.norm(om)
+            s = min(1.0, np.deg2rad(p.max_step_deg) / ang if ang > 0 else 1.0,
+                    p.max_step_mm / np.linalg.norm(v) if np.linalg.norm(v) > 0 else 1.0)
+            om, v = om * s, v * s
+            dA = np.eye(4)
+            dA[:3, :3] = axis_angle(om, np.linalg.norm(om)) if np.linalg.norm(om) > 0 else np.eye(3)
+            dA[:3, 3] = v
+            A = dA @ A
+            n_inl = int((w > 0).sum())
+            if np.linalg.norm(v) < 1e-5 and np.linalg.norm(om) < 1e-7:
+                break
+    info.update(status="ok", fitness=n_inl / len(scene_pts))
+    return np.linalg.inv(A), info
 
 
 def icp_refine(scene_pts: np.ndarray, model_pts: np.ndarray, model_nrm: np.ndarray,
                T_init: np.ndarray, p: IcpParams) -> tuple[np.ndarray | None, dict]:
     """Refine a model-to-camera pose. Returns (T_est or None, info)."""
+    if p.solver == "lm":
+        return icp_lm(scene_pts, model_pts, model_nrm, T_init, p)
     info = {"n_scene": int(len(scene_pts))}
     if len(scene_pts) < p.min_points:
         info["status"] = "too_few_points"
