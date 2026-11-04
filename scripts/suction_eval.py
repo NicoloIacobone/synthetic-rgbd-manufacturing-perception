@@ -54,17 +54,17 @@ def main():
             depth = cv2.imread(str(sc / DEPTH_DIRS[args.condition] / f"{int(im):06d}.png"),
                                cv2.IMREAD_UNCHANGED).astype(np.float64) * DEPTH_SCALE_MM
             poses = [(np.array(g["cam_R_m2c"]).reshape(3, 3), np.array(g["cam_t_m2c"], float)) for g in gt_all[im]]
-            view_surf = np.vstack([models[g["obj_id"]]["pts"] @ R.T + t for g, (R, t) in zip(gt_all[im], poses)])
+            view_tris = [models[g["obj_id"]]["mesh"].triangles @ R.T + t for g, (R, t) in zip(gt_all[im], poses)]
             for k, (g, gi) in enumerate(zip(gt_all[im], info_all[im])):
                 if gi["visib_fract"] < min_vis:
                     skipped.append({"scene": seed, "im_id": int(im), "gt_id": k, "visib_fract": gi["visib_fract"]})
                     continue
-                m, (R, t) = models[g["obj_id"]], poses[k]
+                m = models[g["obj_id"]]
                 mask = cv2.imread(str(sc / "mask_visib" / f"{int(im):06d}_{k:06d}.png"), cv2.IMREAD_GRAYSCALE) > 0
                 pts = backproject(depth, erode_mask(mask, p.mask_erosion_px), K)
                 t0 = time.perf_counter()
                 grasp = plan_suction(pts, cfg_b["cup_radius_mm"], p)
-                res = check_success(grasp, m["mesh"].triangles @ R.T + t, view_surf, cfg_b)
+                res = check_success(grasp, view_tris, k, cfg_b)
                 row = {"scene": seed, "im_id": int(im), "gt_id": k, "obj_id": g["obj_id"], "type": m["type"],
                        "visib_fract": gi["visib_fract"], "n_pts": int(len(pts)), "t_s": time.perf_counter() - t0}
                 row.update({kk: (float(v) if isinstance(v, (np.floating, float)) else v) for kk, v in res.items()})

@@ -4,8 +4,8 @@ Planner (measured data only; cup radius and thresholds from configs/default.yaml
 - candidate centres = the instance's scene points on a `candidate_voxel_mm` grid (first point per voxel);
 - for each candidate, the measured points within the cup radius r (3D ball) are fitted with a plane (PCA);
   the normal is oriented towards the camera. The candidate "fits the cup" if the plane-projected
-  neighbours cover the disk: at least one point in each of `coverage_sectors` angular sectors of the
-  outer annulus [coverage_inner_frac·r, r];
+  neighbours reach the rim everywhere: at least one point in each of `coverage_sectors` angular sectors
+  of the outer annulus [coverage_inner_frac·r, r];
 - the flattest fitting candidate (lowest RMS plane residual) is chosen. Its grasp point is either the raw
   measured point ("raw") or that point projected onto the fitted plane ("plane_fit"); A-44 chooses on dev.
 
@@ -13,16 +13,19 @@ Success (GT; all must hold), with the part's GT mesh in the camera frame:
 1. the grasp point lies within `max_point_to_surface_mm` of the part's surface;
 2. the angle between the grasp normal and the GT outward normal of the closest face is below
    `max_normal_error_deg`;
-3. planarity (D11, A-19) on the GT tangent plane at the closest surface point:
-   (a) the whole disk lies on the part: every disk sample is within `planarity_tolerance_mm` of the
-       part's surface (this fails over slot openings, edges and corners);
-   (b) no GT surface of any part in the view rises more than `planarity_tolerance_mm` above the plane
-       (cup side) inside the disk's cylinder (this fails next to a bracket's other leg or a neighbour).
+3. planarity (D11, A-19, A-50), on the GT tangent plane at the closest surface point: rays are cast along the
+   cup axis (−n) from `cup_radius_mm` above the plane to `cup_radius_mm` below it, from a polar grid over the
+   cup disk, against the GT meshes of all parts in the view. For every ray the **first surface hit** must
+   exist (else the disk hangs over empty space or the tray), belong to the same part, and lie within
+   ±`planarity_tolerance_mm` of the plane (two-sided: a surface rising into the cup fails, and so does a slot
+   floor 8 mm below). Surfaces hidden behind the first one (e.g. the plate's own back face) do not count,
+   nor do surfaces more than one cup radius above the plane (approach collisions are not checked).
 """
 
 from dataclasses import dataclass
 
 import numpy as np
+import open3d as o3d
 from scipy.spatial import cKDTree
 
 from synthrgbd.meshdist import closest_on_triangles
@@ -34,8 +37,8 @@ class SuctionParams:
 
     mask_erosion_px: int = 2
     candidate_voxel_mm: float = 2.0
-    coverage_sectors: int = 8
-    coverage_inner_frac: float = 0.7
+    coverage_sectors: int = 16
+    coverage_inner_frac: float = 0.9
     min_neighbours: int = 20
     grasp_point: str = "plane_fit"       # "raw" | "plane_fit" (A-44)
 
@@ -112,27 +115,48 @@ def disk_samples(centre: np.ndarray, n: np.ndarray, r: float, ring_step_mm: floa
     return centre + (rr * np.cos(aa)).reshape(-1, 1) * u + (rr * np.sin(aa)).reshape(-1, 1) * v
 
 
-def check_success(grasp: dict | None, part_tri: np.ndarray, view_surface_pts: np.ndarray, cfg_b: dict) -> dict:
-    """Evaluate a grasp against the GT mesh of its part (camera frame, mm). `view_surface_pts` are dense
-    GT surface samples of every part in the view (camera frame), used for check 3(b)."""
+def first_surface_heights(view_tris: list, origins: np.ndarray, direction: np.ndarray,
+                          max_t: float) -> tuple[np.ndarray, np.ndarray]:
+    """Cast rays origins + t·direction (t in [0, max_t]) against the triangle sets (camera frame, mm).
+    Returns (t_hit, part index); t_hit = inf and index = -1 where nothing is hit within max_t, and t_hit = 0
+    where the ray starts inside a part (its first hit is a back face)."""
+    scene = o3d.t.geometry.RaycastingScene()
+    for tri in view_tris:
+        v = tri.reshape(-1, 3).astype(np.float32)
+        scene.add_triangles(o3d.core.Tensor(v), o3d.core.Tensor(np.arange(len(v), dtype=np.uint32).reshape(-1, 3)))
+    rays = np.hstack([origins, np.broadcast_to(direction, origins.shape)]).astype(np.float32)
+    ans = scene.cast_rays(o3d.core.Tensor(rays))
+    t = ans["t_hit"].numpy().astype(np.float64)
+    gid = ans["geometry_ids"].numpy().astype(np.int64)
+    miss = ~np.isfinite(t) | (t > max_t)
+    t[miss], gid[miss] = np.inf, -1
+    # A first hit on a triangle facing away from the ray means the ray started inside material: the solid
+    # fills the cup volume up to the ray origin, so report t = 0 (surface at the top of the checked range).
+    inside = ~miss & ((ans["primitive_normals"].numpy() @ np.asarray(direction, np.float32)) > 0)
+    t[inside] = 0.0
+    return t, gid
+
+
+def check_success(grasp: dict | None, view_tris: list, part_index: int, cfg_b: dict) -> dict:
+    """Evaluate a grasp on part `part_index` against the GT meshes of all parts in the view
+    (`view_tris`: list of (F, 3, 3) triangle arrays, camera frame, mm)."""
     out = {"success": False, "has_grasp": grasp is not None}
     if grasp is None:
         return out
     r, tol = cfg_b["cup_radius_mm"], cfg_b["planarity_tolerance_mm"]
+    part_tri = view_tris[part_index]
     cp, f, dist = closest_surface_point(part_tri, grasp["point"])
     n_gt = face_normals(part_tri[f:f + 1])[0]
     ang = float(np.degrees(np.arccos(np.clip(grasp["normal"] @ n_gt, -1, 1))))
     ds = disk_samples(cp, n_gt, r)
-    cps = closest_on_triangles(ds, part_tri[:, 0], part_tri[:, 1], part_tri[:, 2])
-    disk_dev = float(np.linalg.norm(cps - ds[:, None, :], axis=2).min(1).max())
-    rel = view_surface_pts - cp
-    h = rel @ n_gt
-    radial = np.linalg.norm(rel - h[:, None] * n_gt, axis=1)
-    above = float(h[radial < r].max()) if (radial < r).any() else 0.0
-    out.update(point_to_surface_mm=dist, normal_error_deg=ang, disk_max_dev_mm=disk_dev,
-               max_height_above_mm=above,
+    t, gid = first_surface_heights(view_tris, ds + r * n_gt, -n_gt, 2 * r)
+    h = r - t                                           # height of the first surface above the plane
+    hit_same = gid == part_index
+    out.update(point_to_surface_mm=dist, normal_error_deg=ang,
+               disk_frac_no_hit=float((gid < 0).mean()), disk_frac_other_part=float(((gid >= 0) & ~hit_same).mean()),
+               disk_max_abs_height_mm=float(np.abs(h[hit_same]).max()) if hit_same.any() else float("inf"),
                ok_point=dist <= cfg_b["max_point_to_surface_mm"],
-               ok_normal=ang < cfg_b["max_normal_error_deg"],
-               ok_planar=disk_dev <= tol and above <= tol)
+               ok_normal=ang < cfg_b["max_normal_error_deg"])
+    out["ok_planar"] = bool(hit_same.all() and np.abs(h).max() <= tol)
     out["success"] = bool(out["ok_point"] and out["ok_normal"] and out["ok_planar"])
     return out

@@ -74,7 +74,7 @@ def main():
                 pts = backproject(depth, erode_mask(mask, p.mask_erosion_px), K)
                 t = time.perf_counter()
                 T_est, info = icp_refine(pts, m["pts"], m["nrm"], T0, p)
-                row = {"scene": seed, "im_id": int(im), "gt_id": k, "obj_id": g["obj_id"],
+                row = {"scene": seed, "im_id": int(im), "gt_id": k, "obj_id": g["obj_id"], "type": m["type"],
                        "visib_fract": gi["visib_fract"], "n_pts": info["n_scene"], "status": info["status"],
                        "t_icp_s": time.perf_counter() - t,
                        "mssd_init_mm": mssd(T0, T_gt, m["verts"], m["syms"])}
@@ -83,6 +83,12 @@ def main():
                     row["t_err_mm"] = float(np.linalg.norm(T_est[:3, 3] - T_gt[:3, 3]))
                     row["R_err_deg"] = rotation_error_deg(T_est[:3, :3], T_gt[:3, :3])
                     row["fitness"] = info["fitness"]
+                    if m["type"] == "profile":   # centre error along / across the GT profile axis (§5.4)
+                        c = m["centre"]
+                        dc = (T_est[:3, :3] @ c + T_est[:3, 3]) - (T_gt[:3, :3] @ c + T_gt[:3, 3])
+                        ax = T_gt[:3, 2]
+                        row["centre_err_axial_mm"] = float(abs(dc @ ax))
+                        row["centre_err_across_mm"] = float(np.linalg.norm(dc - (dc @ ax) * ax))
                 else:
                     row["mssd_mm"] = None
                 rows.append(row)
