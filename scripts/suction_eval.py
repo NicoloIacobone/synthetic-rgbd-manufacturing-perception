@@ -24,7 +24,7 @@ from synthrgbd.config import load_config  # noqa: E402
 from synthrgbd.pose import backproject, erode_mask, load_part_models  # noqa: E402
 from synthrgbd.suction import SuctionParams, check_success, plan_suction  # noqa: E402
 
-DEPTH_DIRS = {"C1": "depth"}
+DEPTH_DIRS = {"C1": "depth", "C2a": "depth_c2a", "C2b": "depth_c2b", "C3": "depth_stereo_metal", "C4": "depth_stereo_matte"}
 DEPTH_SCALE_MM = 0.1
 
 

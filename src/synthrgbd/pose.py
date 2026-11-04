@@ -15,6 +15,7 @@
 """
 
 from dataclasses import dataclass
+from dataclasses import replace as _replace
 
 import cv2
 import numpy as np
@@ -122,19 +123,47 @@ class IcpParams:
     inner_iters: int = 30            # iterations per outer loop ("o3d") or per stage ("lm")
     min_points: int = 30             # fewer valid scene points -> no estimate (counted as failure)
     solver: str = "o3d"
-    stages: tuple = ((15.0, 5.0),)   # "lm": ((max_corr_mm, tukey_k_mm), ...)
+    stages: tuple | None = None      # ((max_corr_mm, tukey_k_mm), ...) coarse-to-fine; None = ((max_corr_mm, tukey_k_mm),)
+    visibility: str = "backface"     # "backface" | "raycast" (first hit from the camera on the CAD mesh: self-occlusion)
     damping: float = 1e-3            # "lm": Tikhonov lambda = damping * sum(w), on (L·ω, v)
     damping_len_mm: float = 30.0     # "lm": length scale L that makes rotation and translation comparable
     max_step_mm: float = 5.0         # "lm": per-iteration clamp
     max_step_deg: float = 5.0
     knn: int = 8                     # "lm": nearest model points searched for a camera-facing one
+    o3d_step_clamp: bool = False     # "o3d": run single iterations and clamp each to max_step_mm / max_step_deg
 
     @classmethod
     def from_cfg(cls, cfg: dict) -> "IcpParams":
         kw = {k: cfg[k] for k in cls.__dataclass_fields__ if k in cfg}
-        if "stages" in kw:
+        if kw.get("stages") is not None:
             kw["stages"] = tuple(tuple(map(float, st)) for st in kw["stages"])
         return cls(**kw)
+
+
+def _model_scene(tri: np.ndarray, cache: dict = {}):                  # noqa: B006 (deliberate cache)
+    key = (id(tri), tri.shape)
+    if key not in cache:
+        sc = o3d.t.geometry.RaycastingScene()
+        v = tri.reshape(-1, 3).astype(np.float32)
+        sc.add_triangles(o3d.core.Tensor(v), o3d.core.Tensor(np.arange(len(v), dtype=np.uint32).reshape(-1, 3)))
+        cache[key] = sc
+    return cache[key]
+
+
+def visible_model_points(model_pts: np.ndarray, model_nrm: np.ndarray, cam_in_model: np.ndarray,
+                         tri: np.ndarray | None, tol_mm: float = 0.5) -> np.ndarray:
+    """Mask of model points that face the camera and, if `tri` is given, are the first hit of the ray from the
+    camera centre (self-occlusion removed)."""
+    facing = np.einsum("ij,ij->i", model_nrm, model_pts - cam_in_model) < 0
+    if tri is None:
+        return facing
+    d = model_pts[facing] - cam_in_model
+    dist = np.linalg.norm(d, axis=1)
+    rays = np.hstack([np.broadcast_to(cam_in_model, d.shape), d / dist[:, None]]).astype(np.float32)
+    t = _model_scene(tri).cast_rays(o3d.core.Tensor(rays))["t_hit"].numpy()
+    vis = facing.copy()
+    vis[facing] = t >= dist - tol_mm
+    return vis
 
 
 def _model_tree(model_pts: np.ndarray, cache: dict = {}) -> cKDTree:   # noqa: B006 (deliberate cache)
@@ -198,10 +227,43 @@ def icp_lm(scene_pts: np.ndarray, model_pts: np.ndarray, model_nrm: np.ndarray, 
 
 
 def icp_refine(scene_pts: np.ndarray, model_pts: np.ndarray, model_nrm: np.ndarray,
-               T_init: np.ndarray, p: IcpParams) -> tuple[np.ndarray | None, dict]:
-    """Refine a model-to-camera pose. Returns (T_est or None, info)."""
+               T_init: np.ndarray, p: IcpParams, model_tri: np.ndarray | None = None) -> tuple[np.ndarray | None, dict]:
+    """Refine a model-to-camera pose. Returns (T_est or None, info). `model_tri` (CAD triangles, model frame)
+    is needed for visibility="raycast"."""
+    stages = p.stages if p.stages is not None else ((p.max_corr_mm, p.tukey_k_mm),)
     if p.solver == "lm":
-        return icp_lm(scene_pts, model_pts, model_nrm, T_init, p)
+        return icp_lm(scene_pts, model_pts, model_nrm, T_init, p if p.stages else _replace(p, stages=stages))
+    T, info = np.asarray(T_init, np.float64), {}
+    for max_corr, tukey in stages:
+        T_new, info = _icp_o3d(scene_pts, model_pts, model_nrm, T, _replace(p, max_corr_mm=max_corr, tukey_k_mm=tukey),
+                               model_tri if p.visibility == "raycast" else None)
+        if T_new is None:
+            return None, info
+        T = T_new
+    info["stages"] = len(stages)
+    return T, info
+
+
+def _clamp_increment(T_old: np.ndarray, T_new: np.ndarray, max_mm: float, max_deg: float) -> np.ndarray:
+    """Limit the pose change T_new·T_old^-1 to max_deg (rotation about the object centre in the camera frame is
+    approximated by the rotation part) and max_mm (translation of the model origin)."""
+    D = T_new @ np.linalg.inv(T_old)
+    c = np.clip((np.trace(D[:3, :3]) - 1) / 2, -1, 1)
+    ang = np.degrees(np.arccos(c))
+    dt = T_new[:3, 3] - T_old[:3, 3]
+    s = min(1.0, max_deg / ang if ang > 0 else 1.0, max_mm / np.linalg.norm(dt) if np.linalg.norm(dt) > 0 else 1.0)
+    if s >= 1.0:
+        return T_new
+    rv, _ = cv2.Rodrigues(D[:3, :3])
+    R = cv2.Rodrigues(rv * s)[0]
+    out = np.eye(4)
+    out[:3, :3] = R @ T_old[:3, :3]
+    out[:3, 3] = T_old[:3, 3] + s * dt
+    return out
+
+
+def _icp_o3d(scene_pts, model_pts, model_nrm, T_init, p, tri):
+    """One Open3D point-to-plane stage with visibility refreshes (M4 step 1 harness)."""
     info = {"n_scene": int(len(scene_pts))}
     if len(scene_pts) < p.min_points:
         info["status"] = "too_few_points"
@@ -212,16 +274,29 @@ def icp_refine(scene_pts: np.ndarray, model_pts: np.ndarray, model_nrm: np.ndarr
         else o3d.pipelines.registration.TransformationEstimationPointToPlane())
     crit = o3d.pipelines.registration.ICPConvergenceCriteria(
         relative_fitness=1e-7, relative_rmse=1e-7, max_iteration=p.inner_iters)
+    crit1 = o3d.pipelines.registration.ICPConvergenceCriteria(relative_fitness=0, relative_rmse=0, max_iteration=1)
     T = np.asarray(T_init, np.float64).copy()
     for _ in range(p.outer_iters):
         R, t = T[:3, :3], T[:3, 3]
         cam_in_model = -R.T @ t
-        facing = np.einsum("ij,ij->i", model_nrm, model_pts - cam_in_model) < 0
+        facing = visible_model_points(model_pts, model_nrm, cam_in_model, tri)
         tgt = o3d.geometry.PointCloud(o3d.utility.Vector3dVector(model_pts[facing]))
         tgt.normals = o3d.utility.Vector3dVector(model_nrm[facing])
-        reg = o3d.pipelines.registration.registration_icp(
-            src, tgt, p.max_corr_mm, np.linalg.inv(T), est, crit)
-        T_new = np.linalg.inv(np.asarray(reg.transformation))
+        if p.o3d_step_clamp:          # one iteration per call; clamp each increment (near-planar views diverge)
+            T_new = T
+            for _ in range(p.inner_iters):
+                reg = o3d.pipelines.registration.registration_icp(src, tgt, p.max_corr_mm, np.linalg.inv(T_new), est, crit1)
+                T_next = np.linalg.inv(np.asarray(reg.transformation))
+                T_next = _clamp_increment(T_new, T_next, p.max_step_mm, p.max_step_deg)
+                done = np.linalg.norm(T_next[:3, 3] - T_new[:3, 3]) < 1e-5
+                T_new = T_next
+                if done:
+                    break
+            reg = o3d.pipelines.registration.evaluate_registration(src, tgt, p.max_corr_mm, np.linalg.inv(T_new))
+        else:
+            reg = o3d.pipelines.registration.registration_icp(
+                src, tgt, p.max_corr_mm, np.linalg.inv(T), est, crit)
+            T_new = np.linalg.inv(np.asarray(reg.transformation))
         moved = np.linalg.norm(T_new[:3, 3] - T[:3, 3]) + np.abs(T_new[:3, :3] - R).max()
         T = T_new
         info.update(fitness=float(reg.fitness), inlier_rmse=float(reg.inlier_rmse))

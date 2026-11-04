@@ -28,7 +28,7 @@ from synthrgbd.pose import (IcpParams, apply_offset, backproject, draw_offset_di
                             erode_mask, icp_refine, load_part_models, rotation_error_deg)
 from synthrgbd.seeds import rng  # noqa: E402
 
-DEPTH_DIRS = {"C1": "depth"}
+DEPTH_DIRS = {"C1": "depth", "C2a": "depth_c2a", "C2b": "depth_c2b", "C3": "depth_stereo_metal", "C4": "depth_stereo_matte"}
 DEPTH_SCALE_MM = 0.1
 
 
@@ -39,9 +39,12 @@ def main():
     ap.add_argument("--condition", default="C1", choices=sorted(DEPTH_DIRS))
     ap.add_argument("--offset", type=float, nargs=2, default=[0.0, 0.0], metavar=("MM", "DEG"))
     ap.add_argument("--harness", type=Path, default=REPO / "configs" / "harness.yaml")
+    ap.add_argument("--icp-override", type=json.loads, default={},
+                    help='JSON dict over configs/harness.yaml icp, e.g. \'{"stages": [[20,20],[10,10],[5,5]]}\' (A-45 candidates)')
     ap.add_argument("--out", type=Path, required=True)
     args = ap.parse_args()
     cfg, hcfg = load_config(), load_config(args.harness)
+    hcfg["icp"].update(args.icp_override)
     p = IcpParams.from_cfg(hcfg["icp"])
     models = load_part_models(hcfg["model_sampling"]["points_per_model"], hcfg["model_sampling"]["seed"])
     min_vis = hcfg["instances"]["min_visib_fract"]
@@ -73,7 +76,7 @@ def main():
                 mask = cv2.imread(str(sc / "mask_visib" / f"{int(im):06d}_{k:06d}.png"), cv2.IMREAD_GRAYSCALE) > 0
                 pts = backproject(depth, erode_mask(mask, p.mask_erosion_px), K)
                 t = time.perf_counter()
-                T_est, info = icp_refine(pts, m["pts"], m["nrm"], T0, p)
+                T_est, info = icp_refine(pts, m["pts"], m["nrm"], T0, p, m["mesh"].triangles)
                 row = {"scene": seed, "im_id": int(im), "gt_id": k, "obj_id": g["obj_id"], "type": m["type"],
                        "visib_fract": gi["visib_fract"], "n_pts": info["n_scene"], "status": info["status"],
                        "t_icp_s": time.perf_counter() - t,

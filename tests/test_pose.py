@@ -116,3 +116,33 @@ def test_too_few_points_gives_no_estimate():
     mp, mn = sample_with_normals(mesh, 100, np.random.default_rng(0))
     T_est, info = icp_refine(np.zeros((5, 3)), mp, mn, T_BRACKET, IcpParams())
     assert T_est is None and info["status"] == "too_few_points"
+
+
+VARIANTS = {
+    "H0": IcpParams(),
+    "H1": IcpParams(stages=((20.0, 20.0), (10.0, 10.0), (5.0, 5.0))),
+    "H2": IcpParams(stages=((20.0, 20.0), (10.0, 10.0), (5.0, 5.0)), visibility="raycast"),
+    "H3": IcpParams(stages=((20.0, 20.0), (10.0, 10.0), (5.0, 5.0)), visibility="raycast", o3d_step_clamp=True),
+}
+
+
+@pytest.mark.parametrize("name", sorted(VARIANTS))
+@pytest.mark.parametrize("obj_id,T", [(4, T_BRACKET), (2, T_PROFILE_SIDE)])
+def test_harness_candidates_keep_the_zero_offset_fixed_point(name, obj_id, T):
+    mesh, pts, mp, mn, syms = _setup(obj_id, T)
+    T_est, info = icp_refine(pts, mp, mn, T, VARIANTS[name], mesh.triangles)
+    assert info["status"] == "ok" and mssd(T_est, T, unique_vertices(mesh), syms) < 0.05
+
+
+def test_raycast_visibility_removes_self_occluded_faces():
+    """Inside of the L: with the camera looking into the corner both inner faces are visible; from behind
+    the y-leg, the x-leg's inner face is hidden by the y-leg although it faces the camera."""
+    from synthrgbd.pose import visible_model_points
+    mesh = make_part(PART_CATALOGUE[4][1])
+    mp, mn = sample_with_normals(mesh, 20000, np.random.default_rng(0))
+    cam = np.array([-300.0, 20.0, 0.0])                    # behind the y-leg (x < 0), level with the x-leg
+    back = visible_model_points(mp, mn, cam, None)
+    ray = visible_model_points(mp, mn, cam, mesh.triangles)
+    inner_x_leg_top = (np.abs(mp[:, 1] - 4.0) < 1e-6) & (mp[:, 0] > 4.0)
+    assert ray.sum() < back.sum()
+    assert not ray[inner_x_leg_top & back].any()
