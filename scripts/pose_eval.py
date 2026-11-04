@@ -4,7 +4,7 @@ Usage:
   .venv/bin/python scripts/pose_eval.py <dataset_root> <scene_seed>... --condition C1 --offset 0 0 --out <jsonl>
 
 <dataset_root> holds synthrgbd/train_pbr/<scene>/ (BOP). Conditions map to depth folders (uint16, BOP depth
-scale 0.1 mm): C1 = depth/ (ideal); the others are added at M4 (C2a/C2b noise, C3/C4 stereo). --offset is
+scale 0.1 mm), see synthrgbd.conditions: protocol conditions C1-C4 and the descriptive passes. --offset is
 [mm deg]; 0 0 is the §5.11 zero-offset sanity check. Instances below instances.min_visib_fract
 (configs/harness.yaml) are skipped and listed. The pass/fail summary of the sanity check uses
 configs/default.yaml sanity.* (≥ 99% of instances at MSSD < 0.5 mm).
@@ -22,14 +22,13 @@ import numpy as np
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
+from synthrgbd.conditions import DEPTH_DIRS, DEPTH_SCALE_MM  # noqa: E402
 from synthrgbd.config import load_config  # noqa: E402
 from synthrgbd.mssd import mssd  # noqa: E402
 from synthrgbd.pose import (IcpParams, apply_offset, backproject, draw_offset_directions,  # noqa: E402
                             erode_mask, icp_refine, load_part_models, rotation_error_deg)
 from synthrgbd.seeds import rng  # noqa: E402
 
-DEPTH_DIRS = {"C1": "depth", "C2a": "depth_c2a", "C2b": "depth_c2b", "C3": "depth_stereo_metal", "C4": "depth_stereo_matte"}
-DEPTH_SCALE_MM = 0.1
 
 
 def main():

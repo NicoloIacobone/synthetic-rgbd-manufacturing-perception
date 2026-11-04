@@ -21,11 +21,21 @@ ir_render:
   clamp: 0.0                   # Cycles direct/indirect sample clamping off (no hidden saturation, A-32 ii)
   ambient: 0.0                 # world background in the IR passes: projector only (A-03, A-42)
   storage: float16             # linear radiance, unclipped (A-32); npz per frame
+  glossy_bounces: 3            # BlenderProc's default 0 removes every reflected image from metal (A-57, bug found at M5)
+  max_bounces: 12              # Cycles default; ledger rule (A-57): max 3 -> 12 moved correct metal pixels by -2.26 points
+                               #   (one dev view flipped, the other nine moved < 1 point); render time unchanged
+  extra_passes:                # descriptive, not endpoints: name:kind:value (A-51, A-52, A-57)
+    - "r02:metal:0.2"          # roughness dose-response
+    - "r04:metal:0.4"
+    - "bright:matte:0.5"       # bright matte
+    - "nogloss:metal_noglossy:0.15"   # C3 material with reflections off, as in all renders before the fix
 
 materials_matte:               # Lambertian (Principled: metallic 0, specular IOR level 0, roughness 1)
   plane_albedo: 0.5            # gate plane
-  part_albedo: 0.085           # A-24: mean pre-gain radiance of C4 part pixels = that of C3 metal-part pixels, pooled over
-                               #   dev 1000-1004 (metal mean 0.169 x matte@0.5; median matching is degenerate: median metal = 0)
+  part_albedo: 0.318           # A-24 (rule revised by the user, 2026-11-04): mean exposed DN clipped at saturation of C4 part
+                               #   pixels = that of C3 metal-part pixels, pooled over dev 1000-1004 (auto-exposure gain per
+                               #   frame). Plain mean matching breaks once reflections are on: glints give an albedo of 1.90.
+                               #   0.085 was the plain-mean value at glossy 0
   tray_albedo: 0.3
   table_albedo: 0.4
 

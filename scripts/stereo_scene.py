@@ -1,12 +1,17 @@
 """Stereo depth for a rendered scene (D13): IR pairs (scripts/bproc_render_scene.py --ir) -> SGBM -> depth.
 
-Usage: .venv/bin/python scripts/stereo_scene.py <out_root> <scene_seed> [--sheet <png>]
+Usage: .venv/bin/python scripts/stereo_scene.py <out_root> <scene_seed> [--sheet <png>] [--variant loose] [--passes metal matte]
 
 For every view and IR pass (<scene>/ir/<im_id>_<pass>.npz) writes <scene>/depth_stereo_<pass>/<im_id>.png
 (uint16 z-depth, BOP depth_scale 0.1 mm, invalid = 0, D415 left-imager pixels = the BOP camera) and
 <scene>/stereo_meta.json with per-frame timings and quick sensor numbers against the ideal depth
 (informative only; the M5 sensor metrics are computed separately). "metalproxy" uses the M2
 placeholder material and exists only for the A-39 timing at M3.
+
+Exposure (A-42): metal and matte share the gain of the C3 left image. Each descriptive extra pass auto-exposes on its own
+left image, as a real camera would on that scene. All passes of a view use the same noise draws (A-12).
+--variant applies the §5.8 matcher variants (strict settings with filters switched off) and writes
+depth_stereo_<pass>_<variant>/ and stereo_meta_<variant>.json; the IR images are not re-rendered.
 """
 
 import argparse
@@ -28,6 +33,9 @@ from synthrgbd.stereo import (auto_exposure_gain, depth_from_ir, expose_to_uint8
                               exposure_roi_x0, make_sgbm, match_extended)
 
 DEPTH_SCALE_MM = 0.1
+# §5.8: "loose" is the ledger's definition; the single-filter variants split its effect by filter.
+VARIANTS = {"strict": {}, "loose": {"uniqueness_ratio": 0, "disp12_max_diff": -1, "speckle_window_size": 0},
+            "nouniq": {"uniqueness_ratio": 0}, "nolr": {"disp12_max_diff": -1}, "nospeckle": {"speckle_window_size": 0}}
 
 
 def main():
@@ -36,6 +44,8 @@ def main():
     ap.add_argument("scene_seed", type=int)
     ap.add_argument("--ir-config", type=Path, default=REPO / "configs" / "camera_d415_ir.yaml")
     ap.add_argument("--sheet", type=Path)
+    ap.add_argument("--variant", default="strict", choices=sorted(VARIANTS))
+    ap.add_argument("--passes", nargs="+", help="only these IR passes (default: all rendered ones)")
     args = ap.parse_args()
     cam = load_config()["camera"]
     ir = load_config(args.ir_config)
@@ -43,12 +53,13 @@ def main():
     cams = json.loads((scene / "scene_camera.json").read_text())
     seg_index = json.loads((scene / "segmap" / "index.json").read_text())
     cfg_all = load_config()
-    sgbm = make_sgbm(ir["sgbm"])
+    sgbm = make_sgbm({**ir["sgbm"], **VARIANTS[args.variant]})
+    suffix = "" if args.variant == "strict" else f"_{args.variant}"
     pad, gain = ir["ir_render"]["pad_px"], float(ir["exposure"]["gain"])
     auto = ir["exposure"].get("mode") == "auto"
     meta = {"commit": subprocess.check_output(["git", "-C", str(REPO), "rev-parse", "HEAD"], text=True).strip(),
             "ir_config": str(args.ir_config.relative_to(REPO)), "exposure": ir["exposure"],
-            "sensor_noise": ir.get("sensor_noise"), "frames": []}
+            "sensor_noise": ir.get("sensor_noise"), "variant": args.variant, "frames": []}
     sheet = []
     for im_id in sorted(cams, key=int):
         K = np.array(cams[im_id]["cam_K"]).reshape(3, 3)
@@ -61,17 +72,21 @@ def main():
                                          float(ir["exposure"]["setpoint_dn"]))
             r = rng(cfg_all["seeds"]["master"], args.scene_seed, int(im_id), "ir_noise")
             zl, zr = r.standard_normal(Lm.shape), r.standard_normal(Lm.shape)
-        for name in ("metal", "metalproxy", "matte"):
-            f = scene / "ir" / f"{int(im_id):06d}_{name}.npz"
-            if not f.exists():
+        rendered = sorted(p.stem.split("_", 1)[1] for p in (scene / "ir").glob(f"{int(im_id):06d}_*.npz"))
+        shared = [n for n in ("metal", "metalproxy", "matte") if n in rendered]
+        for name in shared + [n for n in rendered if n not in shared]:
+            if args.passes and name not in args.passes:
                 continue
+            f = scene / "ir" / f"{int(im_id):06d}_{name}.npz"
             t = time.perf_counter()
             d = np.load(f)
             L, R = d["left"].astype(np.float32), d["right"].astype(np.float32)
             t_load = time.perf_counter() - t
             t = time.perf_counter()
             if auto:
-                l8, r8 = exposed_pair_uint8(L, R, g_frame, ir.get("sensor_noise"), zl, zr)
+                g_pass = g_frame if name in shared else auto_exposure_gain(
+                    L[:, pad:], exposure_roi_x0(K[0, 0], cam["baseline_m"], cam["min_z_m"]), float(ir["exposure"]["setpoint_dn"]))
+                l8, r8 = exposed_pair_uint8(L, R, g_pass, ir.get("sensor_noise"), zl, zr)
                 disp = match_extended(l8, r8, pad, sgbm, cam["disparity_search_px"])
                 z = disparity_to_depth(disp, K[0, 0], cam["baseline_m"], cam["disparity_search_px"])
                 dn = l8[:, pad:]
@@ -80,7 +95,7 @@ def main():
                 dn = expose_to_uint8(L[:, pad:], gain)
             t_match = time.perf_counter() - t
             t = time.perf_counter()
-            out = scene / f"depth_stereo_{name}"
+            out = scene / f"depth_stereo_{name}{suffix}"
             out.mkdir(exist_ok=True)
             cv2.imwrite(str(out / f"{int(im_id):06d}.png"), np.round(z * 1e3 / DEPTH_SCALE_MM).astype(np.uint16))
             t_write = time.perf_counter() - t
@@ -92,11 +107,11 @@ def main():
                 "mae_mm_parts": float(1e3 * err[v & parts].mean()) if (v & parts).any() else None,
                 "frac_err_gt_5mm_parts": float((err[v & parts] > 5e-3).mean()) if (v & parts).any() else None,
                 "dn_mean": float(dn.mean()), "dn_saturated_frac": float((dn == 255).mean()),
-                "gain": float(g_frame) if auto else gain,
+                "gain": float(g_pass) if auto else gain,
                 "median_err_mm_parts": float(1e3 * np.median((z - gt)[v & parts])) if (v & parts).any() else None})
             if name == "matte":
                 sheet.append((dn, gt, z, parts))
-    (scene / "stereo_meta.json").write_text(json.dumps(meta, indent=1))
+    (scene / f"stereo_meta{suffix}.json").write_text(json.dumps(meta, indent=1))
     for fr in meta["frames"]:
         print("STEREO", json.dumps({k: (round(v, 4) if isinstance(v, float) else v) for k, v in fr.items()}))
     if args.sheet and sheet:

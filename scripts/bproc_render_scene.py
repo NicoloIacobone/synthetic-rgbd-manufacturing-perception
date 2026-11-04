@@ -10,10 +10,12 @@ in units of 0.1 mm, visible instance masks, 6D poses, intrinsics), plus scene_me
 with seeds, commit, versions, layout and per-stage timings.
 
 With --ir: after the BOP output, the IR stereo pair with the dot projector (synthrgbd.bproc_ir,
-configs/camera_d415_ir.yaml) is rendered for every view, twice: parts metal ("metal", C3; materials_metal,
-A-11) and parts matte ("matte", C4; materials_matte.part_albedo, A-24). Tray and table are matte in both.
---metal-roughness / --matte-part-albedo override the config (pre-declared robustness check, A-11).
-Output: <scene>/ir/<im_id:06d>_<metal|matte>.npz (left, right: float16 linear radiance, both extended by
+configs/camera_d415_ir.yaml) is rendered for every view: parts metal ("metal", C3; materials_metal, A-11), parts
+matte ("matte", C4; materials_matte.part_albedo, A-24), then the descriptive passes of ir_render.extra_passes
+(name:kind:value; kind metal = roughness, matte = albedo, metal_noglossy = roughness with Cycles glossy_bounces 0).
+Tray and table are matte in all passes. --metal-roughness / --matte-part-albedo / --glossy-bounces / --max-bounces /
+--ir-samples / --extra-pass override the config (checks only).
+Output: <scene>/ir/<im_id:06d>_<pass>.npz (left, right: float16 linear radiance, both extended by
 pad px on the left, A-40). M3 renders used the M2 RGB placeholder instead of "metal" ("metalproxy").
 
 Conventions:
@@ -75,6 +77,8 @@ def parse_args():
     ap.add_argument("--glossy-bounces", type=int, help="override ir_render.glossy_bounces (convergence checks, A-57)")
     ap.add_argument("--max-bounces", type=int, help="override ir_render.max_bounces (convergence checks, A-57)")
     ap.add_argument("--ir-samples", type=int, help="override ir_render.samples (convergence checks, A-57)")
+    ap.add_argument("--extra-pass", action="append", metavar="NAME:KIND:VALUE",
+                    help="replaces ir_render.extra_passes; repeat for several; pass 'none' for no extra pass")
     return ap.parse_args()
 
 
@@ -189,11 +193,22 @@ def render_ir_passes(cfg, ir, area_light, mats, T_cams, K, scene_dir):
     mt = ir["materials_metal"]
     if mt.get("roughness") is None:
         raise SystemExit("materials_metal.roughness is not set (A-11): pass --metal-roughness or set it in the IR config")
-    for name in ("metal", "matte"):
-        if name == "metal":
-            metal(mats["parts"], mt["base_reflectance"], mt["roughness"], mt["diffuse_albedo"])
+    passes = [("metal", "metal", mt["roughness"]), ("matte", "matte", mm["part_albedo"])]
+    for spec in ir["ir_render"].get("extra_passes") or []:
+        name, kind, value = spec.split(":")
+        passes.append((name, kind, float(value)))
+    glossy_default = bpy.context.scene.cycles.glossy_bounces
+    out["ir_passes"] = {}
+    for name, kind, value in passes:
+        if kind in ("metal", "metal_noglossy"):
+            metal(mats["parts"], mt["base_reflectance"], value, mt["diffuse_albedo"])
+        elif kind == "matte":
+            matte(mats["parts"], value)
         else:
-            matte(mats["parts"], mm["part_albedo"])
+            raise SystemExit(f"unknown pass kind {kind!r}")
+        bpy.context.scene.cycles.glossy_bounces = 0 if kind == "metal_noglossy" else glossy_default
+        out["ir_passes"][name] = {"kind": kind, "value": value, "glossy_bounces": bpy.context.scene.cycles.glossy_bounces,
+                                  "max_bounces": bpy.context.scene.cycles.max_bounces}
         t = time.perf_counter()
         imgs = render_ir()
         out[f"ir_render_{name}_s"] = time.perf_counter() - t
@@ -350,12 +365,15 @@ def main():
         for key, val in (("glossy_bounces", args.glossy_bounces), ("max_bounces", args.max_bounces), ("samples", args.ir_samples)):
             if val is not None:
                 ir_cfg["ir_render"][key] = val
-        timings.update(render_ir_passes(cfg, ir_cfg, light, {"parts": alu, "tray": grey, "table": table_mat},
-                                        T_cams, K, dst_scene))
+        if args.extra_pass is not None:
+            ir_cfg["ir_render"]["extra_passes"] = [] if args.extra_pass == ["none"] else args.extra_pass
+        ir_timings = render_ir_passes(cfg, ir_cfg, light, {"parts": alu, "tray": grey, "table": table_mat}, T_cams, K, dst_scene)
+        passes = ir_timings.pop("ir_passes")
+        timings.update(ir_timings)
         ir_meta = {"config": str(args.ir_config.relative_to(REPO)), "samples": ir_cfg["ir_render"]["samples"],
                    "pad_px": ir_cfg["ir_render"]["pad_px"], "dot_seed": ir_cfg["dots"]["seed"],
-                   "passes": ["metal", "matte"], "frame_order": "L0 R0 L1 R1 ...",
-                   "light_paths": {k: getattr(bpy.context.scene.cycles, k) for k in ("max_bounces", "diffuse_bounces", "glossy_bounces")},
+                   "passes": passes, "frame_order": "L0 R0 L1 R1 ...",
+                   "diffuse_bounces": bpy.context.scene.cycles.diffuse_bounces,
                    "materials_metal": ir_cfg["materials_metal"], "materials_matte": ir_cfg["materials_matte"]}
 
     timings["total_s"] = time.perf_counter() - t0

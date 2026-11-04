@@ -20,12 +20,11 @@ import numpy as np
 
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
+from synthrgbd.conditions import DEPTH_DIRS, DEPTH_SCALE_MM  # noqa: E402
 from synthrgbd.config import load_config  # noqa: E402
 from synthrgbd.pose import backproject, erode_mask, load_part_models  # noqa: E402
 from synthrgbd.suction import SuctionParams, check_success, plan_suction  # noqa: E402
 
-DEPTH_DIRS = {"C1": "depth", "C2a": "depth_c2a", "C2b": "depth_c2b", "C3": "depth_stereo_metal", "C4": "depth_stereo_matte"}
-DEPTH_SCALE_MM = 0.1
 
 
 def main():

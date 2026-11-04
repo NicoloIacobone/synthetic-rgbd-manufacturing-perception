@@ -3,8 +3,9 @@
 Usage: .venv/bin/python scripts/select_harness.py <dataset_root> <dev_seed>... --out <dir>
 
 Task A: for every ICP candidate in CANDIDATES, run scripts/pose_eval.py on each condition C1, C2a, C2b, C3, C4
-at the primary offset (10 mm / 10 deg) and the zero-offset C1 sanity check (§5.11). The chosen candidate
-maximises the MINIMUM recall@5 mm over the five conditions among candidates that pass the sanity check;
+at the primary offset (10 mm / 10 deg) and the zero-offset C1 sanity check (§5.11). The chosen candidate has the
+best LEXIMIN vector of recall@5 mm over the five conditions (sorted ascending, compared element by element; plain
+maximin is degenerate when one condition sits at the floor, ledger) among candidates that pass the sanity check;
 ties -> the earlier candidate in the list (simpler first).
 Task B: the same rule over GRASP_POINTS on bracket success.
 Candidates and the grid are fixed here before the run (ledger). Results: <out>/selection.json.
@@ -59,7 +60,7 @@ def main():
         print(name, json.dumps({c: round(r[c]["recall5"], 3) for c in CONDITIONS}), "min", round(r["min_recall5"], 3),
               "sanity", r["sanity_pass"], flush=True)
     ok = [n for n in CANDIDATES if res["task_a"][n]["sanity_pass"]]
-    best = max(ok, key=lambda n: (res["task_a"][n]["min_recall5"], -list(CANDIDATES).index(n)))
+    best = max(ok, key=lambda n: (sorted(res["task_a"][n][c]["recall5"] for c in CONDITIONS), -list(CANDIDATES).index(n)))
     res["task_a_chosen"] = best
     for gp in GRASP_POINTS:
         r = {}
@@ -77,7 +78,7 @@ def main():
         r["min_bracket_success"] = min(r[c]["bracket_success"] for c in CONDITIONS)
         res["task_b"][gp] = r
         print("B", gp, json.dumps({c: round(r[c]["bracket_success"], 3) for c in CONDITIONS}), flush=True)
-    res["task_b_chosen"] = max(GRASP_POINTS, key=lambda g: (res["task_b"][g]["min_bracket_success"],
+    res["task_b_chosen"] = max(GRASP_POINTS, key=lambda g: (sorted(res["task_b"][g][c]["bracket_success"] for c in CONDITIONS),
                                                             -GRASP_POINTS.index(g)))
     (args.out / "selection.json").write_text(json.dumps(res, indent=1))
     print("CHOSEN", res["task_a_chosen"], res["task_b_chosen"])

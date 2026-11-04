@@ -55,6 +55,7 @@ def metal(material, base: float, roughness: float, diffuse: float = 0.0) -> None
     material.set_principled_shader_value("Base Color", [base, base, base, 1.0])
     material.set_principled_shader_value("Metallic", 1.0)
     material.set_principled_shader_value("Roughness", roughness)
+    material.set_principled_shader_value("Specular IOR Level", 0.5)    # the default; matte() sets 0 (extra passes run after it)
     d = _diffuse_lobe(material)
     d.inputs["Color"].default_value = (diffuse, diffuse, diffuse, 1.0)
     d.inputs["Roughness"].default_value = 0.0
