@@ -206,3 +206,22 @@ This is a working log of what was done, measured, decided, and what failed. It f
   - §4: locking "comparable magnitude to D4 at default firmware" [S-14];
   - §5: fixed-sequence testing and the tuning ledger as judgement examples;
   - §6: ROBI range mismatch.
+
+## 2026-11-04 late — M4 step 1: ICP harness, C1 sanity check, suction code
+- Done:
+  - `synthrgbd.pose` (point-to-plane ICP, normals from the CAD model, back-face culling in an outer loop; offsets per A-30/A-48);
+  - `synthrgbd.suction` (planner + GT check per §5.3);
+  - `scripts/pose_eval.py`, `scripts/suction_eval.py`;
+  - non-frozen `configs/harness.yaml` (all values PROVISIONAL);
+  - tests 54 → 73 pass. Commits 0ebdbac, 11cfe42.
+- Numbers:
+  - **§5.11 sanity, C1, dev 1000–1001, zero offset: 20/20 < 0.5 mm, median 0.032 mm, max 0.28 mm → pass** (same at both commits);
+  - ICP ≈ 0.02 s per instance;
+  - Task B smoke run on C1 dev: brackets 5/8 succeed (1 without a grasp, 2 fail check 3(b)), profiles 0/12 (A-33).
+- Failed / surprised:
+  - 6 000 CAD samples gave 0.07–0.10 mm drift from the GT pose on ideal synthetic views (point-to-plane against a sparse target), so 50 000 are used (0.006–0.019 mm with 60 000);
+  - Task B check 3(b) without a height cap also fails grasps on parts far along the approach axis (193 mm), which goes beyond §5.3: cap left to the user (A-50).
+- Open, for the user: A-48 offset pivot (bounding-box centre) and directions shared across sweep levels; A-49 instance inclusion (visib_fract ≥ 0.1, source unverified); A-50 cylinder cap. §5.12 row text still awaits OK.
+- Report note:
+  - §5: back-face culling and CAD normals;
+  - "what did not work": sparse-target drift; the over-broad suction check caught by the smoke run.

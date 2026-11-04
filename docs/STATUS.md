@@ -2,8 +2,8 @@
 
 Handoff note between sessions. **Read first.** Keep it short (≤ ~40 lines): update it at the end of every task, and overwrite outdated content rather than appending (history goes to DIARY.md and git).
 
-- **Updated:** 2026-11-04, evening
-- **Phase:** Phase 1. M1–M3 done (M3 with the marginal gate failure A-38 iii, option 3a). **Pre-M4 design review done; decisions recorded** (ASSUMPTIONS A-11, A-14, A-15, A-18, A-24, A-42, A-43, new A-44–A-47 and the **tuning ledger**; SOURCES S-05, S-13, new S-14). **M4 in progress.**
+- **Updated:** 2026-11-04, late
+- **Phase:** Phase 1. M1–M3 done (M3 with the marginal gate failure A-38 iii, option 3a). **Pre-M4 design review done; decisions recorded** (ASSUMPTIONS A-11, A-14, A-15, A-18, A-24, A-42, A-43, new A-44–A-47 and the **tuning ledger**; SOURCES S-05, S-13, new S-14). **M4 in progress: step 1 done (commits 0ebdbac, 11cfe42), stopped at the user's first stop point.** C1 sanity (§5.11) on dev 1000–1001: 20/20 < 0.5 mm, max 0.28 mm → pass. Open for the user: A-48 (offset pivot), A-49 (instance inclusion), A-50 (suction 3(b) cylinder cap).
 - **Protocol:** frozen at `protocol-v1`. **Pending:** a §5.12 row (H-1 uses C2b at ε_d = 0.26 px; "C1 ≥ C2" descriptive; fixed-sequence C1–C3 → C2b–C3 → C3–C4 at α = 0.05). The user approved the content; the row text waits for the user's OK before it goes into PLAN.md.
 - **Gates:** M5 Fri 6 Nov (A metrics); code freeze Sat 7 Nov 20:00. Report skeleton starts Thu evening.
 
@@ -18,7 +18,8 @@ Handoff note between sessions. **Read first.** Keep it short (≤ ~40 lines): up
 - BlenderProc env: `scripts/setup_blenderproc.sh` (D14). **Always run Blender through `scripts/bproc.sh`.**
 - Planes + gate: `scripts/bproc.sh scripts/bproc_ir_plane.py --out data/m3/plane`, then `.venv/bin/python scripts/plane_gate.py data/m3/plane`.
 - Scenes with IR + stereo + timing: `scripts/benchmark_m3.sh data/m3 1000 1001`.
-- Tests: `.venv/bin/python -m pytest` (54 pass).
+- Task A: `.venv/bin/python scripts/pose_eval.py data/m3 1000 1001 --condition C1 --offset 0 0 --out data/m4/pose/<name>.jsonl`; Task B: `scripts/suction_eval.py` (same arguments, no --offset). Harness settings: `configs/harness.yaml` (provisional).
+- Tests: `.venv/bin/python -m pytest` (73 pass).
 
 ## Docs until Saturday (slimmed)
 DIARY: one terse entry per step. ASSUMPTIONS: one-line rows. SOURCES: only items the report cites. PLAN: §5.12 rows only.
