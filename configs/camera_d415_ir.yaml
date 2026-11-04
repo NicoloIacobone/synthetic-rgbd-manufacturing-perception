@@ -40,11 +40,14 @@ materials_metal:               # C3 parts (A-11): Principled BSDF, metallic 1
 sensor_noise:                  # A-12 (user-approved model, 2026-11-04): shot + read noise in DN, shared draws C3/C4
   extra_blur_px: 0.0           # none beyond Blender's 1.5 px Blackman-Harris pixel filter
   read_noise_dn: 1.0
-  e_per_dn: null               # calibrated on anchor (a): median over z of the central-ROI plane-fit RMS = 0.09 px [S-13]
+  e_per_dn: 0.12               # calibrated on anchor (a): median over z of the central-ROI plane-fit RMS = 0.09 px [S-13]
+                               #   (grid: 0.125 -> 0.0885, 0.088 -> 0.106; no noise 0.042). EFFECTIVE value: it lumps all
+                               #   unmodelled error sources (speckle, calibration), not a physical conversion gain
 
 exposure:                      # linear radiance -> 8-bit DN (OpenCV SGBM accepts only 8-bit, A-40)
   mode: auto                   # A-42: per-frame gain on the C3 left image, shared by C4 and right ("fixed" = M3 behaviour)
-  setpoint_dn: null            # mean DN over columns >= ceil(f B / Min-Z); fixed on dev by saturation only (ledger)
+  setpoint_dn: 10              # mean DN over columns >= ceil(f B / Min-Z); ledger rule: highest 10 DN step with <= 0.1%
+                               #   saturated C4 pixels in every dev frame (20 DN: 0.106%); dots cover ~3% of pixels
   gain: 5700.0                 # DN per unit radiance; calibrated once at M3 (2026-11-04: 230 / 0.04037), then fixed
   calib_target_dn: 230         # gain chosen so the 99.9th-percentile pixel of the albedo-0.5 plane at
   calib_z_m: 0.45              #   Min-Z (0.45 m) is 230 DN: no saturation on matte at any valid range
