@@ -4,7 +4,7 @@ Per tenere sul secondo schermo mentre leggi le risposte degli agent. Cerca con `
 
 - **Se una sigla non c'è:** chiedi all'agent che l'ha usata di aggiungerla qui (è una regola in `CLAUDE.md`).
 - **In caso di contrasto** valgono i file di origine indicati in ogni sezione (`docs/PLAN.md`, `docs/ASSUMPTIONS.md`, `docs/SOURCES.md`). Questo file riassume e va corretto.
-- **Aggiornato a:** 5 nov 2026, dopo la decisione sul gate §5.11. Lo stato del lavoro non è qui, è in `docs/STATUS.md`.
+- **Aggiornato a:** 5 nov 2026, dopo il secondo giro del gate §5.11. Lo stato del lavoro non è qui, è in `docs/STATUS.md`.
 
 ## 1. Sigle che si confondono
 
@@ -81,10 +81,10 @@ Fonti: ledger sotto A-45, `scripts/select_harness.py`, `configs/harness.yaml`.
 
 | Sigla | Cosa fa | Stato |
 |---|---|---|
-| `H0` | Uno stadio: corrispondenze fino a 15 mm, Tukey 5 mm, filtro back-face | Candidata per il §5.11 (A-62) |
-| `H1` | Tre stadi da grossolano a fine (20, 10, 5 mm), filtro back-face | Candidata per il §5.11 (A-62) |
-| `H2` | H1 + visibilità ray-cast | **In uso.** È quella che ha fallito il sanity check. Bug della cache del ray-cast corretto il 5 nov (ade985f, A-62) |
-| `H3` | H2 + limite a ogni passo (5 mm, 5°) | Scelta a M4; superata da H2 dopo il fix dei riflessi. Candidata per il §5.11 (A-62): al primo giro non passa, con il bug della cache |
+| `H0` | Uno stadio: corrispondenze fino a 15 mm, Tukey 5 mm, filtro back-face | §5.11 (A-62): primo giro 452/459, secondo giro 459/459 |
+| `H1` | Tre stadi da grossolano a fine (20, 10, 5 mm), filtro back-face | §5.11 (A-62): primo giro 452/459, secondo giro 459/459 |
+| `H2` | H1 + visibilità ray-cast | **In uso, in attesa della scelta su dev.** Ha fallito il sanity check con il bug della cache (416/459). Bug corretto il 5 nov (ade985f, A-62): secondo giro 459/459 |
+| `H3` | H2 + limite a ogni passo (5 mm, 5°) | Scelta a M4; superata da H2 dopo il fix dei riflessi. §5.11 (A-62): primo giro 421/459 con il bug della cache, secondo giro 459/459 |
 | `solver: lm` | ICP scritto da noi, smorzato (Levenberg-Marquardt) | Candidato al primo giro del §5.11 (A-62), con stadi 20/10/5: non passa. Escluso dal secondo giro: non ha test e guadagna una sola vista rispetto a H1 |
 
 ## 5. Task, metriche, ipotesi
@@ -118,12 +118,12 @@ Fonte: PLAN §7, `docs/STATUS.md`.
 | `M2` | Pezzi, scene con fisica, output BOP | Fatta |
 | `M3` | Immagini IR, proiettore, SGBM, test sul piano | Fatta, con un criterio fallito di poco e accettato (3a) |
 | `M4` | Modello di camera, scelta dei parametri su dev, pilota | Fatta |
-| `M5` | Render di test, metriche, statistica | **Ferma al gate §5.11** |
+| `M5` | Render di test, metriche, statistica | **Ferma al gate §5.11:** il secondo giro passa, manca la scelta della variante ICP |
 | `M6` | Report e README | Da fare |
 
 Scadenze: metriche A entro ven 6 nov; bozza del report gio sera; code freeze sab 7 nov 20:00; invio previsto dom 8 nov 18:00; scadenza dom 8 nov 23:59 CET.
 
-Passi di M5 nello `STATUS.md`: step 1 controllo del meccanismo (fatto); 2 passate extra (fatto); 3 render di test (fatto); 4 sanity (**fallito**); 5 metriche; 6 push; 7 ROBI.
+Passi di M5 nello `STATUS.md`: step 1 controllo del meccanismo (fatto); 2 passate extra (fatto); 3 render di test (fatto); 4 sanity (**fallito al primo giro, passa al secondo; variante ICP da scegliere**); 5 metriche; 6 push; 7 ROBI.
 
 ## 7. Opzioni con etichetta
 
@@ -247,7 +247,7 @@ Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 | `A-59` | Il riempimento è bistabile e i render non sono identici bit per bit |
 | `A-60` | Regola di decisione: McNemar e bootstrap insieme |
 | `A-61` | Regioni del sensore: bordo e interno |
-| `A-62` | Diagnosi del gate §5.11: il §5.11 prevale su A-53; solo C1, offset zero, scene di test. Nessun candidato passa; trovato il bug della cache del ray-cast |
+| `A-62` | Diagnosi del gate §5.11: il §5.11 prevale su A-53; solo C1, offset zero, scene di test. Primo giro: nessun candidato passa, trovato il bug della cache del ray-cast. Secondo giro, con cache corretta e 200 000 campioni: H0–H3 passano tutte |
 
 ## 10. Rischi `R1`…`R7`
 
