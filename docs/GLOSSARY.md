@@ -83,8 +83,8 @@ Fonti: ledger sotto A-45, `scripts/select_harness.py`, `configs/harness.yaml`.
 |---|---|---|
 | `H0` | Uno stadio: corrispondenze fino a 15 mm, Tukey 5 mm, filtro back-face | Candidata per il §5.11 (A-62) |
 | `H1` | Tre stadi da grossolano a fine (20, 10, 5 mm), filtro back-face | Candidata per il §5.11 (A-62) |
-| `H2` | H1 + visibilità ray-cast | **In uso.** È quella che ha fallito il sanity check |
-| `H3` | H2 + limite a ogni passo (5 mm, 5°) | Scelta a M4; superata da H2 dopo il fix dei riflessi. Candidata per il §5.11 (A-62) |
+| `H2` | H1 + visibilità ray-cast | **In uso.** È quella che ha fallito il sanity check. Il ray-cast ha il bug della cache (A-62) |
+| `H3` | H2 + limite a ogni passo (5 mm, 5°) | Scelta a M4; superata da H2 dopo il fix dei riflessi. Candidata per il §5.11 (A-62): non passa. Il ray-cast ha il bug della cache |
 | `solver: lm` | ICP scritto da noi, smorzato (Levenberg-Marquardt) | Candidato per il §5.11 (A-62), con stadi 20/10/5. Non è tra i candidati di `select_harness.py` e non ha test in `tests/`: i test servono prima di adottarlo |
 
 ## 5. Task, metriche, ipotesi
@@ -247,7 +247,7 @@ Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 | `A-59` | Il riempimento è bistabile e i render non sono identici bit per bit |
 | `A-60` | Regola di decisione: McNemar e bootstrap insieme |
 | `A-61` | Regioni del sensore: bordo e interno |
-| `A-62` | Diagnosi del gate §5.11: il §5.11 prevale su A-53; solo C1, offset zero, scene di test; candidati e regola nel ledger |
+| `A-62` | Diagnosi del gate §5.11: il §5.11 prevale su A-53; solo C1, offset zero, scene di test. Nessun candidato passa; trovato il bug della cache del ray-cast |
 
 ## 10. Rischi `R1`…`R7`
 
@@ -312,6 +312,7 @@ Fonte: `docs/SOURCES.md`.
 | `scripts/run_eval.py` | Lancia sanity, poi Task A e B. **Se un file di risultato esiste, non lo rifà** |
 | `scripts/select_harness.py` | Sceglie la variante ICP con leximin su dev |
 | `scripts/sanity_candidates.py` | Lancia candidati e ripetizioni di H2 per il §5.11 (A-62). Non calcola recall a offset reali |
+| `scripts/sanity_diagnosis.py` | Diagnosi del §5.11: quale mesh usa davvero la cache, filtri di visibilità, conditioning, slittamenti |
 | `scripts/pose_eval.py`, `suction_eval.py` | Valutazione di Task A e Task B |
 | `scripts/bproc.sh` | Unico modo corretto di lanciare Blender |
 | `.venv`, `.venv-bproc` | Ambienti Python: analisi e BlenderProc |
@@ -334,6 +335,7 @@ Fonte: `docs/SOURCES.md`.
 | BOP | Benchmark e formato standard per la stima della posa |
 | bootstrap | Il modo in cui si calcola il CI. Si pescano 50 scene a caso dalle 50 di test, con ripetizione (una può uscire due volte, un'altra mai), e si ricalcola il risultato. Si ripete 10 000 volte e si guarda quanto oscilla |
 | bounces | Rimbalzi di luce simulati. `glossy_bounces` = rimbalzi speculari; `max_bounces` = totale |
+| cache del ray-cast | Copia in memoria della scena per il ray-cast. **Bug (A-62):** in `pose.py` è indicizzata con `id()` di un array temporaneo, quindi un profilo può usare la mesh di un'altra lunghezza |
 | CAD | Modello 3D esatto del pezzo |
 | CI, CI bootstrap | Intervallo di confidenza: i valori plausibili per il numero vero. "CI bootstrap" = calcolato col bootstrap. Si tengono i valori centrali al 95%. Se il CI di una differenza esclude 0, il segno della differenza è attendibile |
 | clamp | Limite alla dimensione di un passo |
@@ -352,6 +354,7 @@ Fonte: `docs/SOURCES.md`.
 | flying pixels | Punti spuri ai bordi degli oggetti |
 | FOV | Campo visivo |
 | gate | Controllo con criteri fissati prima. Se fallisce ci si ferma |
+| faccia di testa (end face) | Una delle due facce piane alle estremità di un profilo |
 | GGX | Modello matematico dei riflessi di una superficie metallica |
 | GT | Ground truth: la verità nota dal simulatore |
 | harness | L'insieme fisso di algoritmo e parametri usato per valutare |
@@ -392,6 +395,7 @@ Fonte: `docs/SOURCES.md`.
 | sanity check | Controllo che il sistema funzioni prima di guardare i risultati |
 | seed | Numero che fissa la casualità |
 | setpoint | Luminosità media obiettivo dell'auto exposure: 20 DN |
+| sample spacing | Distanza media tra i campioni CAD: √(area/N). 0.80 mm sul profilo da 150 mm con 50 000 campioni |
 | SGBM | Semi-Global Block Matching: l'algoritmo stereo usato, da OpenCV |
 | SNR | Rapporto segnale/rumore |
 | speckle filter | Filtro SGBM che toglie piccole macchie isolate. Finestra: 100 px |
