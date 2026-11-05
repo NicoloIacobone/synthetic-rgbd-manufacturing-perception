@@ -4,7 +4,7 @@ Per tenere sul secondo schermo mentre leggi le risposte degli agent. Cerca con `
 
 - **Se una sigla non c'è:** chiedi all'agent che l'ha usata di aggiungerla qui (è una regola in `CLAUDE.md`).
 - **In caso di contrasto** valgono i file di origine indicati in ogni sezione (`docs/PLAN.md`, `docs/ASSUMPTIONS.md`, `docs/SOURCES.md`). Questo file riassume e va corretto.
-- **Aggiornato a:** 4 nov 2026, commit `b8c8774`. Lo stato del lavoro non è qui, è in `docs/STATUS.md`.
+- **Aggiornato a:** 5 nov 2026, dopo la decisione sul gate §5.11. Lo stato del lavoro non è qui, è in `docs/STATUS.md`.
 
 ## 1. Sigle che si confondono
 
@@ -81,11 +81,11 @@ Fonti: ledger sotto A-45, `scripts/select_harness.py`, `configs/harness.yaml`.
 
 | Sigla | Cosa fa | Stato |
 |---|---|---|
-| `H0` | Uno stadio: corrispondenze fino a 15 mm, Tukey 5 mm, filtro back-face | Candidata |
-| `H1` | Tre stadi da grossolano a fine (20, 10, 5 mm), filtro back-face | Candidata |
+| `H0` | Uno stadio: corrispondenze fino a 15 mm, Tukey 5 mm, filtro back-face | Candidata per il §5.11 (A-62) |
+| `H1` | Tre stadi da grossolano a fine (20, 10, 5 mm), filtro back-face | Candidata per il §5.11 (A-62) |
 | `H2` | H1 + visibilità ray-cast | **In uso.** È quella che ha fallito il sanity check |
-| `H3` | H2 + limite a ogni passo (5 mm, 5°) | Scelta a M4; superata da H2 dopo il fix dei riflessi |
-| `solver: lm` | ICP scritto da noi, smorzato (Levenberg-Marquardt) | Esiste nel codice. Non è tra i candidati di `select_harness.py` e non ha test in `tests/` |
+| `H3` | H2 + limite a ogni passo (5 mm, 5°) | Scelta a M4; superata da H2 dopo il fix dei riflessi. Candidata per il §5.11 (A-62) |
+| `solver: lm` | ICP scritto da noi, smorzato (Levenberg-Marquardt) | Candidato per il §5.11 (A-62), con stadi 20/10/5. Non è tra i candidati di `select_harness.py` e non ha test in `tests/`: i test servono prima di adottarlo |
 
 ## 5. Task, metriche, ipotesi
 
@@ -131,9 +131,9 @@ Le lettere e i numeri valgono solo nel loro contesto.
 
 | Etichetta | Contesto | Significato | Esito |
 |---|---|---|---|
-| Opzione 1 | Gate §5.11, 4 nov sera | Diagnosticare prima su C1 a offset zero | **In attesa di te** |
-| Opzione 2 | Gate §5.11 | Passare subito a H3 e rifare il check | **In attesa di te** |
-| Opzione 3 | Gate §5.11 | Rilassare la soglia o restringere il check | **In attesa di te** |
+| Opzione 1 | Gate §5.11, 4 nov sera | Diagnosticare prima su C1 a offset zero | Scelta il 5 nov (A-62) |
+| Opzione 2 | Gate §5.11 | Passare subito a H3 e rifare il check | Non scelta |
+| Opzione 3 | Gate §5.11 | Rilassare la soglia o restringere il check | Non scelta: la soglia non si tocca (A-62) |
 | `3a` | Gate M3 criterio (iii) | Tenere stereo e impostazioni, documentare il fallimento marginale | Scelta |
 | `3b` | Gate M3 criterio (iii) | Speckle window a 200 px | Rifiutata |
 | `1(b)` | Revisione pre-M4 | Tenere §5.6, fixed sequence, C2b a 0.26 px | Scelta |
@@ -180,7 +180,7 @@ Fonte: PLAN §2.
 | `D14` | Ambiente separato per BlenderProc con patch per macOS |
 | `D15` | Impostazione di M3: proiettore, punti, criteri del gate, regola sulla risoluzione |
 
-## 9. Assunzioni `A-01`…`A-61`
+## 9. Assunzioni `A-01`…`A-62`
 
 Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 
@@ -247,6 +247,7 @@ Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 | `A-59` | Il riempimento è bistabile e i render non sono identici bit per bit |
 | `A-60` | Regola di decisione: McNemar e bootstrap insieme |
 | `A-61` | Regioni del sensore: bordo e interno |
+| `A-62` | Diagnosi del gate §5.11: il §5.11 prevale su A-53; solo C1, offset zero, scene di test; candidati e regola nel ledger |
 
 ## 10. Rischi `R1`…`R7`
 
@@ -302,6 +303,7 @@ Fonte: `docs/SOURCES.md`.
 | `configs/camera_d415_ir.yaml` | Parametri del modello di camera |
 | `configs/harness.yaml` | Parametri di ICP e ventosa, oggi H2 |
 | `data/m5/` | Dati di test, 50 scene. `results/` contiene solo il sanity fallito |
+| `data/m5/diag_sanity/` | Diagnosi del gate §5.11 (A-62): candidati e ripetizioni di H2, solo C1 a offset zero |
 | `data/m5_dev/` | Dati dev con le impostazioni finali; `selection/`, `pilot/` |
 | `data/m5_diag/` | Render di convergenza: `gb1`, `gb3` = glossy bounces 1 e 3, `gb3_max12`, `gb3_s128` |
 | `data/m4/` | Dati dev vecchi, riflessi spenti |
@@ -309,6 +311,7 @@ Fonte: `docs/SOURCES.md`.
 | `src/synthrgbd/` | Codice del progetto (`pose.py` = ICP) |
 | `scripts/run_eval.py` | Lancia sanity, poi Task A e B. **Se un file di risultato esiste, non lo rifà** |
 | `scripts/select_harness.py` | Sceglie la variante ICP con leximin su dev |
+| `scripts/sanity_candidates.py` | Lancia candidati e ripetizioni di H2 per il §5.11 (A-62). Non calcola recall a offset reali |
 | `scripts/pose_eval.py`, `suction_eval.py` | Valutazione di Task A e Task B |
 | `scripts/bproc.sh` | Unico modo corretto di lanciare Blender |
 | `.venv`, `.venv-bproc` | Ambienti Python: analisi e BlenderProc |
