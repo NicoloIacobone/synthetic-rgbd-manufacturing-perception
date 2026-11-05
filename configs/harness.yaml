@@ -14,8 +14,10 @@ icp:                         # synthrgbd.pose.IcpParams (A-46). SELECTED on dev 
   min_points: 30             # fewer valid scene points -> no estimate (counted as failure)
 
 model_sampling:
-  points_per_model: 50000    # area-uniform CAD samples with CAD normals; 6000 gave 0.07-0.10 mm zero-offset drift on
-                             #   ideal ray-cast views (sparse targets), 60000 gave 0.006-0.019 mm (M4 step 1, unit tests)
+  points_per_model: 200000   # area-uniform CAD samples with CAD normals. 200000 from 2026-11-05 (A-62, ledger): the drift left
+                             #   on ideal depth was bounded by about one sample spacing; 0.80 -> 0.40 mm on the 150 mm profile.
+                             #   Before: 6000 gave 0.07-0.10 mm zero-offset drift on ideal ray-cast views (sparse targets),
+                             #   60000 gave 0.006-0.019 mm (M4 step 1, unit tests)
   seed: 0                    # harness constant (not a §5.10 stream): same model samples everywhere
 
 instances:
