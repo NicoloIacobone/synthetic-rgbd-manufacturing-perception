@@ -15,7 +15,7 @@ Controlla prima qui. Sono le coppie che somigliano di più.
 | `A1` | Il test principale del Task A: ICP con partenza spostata di 10 mm / 10° | `A-01` = assunzione n. 1. `A#1` = riga 1 della sezione A di `AI_USE_LOG.md` |
 | `A2` | Test opzionale del Task A: registrazione globale, poi ICP. Non è stato fatto | `A-02` = assunzione sulla scadenza |
 | "metriche A" | I numeri del Task A | Le assunzioni `A-xx` |
-| `H0`, `H1`, `H2`, `H3` | Varianti dell'algoritmo ICP (senza trattino). `H2` è quella in uso | `H-1`, `H-2` = ipotesi scientifiche (con trattino) |
+| `H0`, `H1`, `H2`, `H3` | Varianti dell'algoritmo ICP (senza trattino). `H3` è quella in uso | `H-1`, `H-2` = ipotesi scientifiche (con trattino) |
 | `D1`…`D15` | Decisioni approvate, in PLAN §2 | `D415` = la camera. `D4` = il chip di Intel. `D = 0.015` = lobo diffuso del metallo. `D` (lettera) = opzione bright matte |
 | `C1`…`C4` | Le condizioni di profondità confrontate | `(C)` = opzione rifiutata (A-53). `C2a`/`C2b` sono due livelli di `C2` |
 | `R1`…`R7` | Rischi, in PLAN §8 | `r02`, `r04` = passate con roughness 0.2 e 0.4 |
@@ -69,8 +69,8 @@ Fonti: PLAN §5.1, `src/synthrgbd/conditions.py`. Le cartelle sono dentro ogni s
 | `C3r02`, `C3r04` | Come C3 con roughness 0.2 e 0.4 | Descrittive, 50 scene (A-51) | `depth_stereo_r02`, `_r04` |
 | `C3nogloss` | Come C3 senza riflessi | Descrittiva: com'era prima del bug fix (A-57) | `depth_stereo_nogloss` |
 | `C4bright` | Come C4 con albedo 0.5 | Descrittiva: separa "scuro" da "opaco" (A-52) | `depth_stereo_bright` |
-| `C3loose`, `C4loose` | C3 e C4 con i tre filtri SGBM spenti | §5.8, scene 0–9 | `depth_stereo_metal_loose`, `_matte_loose` |
-| `C3nouniq`, `C3nolr`, `C3nospeckle` | C3 con un filtro spento alla volta | §5.8, solo classi del sensore | `depth_stereo_metal_nouniq`, ecc. |
+| `C3loose`, `C4loose` | C3 e C4 con uniqueness e speckle spenti. Il controllo sinistra-destra è **rimasto acceso**, anche se §5.8 chiedeva di spegnerlo (voce 18 di `docs/M5_OPEN_ITEMS.md`) | §5.8, scene 0–9 | `depth_stereo_metal_loose`, `_matte_loose` |
+| `C3nouniq`, `C3nolr`, `C3nospeckle` | C3 con un filtro spento alla volta. **`C3nolr` è identica a C3:** il valore −1 non spegne il controllo sinistra-destra in OpenCV 5.0.0 | §5.8, solo classi del sensore | `depth_stereo_metal_nouniq`, ecc. |
 | `C3redraw1`, `C3redraw2` | Stesse immagini IR e stesso matcher, nuovo rumore casuale | Misura la variabilità di C3 (A-59) | `depth_stereo_metal_redraw1`, `2` |
 
 Solo C1, C2a, C2b, C3 e C4 sono condizioni del protocollo. Le altre non entrano mai nei test confermativi.
@@ -118,12 +118,12 @@ Fonte: PLAN §7, `docs/STATUS.md`.
 | `M2` | Pezzi, scene con fisica, output BOP | Fatta |
 | `M3` | Immagini IR, proiettore, SGBM, test sul piano | Fatta, con un criterio fallito di poco e accettato (3a) |
 | `M4` | Modello di camera, scelta dei parametri su dev, pilota | Fatta |
-| `M5` | Render di test, metriche, statistica | **Ferma al gate §5.11:** il secondo giro passa, manca la scelta della variante ICP |
+| `M5` | Render di test, metriche, statistica | **Chiusa il 2026-11-05** (risultati in `data/m5/results_v2/`). Dubbi e cose non fatte in `docs/M5_OPEN_ITEMS.md` |
 | `M6` | Report e README | Da fare |
 
 Scadenze: metriche A entro ven 6 nov; bozza del report gio sera; code freeze sab 7 nov 20:00; invio previsto dom 8 nov 18:00; scadenza dom 8 nov 23:59 CET.
 
-Passi di M5 nello `STATUS.md`: step 1 controllo del meccanismo (fatto); 2 passate extra (fatto); 3 render di test (fatto); 4 sanity (**fallito al primo giro, passa al secondo; variante ICP da scegliere**); 5 metriche; 6 push; 7 ROBI.
+Passi di M5 nello `STATUS.md`: step 1 controllo del meccanismo (fatto); 2 passate extra (fatto); 3 render di test (fatto); 4 sanity (fallito al primo giro, passa al secondo; scelta H3); 5 metriche (fatte); 6 push (**aspetta l'ok dell'utente**); 7 ROBI (da fare).
 
 ## 7. Opzioni con etichetta
 
@@ -296,6 +296,7 @@ Fonte: `docs/SOURCES.md`.
 | `docs/ASSUMPTIONS.md` | Assunzioni, ledger, ipotesi |
 | `docs/SOURCES.md` | Fonti e stato di verifica |
 | `docs/REPORT_PLAN.md` | Pagine per sezione del report, schema della riflessione |
+| `docs/M5_OPEN_ITEMS.md` | Dubbi, cose non fatte e controlli da fare alla chiusura di M5. "Voce N" = riga N di questo file. La voce 18 aspetta una decisione |
 | `docs/DIARY.md` | Cronologia, solo in aggiunta |
 | `docs/AI_USE_LOG.md` | Interventi sull'AI, per la nota nel report. `A#n` = riga n della sezione A |
 | `docs/personal/` | La tua guida personale, fuori da git |

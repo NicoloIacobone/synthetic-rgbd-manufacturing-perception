@@ -4,7 +4,7 @@ Synthetic RGB-D of aluminium profiles and brackets with a RealSense D415 camera 
 
 Authoritative requirements are in [`task_description.md`](../task_description.md). This file records **decisions and how they will be evaluated**. Assumptions live in [`ASSUMPTIONS.md`](ASSUMPTIONS.md) (IDs `A-xx`, `H-x`), sources in [`SOURCES.md`](SOURCES.md) (IDs `[S-xx]`), the report outline in [`REPORT_PLAN.md`](REPORT_PLAN.md), and the current state in [`STATUS.md`](STATUS.md).
 
-- **Status:** Phase 0 (planning) and pre-Phase-1 setup are complete as of 2026-11-03; in Phase 1, milestones M1 and M2 are done (2026-11-03). **M3 done on 2026-11-04 with one marginal gate failure:** gate criteria A-38 (i), (ii), (iv) pass and (iii) fails marginally; the user kept the stereo route and the matcher settings of commit 044ee81 (option 3a, see §7). Resolution rule A-39 met (43.7 s per frame, 1280×720 kept). M4 is closed and M5 is stopped at the failed §5.11 sanity gate; [`STATUS.md`](STATUS.md) has the current state. The protocol (§5) is frozen at git tag `protocol-v1`; changes after that are deviations (§5.12).
+- **Status:** Phase 0 (planning) and pre-Phase-1 setup are complete as of 2026-11-03; in Phase 1, milestones M1 and M2 are done (2026-11-03). **M3 done on 2026-11-04 with one marginal gate failure:** gate criteria A-38 (i), (ii), (iv) pass and (iii) fails marginally; the user kept the stereo route and the matcher settings of commit 044ee81 (option 3a, see §7). Resolution rule A-39 met (43.7 s per frame, 1280×720 kept). M4 and M5 are closed (M5 on 2026-11-05, outcome in §7); ROBI (A-55) and M6 are next; [`STATUS.md`](STATUS.md) has the current state. The protocol (§5) is frozen at git tag `protocol-v1`; changes after that are deviations (§5.12).
 - **Deadline:** Sun 2026-11-08 23:59 CET (A-02).
 - **Budget:** about 6 h/day, Apple M2 with 8 GB, free software only.
 
@@ -205,6 +205,8 @@ Work proceeds as fast as it goes. Dates are **latest-by** gates, not planned slo
 | M4 Camera model done | Metal/matte, IR noise and blur, SGBM tuning, 5-scene pilot on the dev split (ceiling/floor check; power estimate A-18; tune hyperparameters; log any design change as a deviation, §5.12) | — |
 | M5 Experiment | Full renders, A1 + B, sensor metrics, statistics, invalidation check | **A metrics by Fri 6 Nov end of day** → otherwise freeze B |
 | M6 Report | Skeleton → figures → text → reflection → AI note; README | **Code freeze Sat 7 Nov 20:00. Target submission Sun 8 Nov 18:00** |
+
+**M5 outcome (2026-11-05, commit 26cd449, clean tree; gate "A metrics by Fri 6 Nov" met).** Sanity §5.11 passes after a harness fix (§5.12, A-62). Seeds 0–49, 459 instance-views. A1 recall@5 mm: C1 0.732, C2a 0.749, C2b 0.590, C3 0.085, C4 0.386. Fixed sequence, all three reject: C1−C3 +0.647, C2b−C3 +0.505, C3−C4 −0.301. Task B on brackets: C1 0.821, C2a 0.761, C2b 0.615, C3 0.145, C4 0.359. §5.8 shows no ranking flip, **but the left-right check was not actually off** in the loose variants, so §5.8 is only partly done, pending the user's decision. Everything uncertain or not run is in [`M5_OPEN_ITEMS.md`](M5_OPEN_ITEMS.md).
 
 ## 8. Risks
 

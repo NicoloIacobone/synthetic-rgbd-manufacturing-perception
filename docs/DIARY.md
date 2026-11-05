@@ -337,3 +337,23 @@ User approved steps 1-3. Cache fix ade985f (an entry keeps its array alive; one 
 **Attribution:** H1 has no ray cast, so 452 → 459 is the sample count alone. H2's 416 → 459 is both changes; cache fix at 50 000 samples was not run. Zero offset cannot separate the four: views differing from H2 by > 0.01 mm: H3 0, H1 1, H0 2.
 **My prediction vs result:** predicted worst about 0.43 mm on the 150 mm profile; got 0.309 mm there and 0.404 mm on a bracket. H1 max by part, 50 000 → 200 000 samples: 60 mm 0.356 → 0.314, 100 mm 0.673 → 0.238, 150 mm 0.853 → 0.309, bracket 0.323 → 0.404 mm; bracket p99 0.207 → 0.340 mm while its median goes 0.011 → 0.005 mm. Max / spacing on the bracket goes 0.98 → 2.46, so "about one sample spacing" is not a general bound. Two views drive it: 7/1/4 (0.323 → 0.404 mm, R 0.29°, 760 points) and 20/0/0 (0.07 → 0.37 mm, R 0.53°, 976 points). Not explained; margin to the threshold 0.096 mm (H0 0.073 mm).
 **Stale until re-run:** all H2 and H3 numbers on dev, the pilot and the H2 pick. Next step needs approval: dev selection in a new folder. run_eval.py needs a new results folder too: in data/m5/results it would keep the failed sanity file and stop.
+
+## 2026-11-05, evening: M5 closed
+
+Run `scripts/run_m5.sh`, commit 26cd449, clean tree, ended 19:49 CET. Relaunched detached at 17:28 after the session end killed it at about 17:26; it resumed from finished files. Seeds 0–49 (§5.10), 459 instance-views (342 profile, 117 bracket), 1 excluded. Harness H3 (stages 20/10/5 mm, ray-cast visibility, 5 mm / 5° step clamp), 200 000 CAD samples. Sanity on C1 at zero offset: 459/459 < 0.5 mm.
+
+A1 recall@5 mm (10 mm / 10°): C1 0.732 [0.682, 0.779], C2a 0.749 [0.697, 0.799], C2b 0.590 [0.521, 0.657], C3 0.085 [0.054, 0.118], C4 0.386 [0.327, 0.444]. Descriptive: reflections off 0.102, roughness 0.2 0.159, roughness 0.4 0.288, bright matte 0.444.
+
+Fixed sequence, all three reject (McNemar p < 0.05 and CI excludes 0): C1−C3 +0.647 [0.583, 0.708], p 2e-78; C2b−C3 +0.505 [0.429, 0.580], p 7e-59; C3−C4 −0.301 [−0.356, −0.244], p 6e-31. Second bootstrap stream agrees to the third decimal. MDE 7.8–10.8 points on instance-views, 23.7–32.8 on scenes.
+
+Sweep, recall@5 mm at 2 / 5 / 10 / 20 mm: C1 1.000, 0.919, 0.732, 0.667; C2a 0.989, 0.917, 0.749, 0.669; C2b 0.760, 0.708, 0.590, 0.523; C3 0.135, 0.111, 0.085, 0.072; C4 0.516, 0.464, 0.386, 0.316. The ordering C1 ≈ C2a > C2b > C4 > C3 holds at every offset.
+
+Task B brackets, n = 117: C1 0.821, C2a 0.761, C2b 0.615, C3 0.145, C4 0.359. Grasp planned: C1 0.915, C3 0.444, C4 0.718. Profiles 0 everywhere, by geometry (A-33), while the planner proposes grasps on 0.9% of C1 views and 97% of C2b views.
+
+Part pixels, C1 / C2a / C2b / C3 / C4: median |error| 0 / 0.6 / 2.0 / 4.1 / 2.2 mm; invalid 0 / 0 / 0 / 5.2% / 1.8%; C3 correct 53.7%, behind the surface 33.6%.
+
+**Surprise: the §5.8 loose variants never turned the left-right check off.** `C3nolr` matched C3 exactly in the sensor metrics. Tested on OpenCV 5.0.0: `disp12MaxDiff` −1 and 0 are identical to 1 on a synthetic pair, 1000 changes 2 880 pixels, and all 20 `C3nolr` frames on disk equal C3. No primary number is affected. The ranking does not flip under the two filters that were off. Not re-run; the user decides (open item 18).
+
+Checked and harmless: strict and loose recall are equal by cancelling flips (C3 2 up, 2 down; C4 1 up, 1 down); all 98 views differ. C1 median translation error 1.24 mm against axial 0.28 mm on profiles comes from a bimodal axial error. Tray MAE is inflated by pixels past the tray (12 of 100 views, up to the 6553.5 mm ceiling); parts unaffected.
+
+C3 noise redraws, seeds 0–9: 0.143, 0.133, 0.071; 9 and 13 of 98 views change side. C3−C4 stays negative. 33 open items in `docs/M5_OPEN_ITEMS.md`. Nothing pushed.
