@@ -123,7 +123,7 @@ Fonte: PLAN §7, `docs/STATUS.md`.
 
 Scadenze: metriche A entro ven 6 nov; bozza del report gio sera; code freeze sab 7 nov 20:00; invio previsto dom 8 nov 18:00; scadenza dom 8 nov 23:59 CET.
 
-Passi di M5 nello `STATUS.md`: step 1 controllo del meccanismo (fatto); 2 passate extra (fatto); 3 render di test (fatto); 4 sanity (fallito al primo giro, passa al secondo; scelta H3); 5 metriche (fatte); 6 push (**aspetta l'ok dell'utente**); 7 ROBI (da fare).
+Passi di M5 nello `STATUS.md`: step 1 controllo del meccanismo (fatto); 2 passate extra (fatto); 3 render di test (fatto); 4 sanity (fallito al primo giro, passa al secondo; scelta H3); 5 metriche (fatte); 6 push (fatto); 7 ROBI (da fare).
 
 ## 7. Opzioni con etichetta
 

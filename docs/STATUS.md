@@ -6,14 +6,13 @@ Handoff note between sessions. **Read first**, then CLAUDE.md's other context fi
 - **Phase:** Phase 1. **M1–M5 done.** M5 closed on 2026-11-05 with its uncertainties written down rather than resolved (user's decision): [`M5_OPEN_ITEMS.md`](M5_OPEN_ITEMS.md).
 - **Protocol:** frozen at tag `protocol-v1`; 5 rows in PLAN §5.12. Primary endpoint: A1 recall at MSSD < 5 mm, offset 10 mm / 10°; fixed-sequence testing C1 vs C3 → C2b vs C3 → C3 vs C4 at α = 0.05; unit = instance-view, visib_fract ≥ 0.1, a missing estimate = failure.
 - **Gates:** A metrics by Fri 6 Nov **met**; code freeze Sat 7 Nov 20:00; target submission Sun 8 Nov 18:00. Report skeleton: Thursday evening.
-- **Git:** 22 commits plus the closure are ahead of `origin/main` (abbae3d). **Do not push until the user approves.**
+- **Git:** everything through the M5 closure is pushed to `origin/main` (2026-11-05, user's approval).
 
 ## Next steps, in order
-1. **The user runs a review agent** on the finished milestone.
+1. **The user runs a review agent** on the finished milestone (planned for Fri 6 Nov). Start nothing else until then.
 2. **The user decides open item 18:** the §5.8 loose variants left the left-right check on, because `disp12MaxDiff` −1 behaves as 1 in OpenCV 5.0.0. Either re-match seeds 0–9 with a large value and re-run `C3loose` and `C4loose` (about 20 min of ICP plus matching), or keep and disclose it with a §5.12 row.
-3. **Push** after the user's approval.
-4. **ROBI (A-55):** 3 h time box, one figure (ROBI-D415 vs C3 0.15 / 0.2 / 0.4 vs C4; mm and px; range mismatch stated), framed on the mechanism: on metal, does the real D415 fill (smooth or bias towards the background) or leave holes? One retry of the fetch (Zigzag remainder, Chrome screw `1qqG0KVW6_Upxc95Wuk9HecR0JrxGZSd4`); Drive refused range requests after 60 MB. Zigzag results so far in `data/m5/robi/zigzag.json` (26 views). `scripts/ir_appearance.py` and `scripts/fig_robi.py` take the test `sensor.json` (`data/m5/results_v2/sensor.json`).
-5. **M6:** report, reflection, AI note, README. Tell the user: C4 albedo 0.247 and harness H3 differ from what was approved or expected (A-24, A-62); the approved rules moved them.
+3. **ROBI (A-55):** 3 h time box, one figure (ROBI-D415 vs C3 0.15 / 0.2 / 0.4 vs C4; mm and px; range mismatch stated), framed on the mechanism: on metal, does the real D415 fill (smooth or bias towards the background) or leave holes? One retry of the fetch (Zigzag remainder, Chrome screw `1qqG0KVW6_Upxc95Wuk9HecR0JrxGZSd4`); Drive refused range requests after 60 MB. Zigzag results so far in `data/m5/robi/zigzag.json` (26 views). `scripts/ir_appearance.py` and `scripts/fig_robi.py` take the test `sensor.json` (`data/m5/results_v2/sensor.json`).
+4. **M6:** report, reflection, AI note, README. Tell the user: C4 albedo 0.247 and harness H3 differ from what was approved or expected (A-24, A-62); the approved rules moved them.
 
 ## Results (commit 26cd449, clean tree; `data/m5/results_v2/stats.json`)
 Seeds 0–49, 459 instance-views (342 profile, 117 bracket), 1 excluded. Sanity on C1 at zero offset: 459/459 < 0.5 mm.
