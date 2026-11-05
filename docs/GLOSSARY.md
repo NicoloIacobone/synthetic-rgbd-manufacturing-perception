@@ -48,7 +48,7 @@ Da solo, il simbolo § indica una sezione di `docs/PLAN.md`.
 | §5.9 | Guasti attesi, tra cui "ICP scivola lungo i prismi" |
 | §5.10 | Scene dev e test, seed, accoppiamento |
 | **§5.11** | **Sanity check su C1 a offset zero: è il gate fallito ora** |
-| §5.12 | Registro delle deviazioni dal protocollo (4 righe) |
+| §5.12 | Registro delle deviazioni dal protocollo (5 righe) |
 | §6 | Consegna minima e lavoro opzionale |
 | §7 | Milestone e gate |
 | §8 | Rischi `R1`…`R7` |
@@ -83,8 +83,8 @@ Fonti: ledger sotto A-45, `scripts/select_harness.py`, `configs/harness.yaml`.
 |---|---|---|
 | `H0` | Uno stadio: corrispondenze fino a 15 mm, Tukey 5 mm, filtro back-face | §5.11 (A-62): primo giro 452/459, secondo giro 459/459 |
 | `H1` | Tre stadi da grossolano a fine (20, 10, 5 mm), filtro back-face | §5.11 (A-62): primo giro 452/459, secondo giro 459/459 |
-| `H2` | H1 + visibilità ray-cast | **In uso, in attesa della scelta su dev.** Ha fallito il sanity check con il bug della cache (416/459). Bug corretto il 5 nov (ade985f, A-62): secondo giro 459/459 |
-| `H3` | H2 + limite a ogni passo (5 mm, 5°) | Scelta a M4; superata da H2 dopo il fix dei riflessi. §5.11 (A-62): primo giro 421/459 con il bug della cache, secondo giro 459/459 |
+| `H2` | H1 + visibilità ray-cast | Ha fallito il sanity check con il bug della cache (416/459). Bug corretto il 5 nov (ade985f, A-62): secondo giro 459/459. Superata da H3 su dev |
+| `H3` | H2 + limite a ogni passo (5 mm, 5°) | Scelta a M4; superata da H2 dopo il fix dei riflessi. **In uso** (scelta su dev il 5 nov, A-62). §5.11: primo giro 421/459 con il bug della cache, secondo giro 459/459 |
 | `solver: lm` | ICP scritto da noi, smorzato (Levenberg-Marquardt) | Candidato al primo giro del §5.11 (A-62), con stadi 20/10/5: non passa. Escluso dal secondo giro: non ha test e guadagna una sola vista rispetto a H1 |
 
 ## 5. Task, metriche, ipotesi
@@ -238,7 +238,7 @@ Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 | `A-50` | Check di planarità della ventosa |
 | `A-51` | Opzione (B): roughness 0.2 e 0.4 su 50 scene |
 | `A-52` | Opzione (D): passata opaca chiara, albedo 0.5. L'albedo di C4 è 0.247 |
-| `A-53` | Opzione (C) rifiutata. **Niente cambia dopo i dati di test: è in conflitto con §5.11.** Il testo cita H3, il ledger H2 |
+| `A-53` | Opzione (C) rifiutata. Niente cambia dopo i dati di test, salvo un §5.11 fallito, che ha la precedenza: usato una volta per l'harness (H3, A-62) |
 | `A-54` | Controllo con figura prima del render: ha trovato il bug A-57 |
 | `A-55` | ROBI obbligatorio dopo M5, 3 ore al massimo |
 | `A-56` | Modalità operativa: l'agent si ferma solo per valori congelati, risultati che minacciano l'esperimento, gate falliti |
@@ -301,8 +301,8 @@ Fonte: `docs/SOURCES.md`.
 | `docs/personal/` | La tua guida personale, fuori da git |
 | `configs/default.yaml` | Parametri congelati del protocollo |
 | `configs/camera_d415_ir.yaml` | Parametri del modello di camera |
-| `configs/harness.yaml` | Parametri di ICP e ventosa, oggi H2 |
-| `data/m5/` | Dati di test, 50 scene. `results/` contiene solo il sanity fallito |
+| `configs/harness.yaml` | Parametri di ICP e ventosa, oggi H3 con 200 000 campioni |
+| `data/m5/` | Dati di test, 50 scene. `results/` contiene solo il sanity fallito; `results_v2/` i risultati con H3; `results_v2_s58/` il §5.8 sulle scene 0–9 |
 | `data/m5/diag_sanity/` | Diagnosi del gate §5.11 (A-62), primo giro: candidati e ripetizioni di H2, solo C1 a offset zero |
 | `data/m5/diag_sanity_fix/` | Secondo giro del §5.11: H0–H3 con la cache corretta e 200 000 campioni, solo C1 a offset zero |
 | `data/m5_dev/` | Dati dev con le impostazioni finali; `selection/`, `pilot/` |
@@ -311,7 +311,9 @@ Fonte: `docs/SOURCES.md`.
 | `data/robi/` | Parte del dataset ROBI scaricata |
 | `src/synthrgbd/` | Codice del progetto (`pose.py` = ICP) |
 | `scripts/run_eval.py` | Lancia sanity, poi Task A e B. **Se un file di risultato esiste, non lo rifà** |
-| `scripts/select_harness.py` | Sceglie la variante ICP con leximin su dev |
+| `scripts/select_harness.py` | Sceglie la variante ICP con leximin su dev. `data/m5_dev/selection_fix/` = scelta dopo il fix |
+| `scripts/run_m5.sh` | Lancia tutte le metriche di M5, riprende da dove si è fermato |
+| `scripts/robustness_s58.py` | Confronto strict e loose del §5.8, con la regola del ledger |
 | `scripts/sanity_candidates.py` | Lancia candidati e ripetizioni di H2 per il §5.11 (A-62). Non calcola recall a offset reali |
 | `scripts/sanity_diagnosis.py` | Diagnosi del §5.11: quale mesh usa davvero la cache, filtri di visibilità, conditioning, slittamenti |
 | `scripts/pose_eval.py`, `suction_eval.py` | Valutazione di Task A e Task B |
