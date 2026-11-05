@@ -1,5 +1,7 @@
 """§5.11 diagnosis (A-62): why ICP leaves the ground-truth pose on ideal depth. C1, zero offset, test scenes only.
 No recall at a real offset is computed and no ICP variant outside the ledger is evaluated.
+The diagnosis of the cache bug was run at commit 1887f8e, before the fix: from the fix on, `replay` must show every
+profile on its own mesh, which is how the second round checks the fix.
 
 Usage (run in this order):
   OMP_NUM_THREADS=2 .venv/bin/python scripts/sanity_diagnosis.py replay <root> <diag_dir> <first> <last>

@@ -27,8 +27,8 @@ from synthrgbd.parts import PART_CATALOGUE, Mesh, ProfileSpec, make_part
 
 
 def load_part_models(n_pts: int, seed: int) -> dict:
-    """Per obj_id: mesh, CAD samples + normals (seed: harness constant), unique vertices (MSSD),
-    bounding-box centre (offset pivot) and symmetries (A-20)."""
+    """Per obj_id: mesh, its triangles as one long-lived array (ray cast, see _model_scene), CAD samples + normals
+    (seed: harness constant), unique vertices (MSSD), bounding-box centre (offset pivot) and symmetries (A-20)."""
     models = {}
     for obj_id, (name, spec) in PART_CATALOGUE.items():
         mesh = make_part(spec)
@@ -36,7 +36,7 @@ def load_part_models(n_pts: int, seed: int) -> dict:
         verts = unique_vertices(mesh)
         is_profile = isinstance(spec, ProfileSpec)
         models[obj_id] = {
-            "name": name, "mesh": mesh, "pts": pts, "nrm": nrm, "verts": verts,
+            "name": name, "mesh": mesh, "tri": mesh.triangles, "pts": pts, "nrm": nrm, "verts": verts,
             "centre": (verts.min(0) + verts.max(0)) / 2,
             "syms": profile_symmetries() if is_profile else equal_leg_bracket_symmetries(),
             "type": "profile" if is_profile else "bracket"}
@@ -141,13 +141,16 @@ class IcpParams:
 
 
 def _model_scene(tri: np.ndarray, cache: dict = {}):                  # noqa: B006 (deliberate cache)
+    """Ray-casting scene of `tri`, cached by array identity. An entry keeps `tri` alive, so its id() cannot be reused by
+    another array (A-62: profiles were ray-cast against the mesh of another length). Pass a long-lived array such as
+    load_part_models()["tri"]: `Mesh.triangles` is a new array per call and would add an entry each time."""
     key = (id(tri), tri.shape)
     if key not in cache:
         sc = o3d.t.geometry.RaycastingScene()
         v = tri.reshape(-1, 3).astype(np.float32)
         sc.add_triangles(o3d.core.Tensor(v), o3d.core.Tensor(np.arange(len(v), dtype=np.uint32).reshape(-1, 3)))
-        cache[key] = sc
-    return cache[key]
+        cache[key] = (tri, sc)
+    return cache[key][1]
 
 
 def visible_model_points(model_pts: np.ndarray, model_nrm: np.ndarray, cam_in_model: np.ndarray,

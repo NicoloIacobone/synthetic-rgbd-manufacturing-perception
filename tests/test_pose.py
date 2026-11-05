@@ -146,3 +146,29 @@ def test_raycast_visibility_removes_self_occluded_faces():
     inner_x_leg_top = (np.abs(mp[:, 1] - 4.0) < 1e-6) & (mp[:, 0] > 4.0)
     assert ray.sum() < back.sum()
     assert not ray[inner_x_leg_top & back].any()
+
+
+# Regression tests for the cache bug found at the §5.11 gate (A-62). `Mesh.triangles` returns a new array per call and
+# all profile lengths have the same triangle count, so a cache keyed on id() could hand back another profile's scene.
+
+def test_raycast_visibility_uses_the_mesh_it_is_given():
+    """A longer profile encloses the end faces of a shorter one, so its scene would cull them."""
+    from synthrgbd.pose import visible_model_points
+    short, long_ = make_part(PART_CATALOGUE[1][1]), make_part(PART_CATALOGUE[3][1])
+    mp, mn = sample_with_normals(short, 20000, np.random.default_rng(0))
+    cam = np.array([150.0, 100.0, 400.0])                  # sees the +z end face of the 60 mm profile
+    end_face = np.abs(mp[:, 2] - 30.0) < 1e-9
+    assert end_face.sum() > 100
+    for _ in range(10):
+        hidden = visible_model_points(mp, mn, cam, long_.triangles)
+        assert hidden[end_face].mean() < 0.05              # the long mesh hides them, bar the 0.5 mm tolerance at its side
+        assert visible_model_points(mp, mn, cam, short.triangles)[end_face].all()
+
+
+def test_load_part_models_gives_each_part_its_own_long_lived_triangles():
+    from synthrgbd.pose import _model_scene, load_part_models
+    models = load_part_models(100, 0)
+    assert {o: float(np.ptp(m["tri"][:, :, 2])) for o, m in models.items()} == {1: 60.0, 2: 100.0, 3: 150.0, 4: 30.0}
+    assert models[1]["tri"] is models[1]["tri"]            # not rebuilt per access, unlike Mesh.triangles
+    assert _model_scene(models[1]["tri"]) is _model_scene(models[1]["tri"])
+    assert _model_scene(models[1]["tri"]) is not _model_scene(models[3]["tri"])

@@ -75,7 +75,7 @@ def main():
                 mask = cv2.imread(str(sc / "mask_visib" / f"{int(im):06d}_{k:06d}.png"), cv2.IMREAD_GRAYSCALE) > 0
                 pts = backproject(depth, erode_mask(mask, p.mask_erosion_px), K)
                 t = time.perf_counter()
-                T_est, info = icp_refine(pts, m["pts"], m["nrm"], T0, p, m["mesh"].triangles)
+                T_est, info = icp_refine(pts, m["pts"], m["nrm"], T0, p, m["tri"])
                 row = {"scene": seed, "im_id": int(im), "gt_id": k, "obj_id": g["obj_id"], "type": m["type"],
                        "visib_fract": gi["visib_fract"], "n_pts": info["n_scene"], "status": info["status"],
                        "t_icp_s": time.perf_counter() - t,
