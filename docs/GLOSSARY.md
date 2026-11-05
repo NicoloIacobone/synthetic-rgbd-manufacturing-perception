@@ -329,10 +329,10 @@ Fonte: `docs/SOURCES.md`.
 | bistabile | Piccolissime differenze fanno saltare il risultato tra due stati (A-59) |
 | BlenderProc, Blender, Cycles | Libreria per dati sintetici, programma 3D, motore di rendering |
 | BOP | Benchmark e formato standard per la stima della posa |
-| bootstrap | Stima l'incertezza ricampionando le scene con ripetizione |
+| bootstrap | Il modo in cui si calcola il CI. Si pescano 50 scene a caso dalle 50 di test, con ripetizione (una può uscire due volte, un'altra mai), e si ricalcola il risultato. Si ripete 10 000 volte e si guarda quanto oscilla |
 | bounces | Rimbalzi di luce simulati. `glossy_bounces` = rimbalzi speculari; `max_bounces` = totale |
 | CAD | Modello 3D esatto del pezzo |
-| CI | Intervallo di confidenza |
+| CI, CI bootstrap | Intervallo di confidenza: i valori plausibili per il numero vero. "CI bootstrap" = calcolato col bootstrap. Si tengono i valori centrali al 95%. Se il CI di una differenza esclude 0, il segno della differenza è attendibile |
 | clamp | Limite alla dimensione di un passo |
 | coarse-to-fine, stadi | ICP da grossolano a preciso: 20, poi 10, poi 5 mm |
 | conditioning | Quanto il sistema di equazioni è stabile. Mal condizionato = quasi singolare |
@@ -361,7 +361,7 @@ Fonte: `docs/SOURCES.md`.
 | LM | Levenberg-Marquardt: ottimizzazione con smorzamento |
 | matcher | L'algoritmo che accoppia immagine sinistra e destra |
 | maximin | Sceglie chi ha il peggior risultato più alto. Degenere quando C3 è 0 ovunque |
-| McNemar | Test su coppie: guarda i casi in cui una condizione riesce e l'altra no |
+| McNemar | Test per due condizioni sugli stessi casi. Guarda solo quelli in cui ne riesce una sola: senza differenza reale si dividerebbero circa a metà. Il **p** (p-value) dice quanto spesso il caso darebbe uno squilibrio almeno così forte; serve p < 0.05 |
 | MDE | Effetto minimo rilevabile |
 | MERL | Database di misure di materiali da cui viene la roughness |
 | Min-Z | Distanza minima misurabile: 450 mm a 1280×720 |
