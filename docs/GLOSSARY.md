@@ -83,9 +83,9 @@ Fonti: ledger sotto A-45, `scripts/select_harness.py`, `configs/harness.yaml`.
 |---|---|---|
 | `H0` | Uno stadio: corrispondenze fino a 15 mm, Tukey 5 mm, filtro back-face | Candidata per il §5.11 (A-62) |
 | `H1` | Tre stadi da grossolano a fine (20, 10, 5 mm), filtro back-face | Candidata per il §5.11 (A-62) |
-| `H2` | H1 + visibilità ray-cast | **In uso.** È quella che ha fallito il sanity check. Il ray-cast ha il bug della cache (A-62) |
-| `H3` | H2 + limite a ogni passo (5 mm, 5°) | Scelta a M4; superata da H2 dopo il fix dei riflessi. Candidata per il §5.11 (A-62): non passa. Il ray-cast ha il bug della cache |
-| `solver: lm` | ICP scritto da noi, smorzato (Levenberg-Marquardt) | Candidato per il §5.11 (A-62), con stadi 20/10/5. Non è tra i candidati di `select_harness.py` e non ha test in `tests/`: i test servono prima di adottarlo |
+| `H2` | H1 + visibilità ray-cast | **In uso.** È quella che ha fallito il sanity check. Bug della cache del ray-cast corretto il 5 nov (ade985f, A-62) |
+| `H3` | H2 + limite a ogni passo (5 mm, 5°) | Scelta a M4; superata da H2 dopo il fix dei riflessi. Candidata per il §5.11 (A-62): al primo giro non passa, con il bug della cache |
+| `solver: lm` | ICP scritto da noi, smorzato (Levenberg-Marquardt) | Candidato al primo giro del §5.11 (A-62), con stadi 20/10/5: non passa. Escluso dal secondo giro: non ha test e guadagna una sola vista rispetto a H1 |
 
 ## 5. Task, metriche, ipotesi
 
@@ -303,7 +303,8 @@ Fonte: `docs/SOURCES.md`.
 | `configs/camera_d415_ir.yaml` | Parametri del modello di camera |
 | `configs/harness.yaml` | Parametri di ICP e ventosa, oggi H2 |
 | `data/m5/` | Dati di test, 50 scene. `results/` contiene solo il sanity fallito |
-| `data/m5/diag_sanity/` | Diagnosi del gate §5.11 (A-62): candidati e ripetizioni di H2, solo C1 a offset zero |
+| `data/m5/diag_sanity/` | Diagnosi del gate §5.11 (A-62), primo giro: candidati e ripetizioni di H2, solo C1 a offset zero |
+| `data/m5/diag_sanity_fix/` | Secondo giro del §5.11: H0–H3 con la cache corretta e 200 000 campioni, solo C1 a offset zero |
 | `data/m5_dev/` | Dati dev con le impostazioni finali; `selection/`, `pilot/` |
 | `data/m5_diag/` | Render di convergenza: `gb1`, `gb3` = glossy bounces 1 e 3, `gb3_max12`, `gb3_s128` |
 | `data/m4/` | Dati dev vecchi, riflessi spenti |
@@ -335,7 +336,7 @@ Fonte: `docs/SOURCES.md`.
 | BOP | Benchmark e formato standard per la stima della posa |
 | bootstrap | Il modo in cui si calcola il CI. Si pescano 50 scene a caso dalle 50 di test, con ripetizione (una può uscire due volte, un'altra mai), e si ricalcola il risultato. Si ripete 10 000 volte e si guarda quanto oscilla |
 | bounces | Rimbalzi di luce simulati. `glossy_bounces` = rimbalzi speculari; `max_bounces` = totale |
-| cache del ray-cast | Copia in memoria della scena per il ray-cast. **Bug (A-62):** in `pose.py` è indicizzata con `id()` di un array temporaneo, quindi un profilo può usare la mesh di un'altra lunghezza |
+| cache del ray-cast | Copia in memoria della scena per il ray-cast. **Bug (A-62):** in `pose.py` era indicizzata con `id()` di un array temporaneo, quindi un profilo poteva usare la mesh di un'altra lunghezza. Corretto il 5 nov (ade985f) |
 | CAD | Modello 3D esatto del pezzo |
 | CI, CI bootstrap | Intervallo di confidenza: i valori plausibili per il numero vero. "CI bootstrap" = calcolato col bootstrap. Si tengono i valori centrali al 95%. Se il CI di una differenza esclude 0, il segno della differenza è attendibile |
 | clamp | Limite alla dimensione di un passo |
@@ -395,7 +396,7 @@ Fonte: `docs/SOURCES.md`.
 | sanity check | Controllo che il sistema funzioni prima di guardare i risultati |
 | seed | Numero che fissa la casualità |
 | setpoint | Luminosità media obiettivo dell'auto exposure: 20 DN |
-| sample spacing | Distanza media tra i campioni CAD: √(area/N). 0.80 mm sul profilo da 150 mm con 50 000 campioni |
+| sample spacing | Distanza media tra i campioni CAD: √(area/N). Sul profilo da 150 mm: 0.80 mm con 50 000 campioni, 0.40 mm con 200 000 |
 | SGBM | Semi-Global Block Matching: l'algoritmo stereo usato, da OpenCV |
 | SNR | Rapporto segnale/rumore |
 | speckle filter | Filtro SGBM che toglie piccole macchie isolate. Finestra: 100 px |
