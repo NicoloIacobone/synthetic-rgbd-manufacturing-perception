@@ -237,7 +237,7 @@ Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 | `A-49` | Inclusi solo visib_fract ≥ 0.1; stima mancante = fallimento |
 | `A-50` | Check di planarità della ventosa |
 | `A-51` | Opzione (B): roughness 0.2 e 0.4 su 50 scene |
-| `A-52` | Opzione (D): passata opaca chiara. Il testo cita ancora 0.085, oggi l'albedo è 0.247 |
+| `A-52` | Opzione (D): passata opaca chiara, albedo 0.5. L'albedo di C4 è 0.247 |
 | `A-53` | Opzione (C) rifiutata. **Niente cambia dopo i dati di test: è in conflitto con §5.11.** Il testo cita H3, il ledger H2 |
 | `A-54` | Controllo con figura prima del render: ha trovato il bug A-57 |
 | `A-55` | ROBI obbligatorio dopo M5, 3 ore al massimo |
