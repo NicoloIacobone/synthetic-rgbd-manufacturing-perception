@@ -186,7 +186,7 @@ Fonte: PLAN §2.
 | `D14` | Ambiente separato per BlenderProc con patch per macOS |
 | `D15` | Impostazione di M3: proiettore, punti, criteri del gate, regola sulla risoluzione |
 
-## 9. Assunzioni `A-01`…`A-71`
+## 9. Assunzioni `A-01`…`A-72`
 
 Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 
@@ -263,6 +263,7 @@ Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 | `A-69` | Regola per la luce RGB: griglia di energie, al massimo 5% di pixel di parte saturi |
 | `A-70` | Test con luce ambiente, solo descrittivo: un livello, 21 DN sul metallo, scene 0–9 |
 | `A-71` | Strumenti di consegna: `results/`, `scripts/setup.sh`, `scripts/quick_run.py`, scena di esempio seme 0 |
+| `A-72` | L'ICP non è ripetibile alla lettera: stessa profondità, risultati diversi su alcune viste instabili. Effetto sul recall di test non misurato |
 
 ## 10. Rischi `R1`…`R7`
 

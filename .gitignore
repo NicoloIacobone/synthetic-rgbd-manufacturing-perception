@@ -19,6 +19,7 @@ docs/personal/
 # Generated data: datasets, renders, experiment outputs (never committed)
 data/
 outputs/
+dist/
 renders/
 *.hdf5
 *.exr
