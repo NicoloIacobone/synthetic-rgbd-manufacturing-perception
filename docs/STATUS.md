@@ -8,6 +8,13 @@ Handoff note between sessions. **Read first**, then CLAUDE.md's other context fi
 - **Gates:** A metrics by Fri 6 Nov **met**; code freeze Sat 7 Nov 20:00; target submission Sun 8 Nov 18:00. Report skeleton: planned for Thursday evening, not started.
 - **Git:** pushed to `origin/main` through 7ecbcb0 (2026-11-05). Later commits are local: push only when the user asks.
 - **Budget:** about 18 h to Sun 18:00 at 6 h/day; the essential work below is about 17 h. Page budget in REPORT_PLAN sums to exactly 8.00.
+- **Delivery (user's mail, re-sent 2026-11-06):** send to jpetrik@ethz.ch as an attachment or download link by Sun 8 Nov 23:59 CET.
+
+## Audit against the mail, 2026-11-06 (no decision taken yet)
+- **Repo is private:** the reader cannot open a plain GitHub link. Choose how to share it; 2 commits are unpushed, plus this one.
+- **RGB is overexposed:** test frames, part pixels with all channels ≥ 250: median 36%, max 92%; median part grey 242 (light energy 150, `scripts/bproc_render_scene.py`). Neither task reads RGB, so no result is affected, but the example-frame figure is. Proposed: RGB-only re-render into a new folder.
+- **Dates do not fit 6 h/day:** 11.25 h of draft work is due by Sat 12:00 and 15.25 h by the Sat 20:00 code freeze, against at most 12 h available by then. Proposed: move the freeze to Sun 12:00.
+- **Proposed, not run, user decides:** one ambient-IR sensitivity on seeds 0–9 (descriptive, A-03, open item 35); C3 noise redraws on all 50 scenes (open items 4, 31).
 
 ## Next steps, in order
 1. **Report skeleton from the three-sentence story** (0.5 h). No new codes, assumptions or open-item work until submission unless a result demands it.

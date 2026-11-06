@@ -369,3 +369,7 @@ User decisions: item 18 re-run first, disclose only if it fails (the agent had r
 Noise sensitivity (same commit and folder, e_per_dn 1.0 vs 0.087, about 30% of the noise at 21 DN): C3 0.143 → 0.143 (+0.0 points [−4.0, +4.0], 4 views each way); C4 0.357 → 0.408 (+5.1 points [−1.0, +11.1], p 0.27); C4−C3 +21.4 → +26.5 points. **Surprise:** the review agent expected noise could matter for the metal; it does not at this value. Ambient light stays untested.
 
 Report notes: "what did not work" gets the −1 pitfall, found only by checking results, and pinned by a test now. Limitations get distance, ROBI in pixels, simulated IR vs real.
+
+## 2026-11-06, audit against the invitation mail
+
+Read-only audit at f6a2ffe, no code or frozen value changed. Tests: 98 pass. `stats.json` matches STATUS (C1 0.732, C2b 0.590, C3 0.085, C4 0.386; commit 26cd449, clean tree). Not yet existing: PDF, report source, README, quick-run, `.venv` setup script. Surprises: the GitHub repo is private; RGB on the 100 test frames is overexposed (part pixels with all channels ≥ 250: median 36%, max 92%; median grey 242; no task reads RGB, so no result is affected); the Sat 12:00 and Sat 20:00 dates need 11.25 h and 15.25 h against at most 12 h at 6 h/day. Ambient-IR sensitivity and C3 redraws on 50 scenes proposed to the user, not run.

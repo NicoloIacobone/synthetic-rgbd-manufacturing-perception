@@ -17,7 +17,7 @@ Every scoping, modelling or evaluation choice that is not a direct fact belongs 
 | ID | Statement | Type | Source | Test / justification | Status | Report |
 |---|---|---|---|---|---|---|
 | A-01 | The reflection and AI note count toward the 8-page limit | usr | task_description.md is silent | Conservative reading | accepted | all |
-| A-02 | Deadline is Sun 2026-11-08 23:59 CET | usr | User (not in task_description.md) | — | accepted | — |
+| A-02 | Deadline is Sun 2026-11-08 23:59 CET | doc | Invitation mail from J. Petrik, re-sent by the user 2026-11-06 (not in task_description.md) | — | accepted | — |
 | A-03 | Indoor cell: no sunlight or ambient-IR interference; constant temperature | asm | — | Scoping; listed as an excluded effect. **Review 2026-11-06:** zero ambient also removes passive texture, not only interference: the real ROBI Zigzag left image has a median of 21 DN on the part, ours 1.9 DN on metal (seeds 0–9). Not tested; a limitation to state | accepted | §4, §7 |
 | A-04 | Static scene at capture time, so motion blur and rolling shutter are irrelevant | asm | — | Scoping | accepted | §4 |
 | A-05 | Procedural T-slot-like profiles and L-brackets are representative of the target parts | asm | Our scoping choice, not a researched convention | Discussed as a limitation | accepted | §3, §7 |
