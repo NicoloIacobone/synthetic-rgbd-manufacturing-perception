@@ -251,8 +251,8 @@ Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 | `A-60` | Regola di decisione: McNemar e bootstrap insieme |
 | `A-61` | Regioni del sensore: bordo e interno |
 | `A-62` | Diagnosi del gate §5.11: il §5.11 prevale su A-53; solo C1, offset zero, scene di test. Primo giro: nessun candidato passa, trovato il bug della cache del ray-cast. Secondo giro, con cache corretta e 200 000 campioni: H0–H3 passano tutte |
-| `A-63` | Rifacimento del §5.8 con il controllo sinistra-destra spento davvero: valore 1000, perché −1 non lo spegne in OpenCV 5.0.0 |
-| `A-64` | Prova descrittiva col rumore IR a circa un terzo (`e_per_dn` 1), scene 0–9. Non cambia nessun numero del protocollo |
+| `A-63` | Rifacimento del §5.8 con il controllo sinistra-destra spento davvero: valore 1000, perché −1 non lo spegne in OpenCV 5.0.0. Fatto il 6 nov: nessuna inversione |
+| `A-64` | Prova descrittiva col rumore IR a circa un terzo (`e_per_dn` 1), scene 0–9. Fatta il 6 nov: C3 non si muove (0.143), C4 da 0.357 a 0.408. Non cambia nessun numero del protocollo |
 | `A-65` | Decisioni su report e consegna: metallo come 0.085 con intervallo 0.085–0.288; ROBI solo Zigzag; quick-run con una scena di esempio |
 
 ## 10. Rischi `R1`…`R7`

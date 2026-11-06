@@ -357,3 +357,15 @@ Part pixels, C1 / C2a / C2b / C3 / C4: median |error| 0 / 0.6 / 2.0 / 4.1 / 2.2 
 Checked and harmless: strict and loose recall are equal by cancelling flips (C3 2 up, 2 down; C4 1 up, 1 down); all 98 views differ. C1 median translation error 1.24 mm against axial 0.28 mm on profiles comes from a bimodal axial error. Tray MAE is inflated by pixels past the tray (12 of 100 views, up to the 6553.5 mm ceiling); parts unaffected.
 
 C3 noise redraws, seeds 0–9: 0.143, 0.133, 0.071; 9 and 13 of 98 views change side. C3−C4 stays negative. 33 open items in `docs/M5_OPEN_ITEMS.md`. Nothing pushed.
+
+## 2026-11-06: independent review of M5; §5.8 re-run; noise sensitivity
+
+Review (read-only agent, user's prompt): all STATUS numbers recomputed from the raw files and confirmed; 96 tests passed; result files from 26cd449, clean tree; IR and depth from 73f0305 / 8ccbd95, and the difference touches only the redraw option. Findings new to the docs: distance is a strong moderator (C3 0.32 below 0.7 m, 0.00 at 0.9 m and beyond; C4 0.68 and 0.24; C1 0.62 and 0.77); at 2 mm / 2° every start is already under 5 mm and C3 ends at 0.135, so the ICP limit explains C1's fall, not C3's level; simulated IR differs from real ROBI IR (part median 1.9 vs 21 DN, local SD 23 vs 4.6 DN). M6 not started: no skeleton, README or quick-run.
+
+User decisions: item 18 re-run first, disclose only if it fails (the agent had recommended disclosing); the other four as recommended (A-64, A-65).
+
+§5.8 re-run (commit c44cd7a, clean tree, seeds 0–9, 98 instance-views, master seed 0, `data/m5/results_s58_v2`, about 21 min wall time for the four ICP runs). OpenCV 5.0.0: disp12MaxDiff −1, 0, 1 identical; 127, 128, 1000, 100 000 identical; 4 524 px differ between the groups on scene 0 view 0. `C3nolr1000` differs from C3 in 20 of 20 views. Sanity 98/98. **No flip:** C1−C3 +0.571 → +0.561, C2b−C3 +0.347 → +0.337, C3−C4 −0.214 → −0.214; C3 0.143 → 0.153, C4 0.357 → 0.367; 5 and 3 views change side. All filters off: part invalid 5.3 → 0.0% on C3, correct only 61.3 → 62.4%, MAE 6.57 → 21.61 mm. The filters remove mostly wrong pixels, and ICP tolerates them.
+
+Noise sensitivity (same commit and folder, e_per_dn 1.0 vs 0.087, about 30% of the noise at 21 DN): C3 0.143 → 0.143 (+0.0 points [−4.0, +4.0], 4 views each way); C4 0.357 → 0.408 (+5.1 points [−1.0, +11.1], p 0.27); C4−C3 +21.4 → +26.5 points. **Surprise:** the review agent expected noise could matter for the metal; it does not at this value. Ambient light stays untested.
+
+Report notes: "what did not work" gets the −1 pitfall, found only by checking results, and pinned by a test now. Limitations get distance, ROBI in pixels, simulated IR vs real.

@@ -52,3 +52,11 @@ AI-on-AI (section B), same review: the adversarial subagent reversed two of the 
 | 11 | 2026-11-04 | Agent status reports wrote bare project codes (D1, R5, §5.8) | Said the codes were confusing and that many prompts in one day had cost them control of the project; asked for a personal from-zero guide and a code dictionary | `docs/GLOSSARY.md` added; CLAUDE.md now requires each code to be written with its meaning |
 
 AI-on-AI (section B), same evening: a second agent re-counted the M5 stop report from the result file. All its numbers held, but it had pooled two kinds of small ICP drift under one median and had not followed up low fitness on ideal depth; its remark that short profiles failing most does not fit a lever-arm effect is only half right (DIARY, 2026-11-04 ~21:15).
+
+### Added 2026-11-06 (independent review of M5)
+
+| # | Date | AI suggestion | User's response | Outcome |
+|---|---|---|---|---|
+| 12 | 2026-11-06 | The review agent recommended disclosing open item 18 (the §5.8 check had left the left-right filter on) rather than re-running it, arguing from a bound that a re-run could not flip the ranking | Accepted the agent's other four recommendations but rejected this one: try the re-run first, and disclose only if it still does not work | Re-run with the check really off (A-63): it works and the ranking does not flip, as the bound predicted. §5.8 is now done as the protocol defines it, instead of carrying a disclosed gap |
+
+AI-on-AI (section B), same review: the agent suspected that the IR noise, about three times what real ROBI images allow, might be setting the metal result, and proposed a measurement. It did not hold: at about a third of the noise metal recall stayed 0.143 (A-64).

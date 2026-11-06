@@ -22,7 +22,7 @@ Page budget and reflection outline for the PDF report (≤ 8 pages including ref
 ## 2. Reflection outline (tentative until results)
 
 **Riskiest assumption candidates**
-- **(a) Preferred:** the simulated sensor reproduces how the real sensor errs on reflective metal. Links to the C3 vs C4 result; ROBI suggests the real D415 smooths metal rather than leaving holes [S-05].
+- **(a) Preferred:** the simulated sensor reproduces how the real sensor errs on reflective metal. Links to the C3 vs C4 result. Own ROBI Zigzag measure (`data/m5/robi/zigzag.json`, A-65): the real D415 leaves 21% of part pixels invalid against 5% in C3, while its disparity errors are of similar size, at another range; [S-05] says only "loss of geometric details".
 - **(b)** Randomised appearance in simulation covers real factory surfaces.
 - **(c)** Pose error in simulation predicts real pick or assembly success.
 
