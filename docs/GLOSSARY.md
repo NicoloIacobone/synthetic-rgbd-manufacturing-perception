@@ -74,7 +74,10 @@ Fonti: PLAN §5.1, `src/synthrgbd/conditions.py`. Le cartelle sono dentro ogni s
 | `C3redraw1`, `C3redraw2` | Stesse immagini IR e stesso matcher, nuovo rumore casuale | Misura la variabilità di C3 (A-59) | `depth_stereo_metal_redraw1`, `2` |
 | `C3looselr`, `C4looselr` | C3 e C4 con tutti e tre i filtri spenti: uniqueness, speckle e controllo sinistra-destra (valore 1000) | Rifacimento del §5.8, scene 0–9 (A-63) | `depth_stereo_metal_looselr`, `depth_stereo_matte_looselr` |
 | `C3nolr1000` | C3 con il solo controllo sinistra-destra spento davvero | §5.8, solo classi del sensore (A-63) | `depth_stereo_metal_nolr1000` |
-| `C3e1`, `C4e1` | C3 e C4 con rumore IR più basso: `e_per_dn` 1 invece di 0.087 | Descrittive, scene 0–9 (A-64) | `depth_stereo_metal_e1`, `depth_stereo_matte_e1` |
+| `C3e1`, `C4e1` | C3 e C4 con rumore IR più basso: `e_per_dn` 1 invece del valore in configurazione | Descrittive, scene 0–9 (A-64) | `depth_stereo_metal_e1`, `depth_stereo_matte_e1` |
+| `C3amb`, `C4amb` | C3 e C4 con luce ambiente aggiunta alla radianza del proiettore, un solo livello fissato sui dev | Descrittive, scene 0–9 (A-70) | `depth_stereo_metal_amb`, `depth_stereo_matte_amb` |
+
+**Dal 6 nov 2026 la corsa primaria è a 71° (A-66):** fx 897,25 px, C2b 0,234 px, dati in `data/hfov71/`. I valori di questa tabella con cifre vecchie (0,262 px, albedo 0,247) sono quelli della corsa archiviata a 65°; i valori nuovi sono in `configs/`.
 
 Solo C1, C2a, C2b, C3 e C4 sono condizioni del protocollo. Le altre non entrano mai nei test confermativi.
 
@@ -183,7 +186,7 @@ Fonte: PLAN §2.
 | `D14` | Ambiente separato per BlenderProc con patch per macOS |
 | `D15` | Impostazione di M3: proiettore, punti, criteri del gate, regola sulla risoluzione |
 
-## 9. Assunzioni `A-01`…`A-65`
+## 9. Assunzioni `A-01`…`A-71`
 
 Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 
@@ -254,6 +257,12 @@ Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 | `A-63` | Rifacimento del §5.8 con il controllo sinistra-destra spento davvero: valore 1000, perché −1 non lo spegne in OpenCV 5.0.0. Fatto il 6 nov: nessuna inversione |
 | `A-64` | Prova descrittiva col rumore IR a circa un terzo (`e_per_dn` 1), scene 0–9. Fatta il 6 nov: C3 non si muove (0.143), C4 da 0.357 a 0.408. Non cambia nessun numero del protocollo |
 | `A-65` | Decisioni su report e consegna: metallo come 0.085 con intervallo 0.085–0.288; ROBI solo Zigzag; quick-run con una scena di esempio |
+| `A-66` | **Corsa finale a 71°:** focale del sensore, si rifà tutto, risultato primario qualunque sia la direzione; 65° solo come sensibilità. Risultati precedenti già visti, da dichiarare |
+| `A-67` | Gate sul piano a 71°: ROI all'80% di larghezza e altezza e criteri (ii′), (iii′), (iv′). Sostituisce per questa corsa i criteri (ii), (iii), (iv) di A-38 |
+| `A-68` | Pattern a punti a 71°: stessi 30 000 punti e stesso seed, punto di 0,7 px, 3,76% dei pixel illuminati |
+| `A-69` | Regola per la luce RGB: griglia di energie, al massimo 5% di pixel di parte saturi |
+| `A-70` | Test con luce ambiente, solo descrittivo: un livello, 21 DN sul metallo, scene 0–9 |
+| `A-71` | Strumenti di consegna: `results/`, `scripts/setup.sh`, `scripts/quick_run.py`, scena di esempio seme 0 |
 
 ## 10. Rischi `R1`…`R7`
 
@@ -309,7 +318,10 @@ Fonte: `docs/SOURCES.md`.
 | `configs/default.yaml` | Parametri congelati del protocollo |
 | `configs/camera_d415_ir.yaml` | Parametri del modello di camera |
 | `configs/harness.yaml` | Parametri di ICP e ventosa, oggi H3 con 200 000 campioni |
-| `data/m5/` | Dati di test, 50 scene. `results/` contiene solo il sanity fallito; `results_v2/` i risultati con H3; `results_v2_s58/` il primo §5.8 sulle scene 0–9; `results_s58_v2/` il §5.8 rifatto e la prova sul rumore (A-63, A-64) |
+| `data/hfov71/` | **Corsa finale a 71° (A-66):** `plane/`, `intrinsics/`, `dev_iter<k>/`, `rgb_sweep/`, `dev/`, `test/` (scene 0–49 e risultati) |
+| `results/` | Risultati tracciati in git: `hfov71/`, `archive_hfov65/`, `figures/`, `MANIFEST.json` (A-71) |
+| `dist/` | Archivio della scena di esempio per il quick-run, fuori da git (A-71) |
+| `data/m5/` | **Corsa archiviata a 65°.** Dati di test, 50 scene. `results/` contiene solo il sanity fallito; `results_v2/` i risultati con H3; `results_v2_s58/` il primo §5.8 sulle scene 0–9; `results_s58_v2/` il §5.8 rifatto e la prova sul rumore (A-63, A-64) |
 | `data/m5/diag_sanity/` | Diagnosi del gate §5.11 (A-62), primo giro: candidati e ripetizioni di H2, solo C1 a offset zero |
 | `data/m5/diag_sanity_fix/` | Secondo giro del §5.11: H0–H3 con la cache corretta e 200 000 campioni, solo C1 a offset zero |
 | `data/m5_dev/` | Dati dev con le impostazioni finali; `selection/`, `pilot/` |
@@ -319,8 +331,10 @@ Fonte: `docs/SOURCES.md`.
 | `src/synthrgbd/` | Codice del progetto (`pose.py` = ICP) |
 | `scripts/run_eval.py` | Lancia sanity, poi Task A e B. **Se un file di risultato esiste, non lo rifà** |
 | `scripts/select_harness.py` | Sceglie la variante ICP con leximin su dev. `data/m5_dev/selection_fix/` = scelta dopo il fix |
-| `scripts/run_m5.sh` | Lancia tutte le metriche di M5, riprende da dove si è fermato |
-| `scripts/run_m5_followup.sh` | Lancia il §5.8 rifatto e la prova sul rumore sulle scene 0–9 (A-63, A-64) |
+| `scripts/run_final.sh` | Orchestratore della corsa finale a 71°: render, metriche, controlli, ridisegni, test ambiente. Riprende da dove si è fermato |
+| `scripts/run_m5.sh` | Lancia le metriche principali su una cartella dati indicata esplicitamente, riprende da dove si è fermato |
+| `scripts/run_m5_followup.sh` | Lancia il §5.8, la prova sul rumore e i ridisegni, sempre su una cartella indicata esplicitamente (A-63, A-64) |
+| `scripts/check_stop.py` | Applica le regole di stop della corsa finale e ferma l'orchestratore (ledger "Final-run stop rules") |
 | `scripts/robustness_s58.py` | Confronto strict e loose del §5.8, con la regola del ledger |
 | `scripts/sanity_candidates.py` | Lancia candidati e ripetizioni di H2 per il §5.11 (A-62). Non calcola recall a offset reali |
 | `scripts/sanity_diagnosis.py` | Diagnosi del §5.11: quale mesh usa davvero la cache, filtri di visibilità, conditioning, slittamenti |
