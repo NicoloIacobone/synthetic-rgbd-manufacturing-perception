@@ -9,7 +9,7 @@ Riepilogo per la verifica manuale. Le sezioni 1–8 contengono solo ciò che è 
 | Titolo | Intel® RealSense™ Product Family D400 Series Datasheet (p. 1) |
 | Revisione | **Revision 017, September 2023** (p. 1) |
 | Numero documento | 337029-017 (p. 1) |
-| File | `Intel-RealSense-D400-Series-Datasheet-September-2023.pdf` nella radice della repo, 169 pagine |
+| File | `docs/Intel-RealSense-D400-Series-Datasheet-September-2023.pdf`, 169 pagine, solo locale (escluso da git) |
 | SHA-256 | `4f74ae650f1c17ca5cc9e731de322733f9d9f7fee8e1daec7a9e0126e79354b7` |
 | Provenienza | Metadati del PDF: creato con Safari il 2026-11-06, titolo `https:/www.realsenseai.com/wp-content/uploads/2023/10/Intel-RealSense-D400-Series-Datasheet-September-2023` |
 
