@@ -104,4 +104,5 @@ ambient_test:                  # descriptive ambient-IR test, seeds 0-9 (A-70). 
   world_strength: 1.0          # uniform world in the ambient-only passes; projector off
   target_dn: 21.0              # mean over dev views of the median left-image DN on C3 part pixels (ROBI Zigzag 21.27)
   tol_dn: 0.5
-  level: null                  # a in total = projector + a x ambient; set by scripts/ambient_level.py before any test seed
+  level: 0.002371              # a in total = projector + a x ambient; scripts/ambient_level.py on dev (data/hfov71/dev/ambient_level.json): 21.2 DN
+                               #   on C3 parts (2.8 DN without ambient, 40.9 DN with ambient only); set before any test seed
