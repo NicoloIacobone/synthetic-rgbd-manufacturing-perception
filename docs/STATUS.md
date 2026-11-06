@@ -8,7 +8,13 @@ Handoff note between sessions. **Read first**, then CLAUDE.md's other context fi
 - **Gates:** A metrics by Fri 6 Nov **met**; code freeze Sat 7 Nov 20:00; target submission Sun 8 Nov 18:00. Report skeleton: planned for Thursday evening, not started.
 - **Git:** pushed to `origin/main` through 7ecbcb0 (2026-11-05). Later commits are local: push only when the user asks.
 - **Budget:** about 18 h to Sun 18:00 at 6 h/day; the essential work below is about 17 h. Page budget in REPORT_PLAN sums to exactly 8.00.
-- **Delivery (user's mail, re-sent 2026-11-06):** send to jpetrik@ethz.ch as an attachment or download link by Sun 8 Nov 23:59 CET.
+- **Delivery (user's mail, re-sent 2026-11-06):** send to jpetrik@ethz.ch as an attachment or download link by Sun 8 Nov 23:59 CET. The user sends it.
+
+## User decisions, 2026-11-06 (they override the proposals below; not started)
+- **Focal length: change it and re-run render and experiment.** Target value to be confirmed by the user (proposed: imager 71°, fx 897.2 px). Results below become the archived 65° run.
+- **Yes:** ambient-IR test on 10 scenes; fix the overexposed RGB; C3 noise redraws on all 50 scenes; from-zero install, quick-run, README, clean-clone test, pre-publication check.
+- **Time:** ignore the 6 h/day budget; agents may run 10–12 h/day and overnight. Code freeze date not moved, and the freeze and tag run only when the user says so.
+- **Waits for the user:** what becomes public, push, Release, visibility, the mail.
 
 ## Audit against the mail, 2026-11-06 (no decision taken yet)
 - **Repo is private:** the reader cannot open a plain GitHub link. Choose how to share it; 2 commits are unpushed, plus this one.

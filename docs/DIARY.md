@@ -377,3 +377,7 @@ Read-only audit at f6a2ffe, no code or frozen value changed. Tests: 98 pass. `st
 ## 2026-11-06, D415 datasheet read and summarised
 
 Read Rev 017, September 2023 (337029-017, SHA-256 4f74ae65…, 169 pages), supplied by the user, into `docs/D415_DATASHEET_SUMMARY.md`. 41 quoted phrases machine-checked against their cited pages, 0 missing; 11 pages also checked by eye (16, 22, 41, 43, 45, 71, 76, 81, 91, 92, 93). Values used so far match Rev 013; pages and some table numbers differ. Surprises: fx 1004.6 px comes from the 65° depth FOV while the imager is 71° ± 1° (897 px on 1280 px; ROBI's camera 905.9 px; Min-Z points the other way, about 1031 px). The imagers have filter "None", which weakens the zero-ambient justification. No frozen value changed, nothing re-run.
+
+## 2026-11-06, user decisions before the final run
+
+User decided: change the focal length and re-run render and experiment; run the ambient-IR test on 10 scenes; fix the overexposed RGB; redraw C3 noise on all 50 scenes; build a from-zero install, quick-run, README, clean-clone test and a pre-publication check. Freeze/tag, publication and the mail wait for the user. Target focal value still to be confirmed by the user (proposed: imager 71°, fx 897.2 px). Not started.
