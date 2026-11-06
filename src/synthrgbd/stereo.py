@@ -19,6 +19,15 @@ from synthrgbd.geometry import disparity_to_depth, sgbm_raw_to_disparity
 _MODES = {"SGBM": cv2.STEREO_SGBM_MODE_SGBM, "HH": cv2.STEREO_SGBM_MODE_HH,
           "SGBM_3WAY": cv2.STEREO_SGBM_MODE_SGBM_3WAY}
 
+# §5.8 matcher variants: strict settings with filters switched off. OpenCV 5.0.0 treats disp12MaxDiff <= 0 as 1, so the
+# left-right check is off only with a value at least as large as the search range (A-63). "loose" and "nolr" use -1, which
+# leaves the check on: they reproduce the first §5.8 run and are not the definition in the ledger; "looselr" and "nolr1000" are.
+SGBM_VARIANTS = {"strict": {},
+                 "loose": {"uniqueness_ratio": 0, "disp12_max_diff": -1, "speckle_window_size": 0},
+                 "looselr": {"uniqueness_ratio": 0, "disp12_max_diff": 1000, "speckle_window_size": 0},
+                 "nouniq": {"uniqueness_ratio": 0}, "nolr": {"disp12_max_diff": -1}, "nolr1000": {"disp12_max_diff": 1000},
+                 "nospeckle": {"speckle_window_size": 0}}
+
 
 def expose_to_uint8(radiance: np.ndarray, gain: float) -> np.ndarray:
     """Fixed linear exposure: DN = clip(round(gain * L), 0, 255). Saturation happens only here."""

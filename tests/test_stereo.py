@@ -5,8 +5,8 @@ import numpy as np
 import pytest
 
 from synthrgbd.config import REPO_ROOT, load_config
-from synthrgbd.stereo import (depth_from_ir, expose_to_uint8, first_valid_column, make_sgbm, match_extended,
-                              pad_left)
+from synthrgbd.stereo import (SGBM_VARIANTS, depth_from_ir, expose_to_uint8, first_valid_column, make_sgbm,
+                              match_extended, pad_left)
 
 IR_CFG = load_config(REPO_ROOT / "configs" / "camera_d415_ir.yaml")
 W, H, PAD = 640, 120, 128
@@ -76,6 +76,44 @@ def test_pad_too_small_raises(sgbm):
     left, right = shifted_pair(55)
     with pytest.raises(ValueError):
         match_extended(left[:, 64:], right[:, 64:], 64, sgbm, 126)
+
+
+def two_depth_pair():
+    """Left/right with a disparity step (20 px, then 60 px), so part of the left image has no match in the right one."""
+    n = W + PAD
+    T = texture(n + 60, H)
+    left = np.ascontiguousarray(T[:, :n])
+    right = np.empty_like(left)
+    step = n // 2
+    right[:, :step] = T[:, 20:20 + step]
+    right[:, step:] = T[:, step + 60:n + 60]
+    return left, right
+
+
+def test_left_right_check_is_off_only_with_a_large_value():
+    """A-63: in OpenCV 5.0.0 disp12MaxDiff <= 0 behaves as 1, against its documentation. Off means at least the search range."""
+    left, right = two_depth_pair()
+
+    def run(v):
+        return make_sgbm({**IR_CFG["sgbm"], "disp12_max_diff": v}).compute(left, right)
+
+    on = run(1)
+    assert np.array_equal(run(-1), on) and np.array_equal(run(0), on)
+    off = run(1000)
+    assert (off != on).sum() > 0
+    assert np.array_equal(off, run(IR_CFG["sgbm"]["num_disparities"]))
+
+
+def test_sgbm_variants_switch_off_what_the_ledger_says():
+    """The §5.8 definition: uniqueness, left-right check and speckle filter all off (A-63)."""
+    strict = make_sgbm(IR_CFG["sgbm"])
+    assert strict.getUniquenessRatio() > 0 and strict.getSpeckleWindowSize() > 0
+    assert 0 < strict.getDisp12MaxDiff() < IR_CFG["sgbm"]["num_disparities"]      # strict: the check is on
+    for name in ("looselr", "nolr1000"):
+        m = make_sgbm({**IR_CFG["sgbm"], **SGBM_VARIANTS[name]})
+        assert m.getDisp12MaxDiff() >= IR_CFG["sgbm"]["num_disparities"]
+    m = make_sgbm({**IR_CFG["sgbm"], **SGBM_VARIANTS["looselr"]})
+    assert m.getUniquenessRatio() == 0 and m.getSpeckleWindowSize() == 0
 
 
 def test_requires_uint8(sgbm):

@@ -4,7 +4,7 @@ Per tenere sul secondo schermo mentre leggi le risposte degli agent. Cerca con `
 
 - **Se una sigla non c'è:** chiedi all'agent che l'ha usata di aggiungerla qui (è una regola in `CLAUDE.md`).
 - **In caso di contrasto** valgono i file di origine indicati in ogni sezione (`docs/PLAN.md`, `docs/ASSUMPTIONS.md`, `docs/SOURCES.md`). Questo file riassume e va corretto.
-- **Aggiornato a:** 5 nov 2026, dopo il secondo giro del gate §5.11. Lo stato del lavoro non è qui, è in `docs/STATUS.md`.
+- **Aggiornato a:** 6 nov 2026, dopo la revisione di M5. Lo stato del lavoro non è qui, è in `docs/STATUS.md`.
 
 ## 1. Sigle che si confondono
 
@@ -48,7 +48,7 @@ Da solo, il simbolo § indica una sezione di `docs/PLAN.md`.
 | §5.9 | Guasti attesi, tra cui "ICP scivola lungo i prismi" |
 | §5.10 | Scene dev e test, seed, accoppiamento |
 | **§5.11** | **Sanity check su C1 a offset zero: è il gate fallito ora** |
-| §5.12 | Registro delle deviazioni dal protocollo (5 righe) |
+| §5.12 | Registro delle deviazioni dal protocollo (6 righe) |
 | §6 | Consegna minima e lavoro opzionale |
 | §7 | Milestone e gate |
 | §8 | Rischi `R1`…`R7` |
@@ -72,6 +72,9 @@ Fonti: PLAN §5.1, `src/synthrgbd/conditions.py`. Le cartelle sono dentro ogni s
 | `C3loose`, `C4loose` | C3 e C4 con uniqueness e speckle spenti. Il controllo sinistra-destra è **rimasto acceso**, anche se §5.8 chiedeva di spegnerlo (voce 18 di `docs/M5_OPEN_ITEMS.md`) | §5.8, scene 0–9 | `depth_stereo_metal_loose`, `_matte_loose` |
 | `C3nouniq`, `C3nolr`, `C3nospeckle` | C3 con un filtro spento alla volta. **`C3nolr` è identica a C3:** il valore −1 non spegne il controllo sinistra-destra in OpenCV 5.0.0 | §5.8, solo classi del sensore | `depth_stereo_metal_nouniq`, ecc. |
 | `C3redraw1`, `C3redraw2` | Stesse immagini IR e stesso matcher, nuovo rumore casuale | Misura la variabilità di C3 (A-59) | `depth_stereo_metal_redraw1`, `2` |
+| `C3looselr`, `C4looselr` | C3 e C4 con tutti e tre i filtri spenti: uniqueness, speckle e controllo sinistra-destra (valore 1000) | Rifacimento del §5.8, scene 0–9 (A-63) | `depth_stereo_metal_looselr`, `depth_stereo_matte_looselr` |
+| `C3nolr1000` | C3 con il solo controllo sinistra-destra spento davvero | §5.8, solo classi del sensore (A-63) | `depth_stereo_metal_nolr1000` |
+| `C3e1`, `C4e1` | C3 e C4 con rumore IR più basso: `e_per_dn` 1 invece di 0.087 | Descrittive, scene 0–9 (A-64) | `depth_stereo_metal_e1`, `depth_stereo_matte_e1` |
 
 Solo C1, C2a, C2b, C3 e C4 sono condizioni del protocollo. Le altre non entrano mai nei test confermativi.
 
@@ -180,7 +183,7 @@ Fonte: PLAN §2.
 | `D14` | Ambiente separato per BlenderProc con patch per macOS |
 | `D15` | Impostazione di M3: proiettore, punti, criteri del gate, regola sulla risoluzione |
 
-## 9. Assunzioni `A-01`…`A-62`
+## 9. Assunzioni `A-01`…`A-65`
 
 Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 
@@ -240,7 +243,7 @@ Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 | `A-52` | Opzione (D): passata opaca chiara, albedo 0.5. L'albedo di C4 è 0.247 |
 | `A-53` | Opzione (C) rifiutata. Niente cambia dopo i dati di test, salvo un §5.11 fallito, che ha la precedenza: usato una volta per l'harness (H3, A-62) |
 | `A-54` | Controllo con figura prima del render: ha trovato il bug A-57 |
-| `A-55` | ROBI obbligatorio dopo M5, 3 ore al massimo |
+| `A-55` | ROBI obbligatorio dopo M5. Ridotto da A-65: solo Zigzag, 1 ora |
 | `A-56` | Modalità operativa: l'agent si ferma solo per valori congelati, risultati che minacciano l'esperimento, gate falliti |
 | `A-57` | **Bug:** `glossy_bounces = 0`, niente riflessi sul metallo fino al fix |
 | `A-58` | Misure del meccanismo su C3 |
@@ -248,6 +251,9 @@ Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 | `A-60` | Regola di decisione: McNemar e bootstrap insieme |
 | `A-61` | Regioni del sensore: bordo e interno |
 | `A-62` | Diagnosi del gate §5.11: il §5.11 prevale su A-53; solo C1, offset zero, scene di test. Primo giro: nessun candidato passa, trovato il bug della cache del ray-cast. Secondo giro, con cache corretta e 200 000 campioni: H0–H3 passano tutte |
+| `A-63` | Rifacimento del §5.8 con il controllo sinistra-destra spento davvero: valore 1000, perché −1 non lo spegne in OpenCV 5.0.0 |
+| `A-64` | Prova descrittiva col rumore IR a circa un terzo (`e_per_dn` 1), scene 0–9. Non cambia nessun numero del protocollo |
+| `A-65` | Decisioni su report e consegna: metallo come 0.085 con intervallo 0.085–0.288; ROBI solo Zigzag; quick-run con una scena di esempio |
 
 ## 10. Rischi `R1`…`R7`
 
@@ -303,7 +309,7 @@ Fonte: `docs/SOURCES.md`.
 | `configs/default.yaml` | Parametri congelati del protocollo |
 | `configs/camera_d415_ir.yaml` | Parametri del modello di camera |
 | `configs/harness.yaml` | Parametri di ICP e ventosa, oggi H3 con 200 000 campioni |
-| `data/m5/` | Dati di test, 50 scene. `results/` contiene solo il sanity fallito; `results_v2/` i risultati con H3; `results_v2_s58/` il §5.8 sulle scene 0–9 |
+| `data/m5/` | Dati di test, 50 scene. `results/` contiene solo il sanity fallito; `results_v2/` i risultati con H3; `results_v2_s58/` il primo §5.8 sulle scene 0–9; `results_s58_v2/` il §5.8 rifatto e la prova sul rumore (A-63, A-64) |
 | `data/m5/diag_sanity/` | Diagnosi del gate §5.11 (A-62), primo giro: candidati e ripetizioni di H2, solo C1 a offset zero |
 | `data/m5/diag_sanity_fix/` | Secondo giro del §5.11: H0–H3 con la cache corretta e 200 000 campioni, solo C1 a offset zero |
 | `data/m5_dev/` | Dati dev con le impostazioni finali; `selection/`, `pilot/` |
@@ -314,6 +320,7 @@ Fonte: `docs/SOURCES.md`.
 | `scripts/run_eval.py` | Lancia sanity, poi Task A e B. **Se un file di risultato esiste, non lo rifà** |
 | `scripts/select_harness.py` | Sceglie la variante ICP con leximin su dev. `data/m5_dev/selection_fix/` = scelta dopo il fix |
 | `scripts/run_m5.sh` | Lancia tutte le metriche di M5, riprende da dove si è fermato |
+| `scripts/run_m5_followup.sh` | Lancia il §5.8 rifatto e la prova sul rumore sulle scene 0–9 (A-63, A-64) |
 | `scripts/robustness_s58.py` | Confronto strict e loose del §5.8, con la regola del ledger |
 | `scripts/sanity_candidates.py` | Lancia candidati e ripetizioni di H2 per il §5.11 (A-62). Non calcola recall a offset reali |
 | `scripts/sanity_diagnosis.py` | Diagnosi del §5.11: quale mesh usa davvero la cache, filtri di visibilità, conditioning, slittamenti |

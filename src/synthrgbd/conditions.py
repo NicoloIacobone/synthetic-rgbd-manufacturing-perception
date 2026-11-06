@@ -1,7 +1,8 @@
 """Depth conditions: name -> depth folder inside a BOP scene (uint16, BOP depth scale 0.1 mm, invalid = 0).
 
 C1-C4 are the protocol conditions (PLAN §5.1). The others are descriptive and never enter the fixed sequence:
-metal roughness passes (A-51), bright matte (A-52), reflections off (A-57), the loose matcher (§5.8) and noise redraws (A-59).
+metal roughness passes (A-51), bright matte (A-52), reflections off (A-57), the loose matcher (§5.8, A-63), noise redraws (A-59)
+and the lower sensor noise (A-64).
 """
 
 DEPTH_SCALE_MM = 0.1
@@ -18,11 +19,16 @@ DEPTH_DIRS = {
     "C3r04": "depth_stereo_r04",
     "C3nogloss": "depth_stereo_nogloss",
     "C4bright": "depth_stereo_bright",
-    "C3loose": "depth_stereo_metal_loose",
+    "C3loose": "depth_stereo_metal_loose",          # first §5.8 run: the left-right check stayed on (A-63)
     "C4loose": "depth_stereo_matte_loose",
+    "C3looselr": "depth_stereo_metal_looselr",      # §5.8 as defined: all three filters off (A-63)
+    "C4looselr": "depth_stereo_matte_looselr",
     "C3nouniq": "depth_stereo_metal_nouniq",        # one filter off at a time, sensor classes only (§5.8)
-    "C3nolr": "depth_stereo_metal_nolr",
+    "C3nolr": "depth_stereo_metal_nolr",            # identical to C3: -1 leaves the check on (A-63)
+    "C3nolr1000": "depth_stereo_metal_nolr1000",
     "C3nospeckle": "depth_stereo_metal_nospeckle",
     "C3redraw1": "depth_stereo_metal_redraw1",      # same IR and matcher, independent sensor noise (A-59)
     "C3redraw2": "depth_stereo_metal_redraw2",
+    "C3e1": "depth_stereo_metal_e1",                # e_per_dn 1 instead of 0.087: lower sensor noise (A-64)
+    "C4e1": "depth_stereo_matte_e1",
 }
