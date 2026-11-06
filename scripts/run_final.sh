@@ -21,8 +21,7 @@ stage() {
   touch "$D/.done_$name"
   echo "=== $(date '+%H:%M:%S') END $name"
 }
-level=$($PY -c "from synthrgbd.config import load_config, REPO_ROOT; print(load_config(REPO_ROOT / 'configs' / 'camera_d415_ir.yaml')['ambient_test']['level'])" 2>/dev/null \
-  || PYTHONPATH=src $PY -c "from synthrgbd.config import load_config, REPO_ROOT; print(load_config(REPO_ROOT / 'configs' / 'camera_d415_ir.yaml')['ambient_test']['level'])")
+level=$(PYTHONPATH=src $PY -c "from synthrgbd.config import load_config, REPO_ROOT; print(load_config(REPO_ROOT / 'configs' / 'camera_d415_ir.yaml')['ambient_test']['level'])")
 
 ambient_render() { for K in $(seq 0 9); do scripts/bproc.sh scripts/bproc_render_scene.py --scene-seed "$K" --out "$D" --ambient > "$D/logs/ambient_$K.log" 2>&1; done; }
 ambient_match() { mkdir -p "$A/logs"; for K in $(seq 0 9); do $PY scripts/stereo_scene.py "$D" "$K" --ambient > "$A/logs/stereo_amb_$K.log" 2>&1; done; }

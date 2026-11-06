@@ -32,10 +32,11 @@ ir_render:
 
 materials_matte:               # Lambertian (Principled: metallic 0, specular IOR level 0, roughness 1)
   plane_albedo: 0.5            # gate plane
-  part_albedo: 0.247           # A-24 (rule revised by the user, 2026-11-04): mean exposed DN clipped at saturation of C4 part
+  part_albedo: 0.25            # A-24 (rule revised by the user, 2026-11-04): mean exposed DN clipped at saturation of C4 part
                                #   pixels = that of C3 metal-part pixels, pooled over dev 1000-1004, at the auto-exposure gain.
                                #   Clipping couples this rule with the setpoint rule, so both are iterated to their common
-                               #   solution: 0.32 at 10 DN -> 20 DN -> 0.247 -> 20 DN. Plain mean matching breaks once
+                               #   solution: 0.32 at 10 DN -> 20 DN -> 0.247 -> 20 DN (65 degrees); at 71 degrees, from 20 DN and 0.247: rule 0.2499,
+                               #   render at 0.25, rule 0.2498, setpoint still 20 DN, so converged (A-66). Plain mean matching breaks once
                                #   reflections are on (glints give 1.90); 0.085 was the plain-mean value at glossy 0
   tray_albedo: 0.3
   table_albedo: 0.4
@@ -51,17 +52,18 @@ materials_metal:               # C3 parts (A-11): Principled BSDF, metallic 1
 sensor_noise:                  # A-12 (user-approved model, 2026-11-04): shot + read noise in DN, shared draws C3/C4
   extra_blur_px: 0.0           # none beyond Blender's 1.5 px Blackman-Harris pixel filter
   read_noise_dn: 1.0
-  e_per_dn: 0.087              # calibrated on anchor (a) at setpoint 20 DN: median over z of the central-ROI plane-fit RMS =
-                               #   0.09 px [S-13] (grid: 0.0625 -> 0.102, 0.088 -> 0.089; no noise 0.053); 0.12 at 10 DN.
-                               #   EFFECTIVE value: it lumps all unmodelled error sources (speckle, calibration), not a
-                               #   physical conversion gain
+  e_per_dn: 0.42               # calibrated on anchor (a) at setpoint 20 DN, fx 897.25 px: median over z of the central-ROI plane-fit
+                               #   RMS = 0.09 +- 0.001 px [S-13] (grid: 0.354 -> 0.0929, 0.42 -> 0.0897, 0.5 -> 0.0871; no noise 0.0749).
+                               #   0.087 at 65 degrees, where the no-noise floor was 0.053 px: the floor depends on pixel locking at these
+                               #   six distances, so the value moves a lot with f (A-12). EFFECTIVE value: it lumps all unmodelled
+                               #   error sources (speckle, calibration), not a physical conversion gain
 
 exposure:                      # linear radiance -> 8-bit DN (OpenCV SGBM accepts only 8-bit, A-40)
   mode: auto                   # A-42: per-frame gain on the C3 left image, shared by C4 and right ("fixed" = M3 behaviour)
   setpoint_dn: 20              # mean DN over columns >= ceil(f B / Min-Z); ledger rule: highest 10 DN step with <= 0.1%
                                #   saturated C4 pixels in every dev frame (30 DN: 0.41%); dots cover ~3% of pixels.
                                #   10 DN before reflections were on (A-57)
-  gain: 5700.0                 # DN per unit radiance; M3 rule (2026-11-04: 230 / 0.04037); used only by the gate without noise
+  gain: 5700.9                 # DN per unit radiance; M3 rule: p99.9 = 230 DN at 0.45 m (230 / 0.040344, 71 degrees); used only by the gate without noise
   calib_target_dn: 230         # gain chosen so the 99.9th-percentile pixel of the albedo-0.5 plane at
   calib_z_m: 0.45              #   Min-Z (0.45 m) is 230 DN: no saturation on matte at any valid range
 
@@ -94,7 +96,8 @@ plane_gate:                    # gate on the matte plane at 71 degrees, fixed be
   minz_invalid_stop: 0.10      # above it: stop and ask the user
 
 rgb_render:                    # RGB only; neither task reads RGB; deleted before the IR passes, asserted at render time (A-69)
-  light_energy: 150.0          # area light, W; set on the dev views by the A-69 rule
+  light_energy: 12.0           # area light, W; A-69 rule on the 10 dev views: first passing energy, median 0%, maximum 2.66% saturated
+                               #   part pixels, median part grey 180 (energy 150: 46%, 65%, 248); checked by eye
   world_fill: 0.05             # RGB world background
 
 ambient_test:                  # descriptive ambient-IR test, seeds 0-9 (A-70). Level and spectrum are not sourced

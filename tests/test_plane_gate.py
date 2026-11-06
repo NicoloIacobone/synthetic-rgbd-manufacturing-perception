@@ -39,7 +39,8 @@ def test_lit_edge_and_band_as_predeclared():
         assert FX * B / z > lit(z)      # the old band test is only meaningful where the band exceeds the lit edge
     for z in GC["lit_z_m"]:
         assert lit(z) > FX * B / z
-    # A-38 (iv) as written fails by construction from 0.7 m up: this is why (iv') exists
+    # From 0.7 m up the lit edge is more than 10% past the band. That was the reason for (iv'). Measured on the planes, the matcher fills
+    # the unlit strip, so the first valid column stays at the band and A-38 (iv) as written would in fact have passed (A-67).
     assert all(abs(lit(z) - FX * B / z) > 0.1 * FX * B / z for z in (0.7, 0.8, 0.9, 1.0))
 
 

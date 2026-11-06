@@ -73,6 +73,15 @@ def run(plane_dir, cam, ir, master, noise, setpoint, gate_only=False):
         row = {"z_m": z, "gain": gain, "valid_frac_roi": float(vr.sum() / roi.sum()),
                "band_expected_px": band, "band_measured_px": float(np.median(first_valid_column(valid[y0:y1]))),
                "dn_saturated_frac": float((l8[:, pad:] == 255).mean())}
+        # The strip between the band and the lit edge has no dots (A-36, A-67): how much of it the matcher still fills, and how well.
+        x_band, x_lit = int(np.ceil(band)) + hw, int(np.floor(K[0, 2] + f * (ir["projector"]["position_x_m"] / z - np.tan(np.deg2rad(ir["projector"]["fov_deg"][0]) / 2))))
+        if x_lit > x_band:
+            strip = np.zeros((H, W), bool)
+            strip[y0:y1, x_band:x_lit] = True
+            row["unlit_strip_cols"] = [x_band, x_lit]
+            row["unlit_strip_valid_frac"] = float((valid & strip).sum() / strip.sum())
+            if (valid & strip).any():
+                row["unlit_strip_median_abs_err_px"] = float(np.median(np.abs(disp[valid & strip] - band)))
         if z in GATE_Z and vr.any():
             err = zest[vr] - z
             vc = valid & croi
