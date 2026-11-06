@@ -2,12 +2,12 @@ import blenderproc as bproc  # noqa: I001  (BlenderProc requires this to be the 
 
 """M3 plane renders (A-38 gate, A-32 checks): IR stereo pairs of a fronto-parallel matte plane.
 
-Run:  scripts/bproc.sh scripts/bproc_ir_plane.py --out data/m3/plane
-Then: .venv/bin/python scripts/plane_gate.py data/m3/plane
+Run:  scripts/bproc.sh scripts/bproc_ir_plane.py --out <plane_dir>
+Then: .venv/bin/python scripts/plane_gate.py <plane_dir>
 
 Frames (left + right, both extended by pad px on the left, A-40), camera straight down at height z
 above a 6 x 6 m Lambertian plane (albedo from configs/camera_d415_ir.yaml), projector on, no ambient:
-- gate planes z = 0.50, 0.60, ..., 1.00 m and Min-Z planes 0.42 ... 0.46 m (A-38), power P;
+- gate planes and Min-Z planes (plane_gate in the IR config, A-67), power P;
 - linearity (A-32 i): z = 0.70 m at power 2P;
 - metal (A-32 ii): a polished metal sphere (r = 3 cm) on the plane, z = 0.60 m, power P.
 Output: <out>/plane_<tag>.npz (left, right: float16 linear radiance), <out>/plane_meta.json.
@@ -31,8 +31,6 @@ from synthrgbd.config import load_config  # noqa: E402
 from synthrgbd.geometry import intrinsics_from_hfov  # noqa: E402
 from synthrgbd.projector import make_pattern  # noqa: E402
 
-GATE_Z = [0.50, 0.60, 0.70, 0.80, 0.90, 1.00]
-MINZ_Z = [0.42, 0.43, 0.44, 0.45, 0.46]
 LIN_Z, METAL_Z = 0.70, 0.60
 
 
@@ -61,6 +59,7 @@ def main():
     cam = load_config()["camera"]
     ir = load_config(args.ir_config)
     t0 = time.perf_counter()
+    GATE_Z, MINZ_Z = ir["plane_gate"]["gate_z_m"], ir["plane_gate"]["minz_z_m"]
 
     bproc.init()
     ir_render_settings(ir)

@@ -1,14 +1,16 @@
-"""M3 gate on the matte plane (A-38) and the A-32 (i)-(iii) checks, in .venv.
+"""Gate on the matte plane (A-67; A-38 is the 65-degree history) and the A-32 (i)-(iii) checks, in .venv.
 
 Run after scripts/bproc_ir_plane.py:
-  .venv/bin/python scripts/plane_gate.py data/m3/plane              # gate (needs exposure.gain set)
-  .venv/bin/python scripts/plane_gate.py data/m3/plane --calibrate  # print the exposure gain only
+  .venv/bin/python scripts/plane_gate.py <plane_dir>              # gate (needs exposure.gain set)
+  .venv/bin/python scripts/plane_gate.py <plane_dir> --calibrate  # print the exposure gain only
 
-Gate criteria (A-38), at z = 0.50 ... 1.00 m, ROI = image minus the expected left band f B / z and
-minus a border of half the SGBM window:
-  (i) |mean(z_est - z)| < 1% z over valid ROI pixels; (ii) valid >= 95% of the ROI;
-  (iv) median over rows of the first valid column within +-10% of f B / z;
-  (iii) Min-Z: >= 95% valid at 0.45 m and <= 5% valid at <= 0.43 m.
+Planes and limits: plane_gate in configs/camera_d415_ir.yaml. ROI = central 80% of width and height, minus the expected left
+band f B / z and a border of half the SGBM window. No noise, fixed gain.
+  (i) |mean(z_est - z)| < 1% z over valid ROI pixels; (ii') valid >= 95% of the ROI;
+  (iv') first valid column, median over the ROI rows: within +-10% of f B / z where the band exceeds the lit edge; between
+        0.9 f B / z and 1.1 max(f B / z, lit edge) elsewhere;
+  (iii') Min-Z: >= 95% valid at 0.40-0.46 m, <= 5% valid at 0.37-0.38 m (5-10% = the accepted marginal failure, > 10% = stop).
+The same criteria with auto exposure and sensor noise: scripts/anchor_a.py.
 Noise (plane-fit residual, equivalent subpixel RMS) is reported, not gated (M4).
 Writes <dir>/gate_results.json and <dir>/gate_figure.png.
 """
@@ -25,11 +27,9 @@ import numpy as np
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
 from synthrgbd.config import load_config  # noqa: E402
+from synthrgbd.plane_gate import gate_roi, gate_verdict, lit_left_column, roi_rows  # noqa: E402
 from synthrgbd.projector import make_pattern, plane_pattern_in_camera  # noqa: E402
 from synthrgbd.stereo import depth_from_ir, expose_to_uint8, first_valid_column, make_sgbm  # noqa: E402
-
-GATE_Z = [0.50, 0.60, 0.70, 0.80, 0.90, 1.00]
-MINZ_Z = [0.42, 0.43, 0.44, 0.45, 0.46]
 
 
 def load(d: Path, tag: str):
@@ -64,6 +64,11 @@ def main():
     f, B, dmax = K[0, 0], cam["baseline_m"], cam["disparity_search_px"]
     hw = ir["sgbm"]["block_size"] // 2
     ex = ir["exposure"]
+    gc = ir["plane_gate"]
+    GATE_Z, MINZ_Z = gc["gate_z_m"], gc["minz_z_m"]
+    px_proj, hfov_proj = ir["projector"]["position_x_m"], ir["projector"]["fov_deg"][0]
+    lit_edge = lambda z: lit_left_column(f, K[0, 2], px_proj, hfov_proj, z)   # noqa: E731
+    y0, y1 = roi_rows(H, gc["roi_frac"])
 
     if args.calibrate or ex["gain"] is None:
         L, _ = load(args.plane_dir, f"minz{ex['calib_z_m']:.2f}")
@@ -83,13 +88,14 @@ def main():
         t_match = time.perf_counter() - t
         valid = zest > 0
         band = f * B / z
-        roi = np.zeros((H, W), bool)
-        roi[hw:H - hw, int(np.ceil(band)) + hw:W - hw] = True
+        roi = gate_roi(W, H, band, hw, gc["roi_frac"])
+        roi_area = gate_roi(W, H, band, hw, float(np.sqrt(gc["roi_frac"])))      # the area reading of "80%", descriptive (A-67)
         vr = valid & roi
-        first = first_valid_column(valid[hw:H - hw])
+        first = first_valid_column(valid[y0:y1])
         err = zest[vr] - z
-        r = {"z_m": z, "band_expected_px": band, "roi_px": int(roi.sum()),
+        r = {"z_m": z, "band_expected_px": band, "lit_edge_px": lit_edge(z), "roi_px": int(roi.sum()),
              "valid_frac_roi": float(vr.sum() / roi.sum()),
+             "valid_frac_roi_area_reading": float((valid & roi_area).sum() / roi_area.sum()),
              "band_measured_px": float(np.median(first)),
              "t_sgbm_s": t_match,
              "dn_p99.9": float(np.percentile(expose_to_uint8(L[:, pad:], gain), 99.9)),
@@ -106,14 +112,10 @@ def main():
     gate, imgs = [], {}
     for z in GATE_Z:
         r, L, zest, d = evaluate(z, f"z{z:.2f}")
-        r["pass_i_bias"] = bool(r.get("bias_rel", 1.0) < 0.01)
-        r["pass_ii_valid"] = bool(r["valid_frac_roi"] >= 0.95)
-        r["pass_iv_band"] = bool(abs(r["band_measured_px"] - r["band_expected_px"]) <= 0.10 * r["band_expected_px"])
         gate.append(r)
         imgs[z] = (L, zest, d)
     minz = [evaluate(z, f"minz{z:.2f}")[0] for z in MINZ_Z]
-    vf = {round(r["z_m"], 2): r["valid_frac_roi"] for r in minz}
-    pass_iii = bool(vf[0.45] >= 0.95 and all(vf[z] <= 0.05 for z in (0.42, 0.43)))
+    verdict = gate_verdict(gate + minz, gc, f, B, lit_edge)
 
     # Projector geometry: rendered left IR vs numpy forward model of the pattern on the plane.
     pattern, geo, _ = make_pattern(cam, ir)
@@ -129,7 +131,7 @@ def main():
         lit = colmean > 0.05 * np.median(colmean)
         geom.append({"z_m": z, "corr_model": corr(L[sl], pred[sl]), "corr_no_offset": corr(L[sl], pred0[sl]),
                      "corr_mirrored": corr(L[sl], predm[sl]),
-                     "unlit_cols_left": int(np.argmax(lit)), "unlit_cols_right": int(np.argmax(lit[::-1])),
+                     "unlit_cols_left": int(np.argmax(lit)), "unlit_cols_left_predicted": lit_edge(z), "unlit_cols_right": int(np.argmax(lit[::-1])),
                      "unlit_rows": int((~(L.mean(axis=1) > 0.05 * np.median(L.mean(axis=1)))).sum())})
 
     # A-32 (i): linearity in projector power, and 1/z^2 falloff of a Lambertian plane.
@@ -156,12 +158,9 @@ def main():
 
     t_sgbm = float(np.median([r["t_sgbm_s"] for r in gate]))
     out = {"commit": subprocess.check_output(["git", "-C", str(REPO), "rev-parse", "HEAD"], text=True).strip(),
-           "gain": gain, "sgbm": ir["sgbm"], "gate": gate, "minz": minz,
-           "pass": {"i_bias": all(r["pass_i_bias"] for r in gate), "ii_valid": all(r["pass_ii_valid"] for r in gate),
-                    "iii_minz": pass_iii, "iv_band": all(r["pass_iv_band"] for r in gate)},
+           "gain": gain, "sgbm": ir["sgbm"], "gate": gate, "minz": minz, "pass": verdict,
            "projector_geometry": geom, "linearity": lin, "metal": metal,
            "timing": {"sgbm_median_s_per_pair": t_sgbm, "render_s_per_image": meta["timings"]["render_planes_s_per_image"]}}
-    out["pass"]["all"] = all(out["pass"].values())
     (args.plane_dir / "gate_results.json").write_text(json.dumps(out, indent=1))
 
     print(f"{'z':>5} {'band exp':>8} {'band meas':>9} {'valid%':>7} {'bias mm':>8} {'bias%':>6} {'rmse mm':>7} "
@@ -176,10 +175,12 @@ def main():
     print("METAL", json.dumps(metal))
     print("TIMING", json.dumps(out["timing"]))
 
-    figure(args.plane_dir / "gate_figure.png", imgs, gate, minz, pad, gain)
+    figure(args.plane_dir / "gate_figure.png", imgs, gate, minz, pad, gain, f, B, cam["disparity_search_px"], cam["min_z_m"])
+    if verdict["stop"]:
+        raise SystemExit("gate failed (A-67): stop and present the options to the user")
 
 
-def figure(path, imgs, gate, minz, pad, gain):
+def figure(path, imgs, gate, minz, pad, gain, f, B, dmax, min_z_m):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -191,7 +192,7 @@ def figure(path, imgs, gate, minz, pad, gain):
     for a, z in ((ax[0, 1], 0.5), (ax[0, 2], 1.0)):
         d = imgs[z][2]
         im = a.imshow(np.where(d > 0, d, np.nan), cmap="viridis")
-        a.axvline(1004.6 * 0.055 / z, color="r", lw=0.8)
+        a.axvline(f * B / z, color="r", lw=0.8)
         a.set_title(f"disparity, z = {z:.2f} m (red: f B / z)")
         fig.colorbar(im, ax=a, fraction=0.03)
     zs = [r["z_m"] for r in gate]
@@ -201,20 +202,20 @@ def figure(path, imgs, gate, minz, pad, gain):
     ax[1, 0].axhline(-1, color="k", ls=":", lw=0.8)
     ax[1, 0].set_xlabel("z (m)")
     ax[1, 0].legend()
-    ax[1, 0].set_title("gate (i), (ii): limits +-1% bias, 5% invalid")
+    ax[1, 0].set_title("gate (i), (ii'): limits +-1% bias, 5% invalid")
     ax[1, 1].plot(zs, [r["band_expected_px"] for r in gate], "k--", label="f B / z")
     ax[1, 1].plot(zs, [r["band_measured_px"] for r in gate], "o", label="measured")
     ax[1, 1].set_xlabel("z (m)")
     ax[1, 1].set_ylabel("left invalid band (px)")
     ax[1, 1].legend()
-    ax[1, 1].set_title("gate (iv)")
+    ax[1, 1].set_title("gate (iv')")
     ax[1, 2].plot([r["z_m"] for r in minz], [100 * r["valid_frac_roi"] for r in minz], "o-")
-    ax[1, 2].axvline(1004.6 * 0.055 / 126, color="r", lw=0.8, label="f B / 126")
-    ax[1, 2].axvline(0.45, color="k", ls=":", lw=0.8, label="datasheet Min-Z")
+    ax[1, 2].axvline(f * B / dmax, color="r", lw=0.8, label=f"f B / {dmax}")
+    ax[1, 2].axvline(min_z_m, color="k", ls=":", lw=0.8, label="datasheet Min-Z")
     ax[1, 2].set_xlabel("z (m)")
     ax[1, 2].set_ylabel("valid (% ROI)")
     ax[1, 2].legend()
-    ax[1, 2].set_title("gate (iii) Min-Z")
+    ax[1, 2].set_title("gate (iii') Min-Z")
     fig.tight_layout()
     fig.savefig(path, dpi=110)
 

@@ -2,7 +2,7 @@
 
 Usage: .venv/bin/python scripts/c2_depth.py <dataset_root> <scene_seed>...
 
-ε_d = noise.c2a_eps_d_px (0.08 px, [S-03]) and noise.c2b_eps_d_px (0.262 px, Carfagni 1 m point, A-14) from
+ε_d = noise.c2a_eps_d_px (0.08 px, [S-03]) and noise.c2b_eps_d_px (Carfagni 1 m point, A-14) from
 configs/default.yaml. Noise is added to every valid pixel of the ideal depth (depth/, uint16, 0.1 mm),
 independently per pixel, from the seed streams c2a_noise / c2b_noise of (master, scene, view) (§5.10).
 Writes depth_c2a/ and depth_c2b/ (uint16, 0.1 mm; invalid stays 0; negative values clipped to 0).

@@ -29,7 +29,7 @@ suction:                     # synthrgbd.suction.SuctionParams (PLAN §5.3; cup 
   rim_samples: 32            # the cup "fits" if each of 32 rim points (radius r, fitted plane) has a measured point
   rim_gap_mm: 1.5            #   within 1.5 mm. Sector coverage (8 sectors in [0.7 r, r]) let the disk overhang a bracket
                              #   edge by 0.83 mm on an ideal view; 16 sectors in [0.9 r, r] found no fit on tilted dev faces
-                             #   (sparse pixels). 1.5 mm < the 2 px erosion margin (~1.6 mm at 0.8 m). Set on synthetic
+                             #   (sparse pixels). 1.5 mm < the 2 px erosion margin (~1.8 mm at 0.8 m at fx 897 px, A-66). Set on synthetic
                              #   geometry and sampling density, not outcomes (A-45)
   min_neighbours: 20
   grasp_point: plane_fit     # raw | plane_fit (A-44: chosen on dev by the A-45 rule)

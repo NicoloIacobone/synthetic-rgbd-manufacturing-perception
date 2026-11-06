@@ -132,8 +132,8 @@ def make_projector(pattern: np.ndarray, fov_deg, power_w: float) -> "bproc.types
 
 def add_ir_frames(T_left_list, baseline_m: float, proj_x_m: float, light, K_ext: np.ndarray, W_ext: int, H: int,
                   energies=None) -> int:
-    """Replace all keyframes by the interleaved IR frames (L0, R0, L1, R1, ...); key the projector
-    (left pose + proj_x along camera x) and optionally its energy per left view. Returns #frames."""
+    """Replace all keyframes by the interleaved IR frames (L0, R0, L1, R1, ...); key the projector, if any
+    (left pose + proj_x along camera x), and optionally its energy per left view. Returns #frames."""
     bproc.utility.reset_keyframes()
     bproc.camera.set_intrinsics_from_K_matrix(K_ext, W_ext, H)
     frame = 0
@@ -143,10 +143,11 @@ def add_ir_frames(T_left_list, baseline_m: float, proj_x_m: float, light, K_ext:
             Tc = T.copy()
             Tc[:3, 3] = T[:3, 3] + T[:3, 0] * side
             bproc.camera.add_camera_pose(Tc, frame)
-            light.set_location(T[:3, 3] + T[:3, 0] * proj_x_m, frame)
-            light.set_rotation_mat(T[:3, :3], frame)
-            if energies is not None:
-                light.set_energy(float(energies[i]), frame)
+            if light is not None:
+                light.set_location(T[:3, 3] + T[:3, 0] * proj_x_m, frame)
+                light.set_rotation_mat(T[:3, :3], frame)
+                if energies is not None:
+                    light.set_energy(float(energies[i]), frame)
             frame += 1
     return frame
 

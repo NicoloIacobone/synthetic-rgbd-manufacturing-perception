@@ -20,11 +20,19 @@ FX, B = K[0, 0], CFG["baseline_m"]
 
 
 def test_d415_focal_length_and_min_z():
-    # A-28: fx ~ 1004.6 px; A-16: f*B/126 ~ 0.44 m, consistent with datasheet Min-Z 0.45 m
-    assert FX == pytest.approx(1004.6, abs=0.1)
+    # A-28, A-66: fx = 640 / tan(35.5 deg) = 897.25 px, implied VFOV 43.7 deg (datasheet 44 +/- 1).
+    # A-16: f*B/126 = 0.3917 m, 58 mm short of the datasheet's Min-Z 0.45 m: a mismatch that is reported, not hidden (A-67).
+    assert FX == pytest.approx(897.25, abs=0.01)
+    assert 2 * np.degrees(np.arctan(CFG["height"] / 2 / FX)) == pytest.approx(43.72, abs=0.01)
     min_z = FX * B / CFG["disparity_search_px"]
-    assert min_z == pytest.approx(0.4385, abs=1e-3)
+    assert min_z == pytest.approx(0.3917, abs=1e-3)
     assert min_z < CFG["min_z_m"]
+
+
+def test_c2b_level_follows_the_frozen_rule():
+    # A-14, PLAN 5.12: eps_d = 4.74 mm x f B / (1 m)^2, the Carfagni plane SD at 1 m expressed in disparity
+    assert load_config()["noise"]["c2b_eps_d_px"] == pytest.approx(4.74e-3 * FX * B, abs=5e-4)
+    assert load_config()["noise"]["c2a_eps_d_px"] == 0.08
 
 
 def test_sgbm_output_is_scaled_by_16():

@@ -16,11 +16,13 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from synthrgbd.config import load_config  # noqa: E402
 from synthrgbd.geometry import intrinsics_from_hfov  # noqa: E402
 
 out = Path(sys.argv[1])
 out.mkdir(parents=True, exist_ok=True)
-W, H, HFOV = 1280, 720, 65.0           # configs/default.yaml camera (not read here: no yaml in Blender)
+CAM = load_config()["camera"]
+W, H, HFOV = CAM["width"], CAM["height"], CAM["hfov_deg"]
 
 bproc.init()
 K = intrinsics_from_hfov(W, H, HFOV)

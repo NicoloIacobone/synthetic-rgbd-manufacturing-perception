@@ -16,6 +16,8 @@ depth_stereo_<pass>_<variant>/ and stereo_meta_<variant>.json; the IR images are
 depth_stereo_<pass>_redraw<k>/: same IR images, same gain, same matcher. Protocol depth always uses k = 0.
 --e-per-dn v (A-64, descriptive) repeats the matching with sensor_noise.e_per_dn = v, written to depth_stereo_<pass>_e<v>/:
 same IR images, gain, noise draws and matcher. Protocol depth always uses the value in the config.
+--ambient (A-70, descriptive) adds ambient_test.level x <scene>/ir_ambient/<im_id>_<pass>.npz to the projector radiance of the
+metal and matte passes before the same auto exposure, noise draws and matcher; written to depth_stereo_<pass>_amb/.
 """
 
 import argparse
@@ -49,6 +51,7 @@ def main():
     ap.add_argument("--passes", nargs="+", help="only these IR passes (default: all rendered ones)")
     ap.add_argument("--noise-redraw", type=int, default=0, help="k > 0: independent noise draw for the A-59 bound; view ids + 1000 k are never real views")
     ap.add_argument("--e-per-dn", type=float, help="A-64 sensitivity: this e_per_dn instead of the config's, in separate folders")
+    ap.add_argument("--ambient", action="store_true", help="A-70 test: add the ambient-only passes at ambient_test.level, in separate folders")
     args = ap.parse_args()
     cam = load_config()["camera"]
     ir = load_config(args.ir_config)
@@ -62,11 +65,18 @@ def main():
     if args.e_per_dn is not None:
         noise = {**noise, "e_per_dn": args.e_per_dn}
         suffix += f"_e{args.e_per_dn:g}"
+    amb_level = None
+    if args.ambient:
+        amb_level = ir["ambient_test"]["level"]
+        if amb_level is None:
+            raise SystemExit("ambient_test.level is not set (scripts/ambient_level.py)")
+        args.passes = ["metal", "matte"]
+        suffix += "_amb"
     pad, gain = ir["ir_render"]["pad_px"], float(ir["exposure"]["gain"])
     auto = ir["exposure"].get("mode") == "auto"
     meta = {"commit": subprocess.check_output(["git", "-C", str(REPO), "rev-parse", "HEAD"], text=True).strip(),
             "ir_config": str(args.ir_config.relative_to(REPO)), "exposure": ir["exposure"],
-            "sensor_noise": noise, "variant": args.variant, "noise_redraw": args.noise_redraw, "frames": []}
+            "sensor_noise": noise, "variant": args.variant, "noise_redraw": args.noise_redraw, "ambient_level": amb_level, "frames": []}
     sheet = []
     for im_id in sorted(cams, key=int):
         K = np.array(cams[im_id]["cam_K"]).reshape(3, 3)
@@ -75,6 +85,8 @@ def main():
         parts = np.isin(seg, [i for i in seg_index[im_id] if i >= 0])
         if auto:   # A-42: gain from the C3 (metal) left image, shared by C4 and the right image; A-12 noise, shared draws
             Lm = np.load(scene / "ir" / f"{int(im_id):06d}_metal.npz")["left"].astype(np.float32)
+            if args.ambient:
+                Lm = Lm + amb_level * np.load(scene / "ir_ambient" / f"{int(im_id):06d}_metal.npz")["left"].astype(np.float32)
             g_frame = auto_exposure_gain(Lm[:, pad:], exposure_roi_x0(K[0, 0], cam["baseline_m"], cam["min_z_m"]),
                                          float(ir["exposure"]["setpoint_dn"]))
             r = rng(cfg_all["seeds"]["master"], args.scene_seed, int(im_id) + 1000 * args.noise_redraw, "ir_noise")
@@ -88,6 +100,9 @@ def main():
             t = time.perf_counter()
             d = np.load(f)
             L, R = d["left"].astype(np.float32), d["right"].astype(np.float32)
+            if args.ambient:
+                da = np.load(scene / "ir_ambient" / f.name)
+                L, R = L + amb_level * da["left"].astype(np.float32), R + amb_level * da["right"].astype(np.float32)
             t_load = time.perf_counter() - t
             t = time.perf_counter()
             if auto:

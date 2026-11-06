@@ -1,6 +1,6 @@
 """IR appearance of parts vs background on our renders, with the same measures as scripts/robi_compare.py on real images.
 
-Usage: .venv/bin/python scripts/ir_appearance.py <dataset_root> <scene_seed>... --passes metal matte r02 r04 --out <json>
+Usage: .venv/bin/python scripts/ir_appearance.py <dataset_root> <scene_seed>... --passes metal matte r02 r04 --out <json> [--ambient]
 
 Per view, on the 8-bit left image the matcher receives (auto exposure and sensor noise as in scripts/stereo_scene.py):
 median DN, 99th percentile, 7 x 7 local SD and saturation on part pixels vs background pixels (non-part pixels at least 7 px
@@ -35,10 +35,12 @@ def main():
     ap.add_argument("scenes", type=int, nargs="+")
     ap.add_argument("--passes", nargs="+", required=True)
     ap.add_argument("--out", type=Path, required=True)
+    ap.add_argument("--ambient", action="store_true", help="add ambient_test.level x the ambient-only passes to metal and matte (A-70)")
     args = ap.parse_args()
     cfg, ir = load_config(), load_config(REPO / "configs" / "camera_d415_ir.yaml")
     cam, sn = cfg["camera"], ir["sensor_noise"]
     pad, sp = ir["ir_render"]["pad_px"], float(ir["exposure"]["setpoint_dn"])
+    amb = ir["ambient_test"]["level"] if args.ambient else None
     rows = {p: [] for p in args.passes}
     for seed in args.scenes:
         sc = args.root / "synthrgbd" / "train_pbr" / f"{seed:06d}"
@@ -56,10 +58,16 @@ def main():
             r = rng(cfg["seeds"]["master"], seed, int(im), "ir_noise")
             metal = np.load(sc / "ir" / f"{f}_metal.npz")
             zl, zr = r.standard_normal(metal["left"].shape), r.standard_normal(metal["left"].shape)
-            g_c3 = auto_exposure_gain(metal["left"][:, pad:].astype(np.float64), x0, sp)
+            lm = metal["left"].astype(np.float64)
+            if args.ambient:
+                lm = lm + amb * np.load(sc / "ir_ambient" / f"{f}_metal.npz")["left"].astype(np.float64)
+            g_c3 = auto_exposure_gain(lm[:, pad:], x0, sp)
             for p in args.passes:
                 d = np.load(sc / "ir" / f"{f}_{p}.npz")
                 L, R = d["left"].astype(np.float32), d["right"].astype(np.float32)
+                if args.ambient:
+                    da = np.load(sc / "ir_ambient" / f"{f}_{p}.npz")
+                    L, R = L + amb * da["left"].astype(np.float32), R + amb * da["right"].astype(np.float32)
                 g = g_c3 if p in ("metal", "matte") else auto_exposure_gain(L[:, pad:].astype(np.float64), x0, sp)
                 l8 = exposed_pair_uint8(L, R, g, sn, zl, zr)[0][:, pad:]
                 sd = local_sd(l8)

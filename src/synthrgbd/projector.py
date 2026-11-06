@@ -135,6 +135,19 @@ def sample_pattern(pattern: np.ndarray, geo: PatternGeometry, tx: np.ndarray, ty
     return np.where(inside, out, 0.0)
 
 
+def lit_mask(z_m: np.ndarray, K: np.ndarray, proj_offset_x: float, fov_deg) -> np.ndarray:
+    """True where the surface point seen at each pixel lies inside the projector's field (A-36), direct light only.
+    z_m: camera z-depth in metres, <= 0 where there is no surface (False there). Projector at (proj_offset_x, 0, 0), same
+    orientation as the camera. Geometry only: occlusion of the projector is not considered."""
+    h, w = z_m.shape
+    u, v = np.meshgrid(np.arange(w), np.arange(h))
+    z = np.where(z_m > 0, z_m, np.nan)
+    tx = (u - K[0, 2]) / K[0, 0] - proj_offset_x / z
+    ty = (v - K[1, 2]) / K[1, 1]
+    with np.errstate(invalid="ignore"):
+        return (np.abs(tx) <= np.tan(np.deg2rad(fov_deg[0]) / 2)) & (np.abs(ty) <= np.tan(np.deg2rad(fov_deg[1]) / 2))
+
+
 def plane_pattern_in_camera(pattern: np.ndarray, geo: PatternGeometry, K: np.ndarray, width: int, height: int,
                             z: float, proj_offset_x: float) -> np.ndarray:
     """Pattern value seen at each pixel of a camera (intrinsics K) looking at the fronto-parallel

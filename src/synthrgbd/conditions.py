@@ -1,8 +1,8 @@
 """Depth conditions: name -> depth folder inside a BOP scene (uint16, BOP depth scale 0.1 mm, invalid = 0).
 
 C1-C4 are the protocol conditions (PLAN §5.1). The others are descriptive and never enter the fixed sequence:
-metal roughness passes (A-51), bright matte (A-52), reflections off (A-57), the loose matcher (§5.8, A-63), noise redraws (A-59)
-and the lower sensor noise (A-64).
+metal roughness passes (A-51), bright matte (A-52), reflections off (A-57), the loose matcher (§5.8, A-63), noise redraws (A-59),
+the lower sensor noise (A-64) and the ambient-IR test (A-70).
 """
 
 DEPTH_SCALE_MM = 0.1
@@ -31,4 +31,6 @@ DEPTH_DIRS = {
     "C3redraw2": "depth_stereo_metal_redraw2",
     "C3e1": "depth_stereo_metal_e1",                # e_per_dn 1 instead of 0.087: lower sensor noise (A-64)
     "C4e1": "depth_stereo_matte_e1",
+    "C3amb": "depth_stereo_metal_amb",              # projector + ambient light, one level (A-70)
+    "C4amb": "depth_stereo_matte_amb",
 }

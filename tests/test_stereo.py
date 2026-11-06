@@ -10,7 +10,7 @@ from synthrgbd.stereo import (SGBM_VARIANTS, depth_from_ir, expose_to_uint8, fir
 
 IR_CFG = load_config(REPO_ROOT / "configs" / "camera_d415_ir.yaml")
 W, H, PAD = 640, 120, 128
-FX, B = 1004.6, 0.055
+FX, B = 897.25, 0.055                                 # any f works here; the D415 value is pinned in test_geometry.py
 
 
 def texture(width, height, seed=0):
@@ -143,8 +143,8 @@ def test_expose_to_uint8_clips_and_rounds():
 
 def test_auto_exposure_hits_setpoint_and_ignores_left_band():
     from synthrgbd.stereo import auto_exposure_gain, exposure_roi_x0
-    x0 = exposure_roi_x0(1004.6, 0.055, 0.45)
-    assert x0 == 123                                  # ceil(f·B / Min-Z)
+    x0 = exposure_roi_x0(FX, B, 0.45)
+    assert x0 == 110                                  # ceil(f·B / Min-Z); 123 at fx 1004.6 px (A-42, A-66)
     L = np.full((10, 300), 0.02)
     L[:, :x0] = 5.0                                   # bright junk inside the band must not matter
     g = auto_exposure_gain(L, x0, 60.0)

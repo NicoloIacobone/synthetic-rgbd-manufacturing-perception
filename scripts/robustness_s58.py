@@ -39,8 +39,8 @@ def main():
     args = ap.parse_args()
     c3l, c4l = args.loose
     loose = {c: load(args.s58 / f"A_{c}_10.jsonl") for c in (c3l, c4l)}
-    loose |= {c: load((args.redraw_dir or args.s58) / f"A_{c}_10.jsonl") for c in ("C3redraw1", "C3redraw2")}
     scenes = {k[0] for k in loose[c3l]}
+    loose |= {c: load((args.redraw_dir or args.s58) / f"A_{c}_10.jsonl", scenes) for c in ("C3redraw1", "C3redraw2")}   # the redraws may cover more scenes
     strict = {c: load(args.results / f"A_{c}_10.jsonl", scenes) for c in ("C1", "C2a", "C2b", "C3", "C4")}
     for c, d in {**strict, **loose}.items():
         assert d.keys() == strict["C1"].keys(), f"instance-views differ for {c}"

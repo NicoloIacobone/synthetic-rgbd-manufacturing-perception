@@ -14,7 +14,9 @@ configs/camera_d415_ir.yaml) is rendered for every view: parts metal ("metal", C
 matte ("matte", C4; materials_matte.part_albedo, A-24), then the descriptive passes of ir_render.extra_passes
 (name:kind:value; kind metal = roughness, matte = albedo, metal_noglossy = roughness with Cycles glossy_bounces 0).
 Tray and table are matte in all passes. --metal-roughness / --matte-part-albedo / --glossy-bounces / --max-bounces /
---ir-samples / --extra-pass override the config (checks only).
+--ir-samples / --extra-pass / --rgb-light-energy / --rgb-world-fill override the config (checks only).
+With --ambient: nothing but the ambient-only IR passes of an existing scene (A-70): uniform world, projector off, metal and matte,
+to <scene>/ir_ambient/<im_id>_<pass>.npz. The poses are checked against the stored scene_gt.json first; no other output changes.
 Output: <scene>/ir/<im_id:06d>_<pass>.npz (left, right: float16 linear radiance, both extended by
 pad px on the left, A-40). M3 renders used the M2 RGB placeholder instead of "metal" ("metalproxy").
 
@@ -79,6 +81,9 @@ def parse_args():
     ap.add_argument("--ir-samples", type=int, help="override ir_render.samples (convergence checks, A-57)")
     ap.add_argument("--extra-pass", action="append", metavar="NAME:KIND:VALUE",
                     help="replaces ir_render.extra_passes; repeat for several; pass 'none' for no extra pass")
+    ap.add_argument("--rgb-light-energy", type=float, help="override rgb_render.light_energy (A-69 sweep)")
+    ap.add_argument("--rgb-world-fill", type=float, help="override rgb_render.world_fill (A-69 sweep)")
+    ap.add_argument("--ambient", action="store_true", help="only the ambient-only IR passes of an existing scene (A-70)")
     return ap.parse_args()
 
 
@@ -171,6 +176,62 @@ def sample_camera(g, cfg):
         "roll_deg": float(np.rad2deg(roll)), "poi_m": poi.tolist(), "position_m": pos.tolist()}
 
 
+def assert_ir_lighting(expected_lights, world_value):
+    """Only the expected lights exist and the world background has the expected value (A-69)."""
+    lights = sorted(o.name for o in bpy.data.objects if o.type == "LIGHT")
+    assert lights == sorted(expected_lights), f"lights in the IR scene: {lights}"
+    bg = bpy.context.scene.world.node_tree.nodes["Background"]
+    col, strength = [float(x) for x in bg.inputs["Color"].default_value[:3]], float(bg.inputs["Strength"].default_value)
+    assert all(abs(c - world_value) < 1e-9 for c in col) and abs(strength - 1.0) < 1e-9, f"world background {col} strength {strength}"
+
+
+def verify_poses(scene_dir, parts, T_cams):
+    """The re-simulated scene equals the stored one: part poses in the camera frame against scene_gt.json (mm, 0.01 mm)."""
+    gt = json.loads((scene_dir / "scene_gt.json").read_text())
+    worst = 0.0
+    for im, T_cam in enumerate(T_cams):
+        T_c2w = bproc.math.change_source_coordinate_frame_of_transformation_matrix(T_cam, ["X", "-Y", "-Z"])
+        T_w2c = np.linalg.inv(T_c2w)
+        for inst, obj in zip(gt[str(im)], parts):
+            T = T_w2c @ np.asarray(obj.get_local2world_mat())
+            dt = float(np.abs(T[:3, 3] * 1e3 - np.array(inst["cam_t_m2c"])).max())
+            dr = float(np.abs(T[:3, :3] - np.array(inst["cam_R_m2c"]).reshape(3, 3)).max())
+            worst = max(worst, dt)
+            assert dt < 0.01 and dr < 1e-4, f"pose differs from scene_gt.json: view {im}, {obj.get_name()}, {dt} mm, {dr}"
+    return worst
+
+
+def render_ambient_passes(cfg, ir, area_light, mats, T_cams, K, scene_dir, parts):
+    """Ambient-only IR stereo pairs, metal then matte parts, for all views (A-70). Linear radiance, as the projector passes."""
+    from synthrgbd.bproc_ir import add_ir_frames, extended_K, ir_render_settings, matte, metal, render_ir
+
+    t0 = time.perf_counter()
+    worst = verify_poses(scene_dir, parts, T_cams)
+    area_light.delete()
+    ir_render_settings(ir)
+    s = float(ir["ambient_test"]["world_strength"])
+    bproc.renderer.set_world_background([s, s, s], strength=1.0)
+    assert_ir_lighting([], s)
+    W, H, pad = cfg["camera"]["width"], cfg["camera"]["height"], ir["ir_render"]["pad_px"]
+    mm, mt = ir["materials_matte"], ir["materials_metal"]
+    matte(mats["tray"], mm["tray_albedo"])
+    matte(mats["table"], mm["table_albedo"])
+    add_ir_frames(T_cams, cfg["camera"]["baseline_m"], 0.0, None, extended_K(K, pad), W + pad, H)
+    out = scene_dir / "ir_ambient"
+    out.mkdir(exist_ok=True)
+    for name in ("metal", "matte"):
+        if name == "metal":
+            metal(mats["parts"], mt["base_reflectance"], mt["roughness"], mt["diffuse_albedo"])
+        else:
+            matte(mats["parts"], mm["part_albedo"])
+        imgs = render_ir()
+        for v in range(len(T_cams)):
+            np.savez_compressed(out / f"{v:06d}_{name}.npz", left=imgs[2 * v].astype(np.float16), right=imgs[2 * v + 1].astype(np.float16))
+    (out / "meta.json").write_text(json.dumps({"commit": git_commit(), "world_strength": s, "pose_worst_mm": worst, "samples": ir["ir_render"]["samples"],
+                                               "time_s": time.perf_counter() - t0}, indent=1))
+    print("AMBIENT", json.dumps({"scene": scene_dir.name, "pose_worst_mm": worst, "time_s": time.perf_counter() - t0}))
+
+
 def render_ir_passes(cfg, ir, area_light, mats, T_cams, K, scene_dir):
     """IR stereo pairs for all views, metal then matte parts (see module docstring)."""
     from synthrgbd.bproc_ir import add_ir_frames, extended_K, ir_render_settings, make_projector, matte, metal, render_ir
@@ -183,6 +244,7 @@ def render_ir_passes(cfg, ir, area_light, mats, T_cams, K, scene_dir):
     W, H, pad = cfg["camera"]["width"], cfg["camera"]["height"], ir["ir_render"]["pad_px"]
     pattern, _, _ = make_pattern(cfg["camera"], ir)
     proj = make_projector(pattern, ir["projector"]["fov_deg"], ir["projector"]["power_w"])
+    assert_ir_lighting(["ir_projector"], ir["ir_render"]["ambient"])    # the RGB light cannot reach the IR passes (A-69)
     mm = ir["materials_matte"]
     matte(mats["tray"], mm["tray_albedo"])
     matte(mats["table"], mm["table_albedo"])
@@ -289,9 +351,11 @@ def main():
     # Light: one area light above the tray, plus dim ambient.
     light = bproc.types.Light(light_type="AREA")
     light.set_location([0.3, -0.2, 1.5])
-    light.set_energy(150)
+    rgb_cfg = load_config(args.ir_config)["rgb_render"]
+    fill = rgb_cfg["world_fill"] if args.rgb_world_fill is None else args.rgb_world_fill
+    light.set_energy(rgb_cfg["light_energy"] if args.rgb_light_energy is None else args.rgb_light_energy)
     light.blender_obj.data.size = 0.5
-    bproc.renderer.set_world_background([0.05, 0.05, 0.05], strength=1.0)
+    bproc.renderer.set_world_background([fill, fill, fill], strength=1.0)
 
     # Camera.
     W, H = cfg["camera"]["width"], cfg["camera"]["height"]
@@ -303,6 +367,11 @@ def main():
         bproc.camera.add_camera_pose(T_cam)
         cams.append(info)
         T_cams.append(np.asarray(T_cam))
+
+    if args.ambient:
+        render_ambient_passes(cfg, load_config(args.ir_config), light, {"parts": alu, "tray": grey, "table": table_mat}, T_cams, K,
+                              args.out / "synthrgbd" / "train_pbr" / f"{args.scene_seed:06d}", parts)
+        return
 
     # Render RGB + z-depth (no antialiasing on depth) + instance segmentation.
     bproc.renderer.set_max_amount_of_samples(args.samples)
@@ -378,6 +447,7 @@ def main():
 
     timings["total_s"] = time.perf_counter() - t0
     meta = {
+        "rgb_light_energy": rgb_cfg["light_energy"] if args.rgb_light_energy is None else args.rgb_light_energy, "rgb_world_fill": fill,
         "scene_seed": args.scene_seed, "master_seed": master, "rng_stream": "scene (view 0)",
         "commit": git_commit(), "blender": bpy.app.version_string, "numpy": np.__version__,
         "platform": platform.platform(), "cycles_device": bpy.context.scene.cycles.device,

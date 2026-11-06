@@ -21,5 +21,5 @@ for SEED in "$@"; do
   t3=$(now)
   "$REPO/.venv/bin/python" "$REPO/scripts/check_bop_scene.py" "$OUT" "$SEED" --sheet "$OUT/logs/sheet_${SEED}.png" >> "$LOG" 2>&1
   t4=$(now)
-  echo "{\"seed\": $SEED, \"blender_s\": $(echo "$t1 - $t0" | bc), \"gt_info_s\": $(echo "$t2 - $t1" | bc), \"stereo_s\": $(echo "$t3 - $t2" | bc), \"check_s\": $(echo "$t4 - $t3" | bc), \"total_s\": $(echo "$t4 - $t0" | bc)}" | tee -a "$OUT/logs/benchmark.jsonl"
+  awk -v s="$SEED" -v a="$t0" -v b="$t1" -v c="$t2" -v d="$t3" -v e="$t4" 'BEGIN { printf "{\"seed\": %d, \"blender_s\": %.3f, \"gt_info_s\": %.3f, \"stereo_s\": %.3f, \"check_s\": %.3f, \"total_s\": %.3f}\n", s, b-a, c-b, d-c, e-d, e-a }' | tee -a "$OUT/logs/benchmark.jsonl"
 done
