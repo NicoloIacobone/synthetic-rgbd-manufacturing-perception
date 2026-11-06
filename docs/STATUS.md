@@ -15,6 +15,7 @@ Handoff note between sessions. **Read first**, then CLAUDE.md's other context fi
 - **RGB is overexposed:** test frames, part pixels with all channels ≥ 250: median 36%, max 92%; median part grey 242 (light energy 150, `scripts/bproc_render_scene.py`). Neither task reads RGB, so no result is affected, but the example-frame figure is. Proposed: RGB-only re-render into a new folder.
 - **Dates do not fit 6 h/day:** 11.25 h of draft work is due by Sat 12:00 and 15.25 h by the Sat 20:00 code freeze, against at most 12 h available by then. Proposed: move the freeze to Sun 12:00.
 - **Proposed, not run, user decides:** one ambient-IR sensitivity on seeds 0–9 (descriptive, A-03, open item 35); C3 noise redraws on all 50 scenes (open items 4, 31).
+- **Datasheet Rev 017 read (`docs/D415_DATASHEET_SUMMARY.md`), two points to decide:** fx 1004.6 px comes from the 65° depth FOV, while the imager is 71° ± 1° and ROBI's camera has 905.9 px (A-28; `hfov_deg` is frozen, proposal: disclose, no re-render). Imager filter "None", so zero ambient is weaker than stated (A-03). The PDF is untracked on purpose: do not commit it without asking.
 
 ## Next steps, in order
 1. **Report skeleton from the three-sentence story** (0.5 h). No new codes, assumptions or open-item work until submission unless a result demands it.
@@ -67,6 +68,7 @@ Decide implementation details yourself and log each in **one line** (ASSUMPTIONS
 | Code / tests | `src/synthrgbd/` (pose, suction, stereo, …); `.venv/bin/python -m pytest` (98 pass) |
 | Decisions, assumptions, ledger, sources | `docs/PLAN.md`, `docs/ASSUMPTIONS.md` (ledger under A-45), `docs/SOURCES.md` |
 | Open items of M5 | `docs/M5_OPEN_ITEMS.md` |
+| Camera facts with datasheet pages | `docs/D415_DATASHEET_SUMMARY.md` |
 | Code dictionary (Italian) | `docs/GLOSSARY.md`; write codes with their meaning in messages to the user |
 
 ## Docs until Saturday (slimmed)

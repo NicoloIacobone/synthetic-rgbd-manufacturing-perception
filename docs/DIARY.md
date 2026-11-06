@@ -373,3 +373,7 @@ Report notes: "what did not work" gets the −1 pitfall, found only by checking 
 ## 2026-11-06, audit against the invitation mail
 
 Read-only audit at f6a2ffe, no code or frozen value changed. Tests: 98 pass. `stats.json` matches STATUS (C1 0.732, C2b 0.590, C3 0.085, C4 0.386; commit 26cd449, clean tree). Not yet existing: PDF, report source, README, quick-run, `.venv` setup script. Surprises: the GitHub repo is private; RGB on the 100 test frames is overexposed (part pixels with all channels ≥ 250: median 36%, max 92%; median grey 242; no task reads RGB, so no result is affected); the Sat 12:00 and Sat 20:00 dates need 11.25 h and 15.25 h against at most 12 h at 6 h/day. Ambient-IR sensitivity and C3 redraws on 50 scenes proposed to the user, not run.
+
+## 2026-11-06, D415 datasheet read and summarised
+
+Read Rev 017, September 2023 (337029-017, SHA-256 4f74ae65…, 169 pages), supplied by the user, into `docs/D415_DATASHEET_SUMMARY.md`. 41 quoted phrases machine-checked against their cited pages, 0 missing; 11 pages also checked by eye (16, 22, 41, 43, 45, 71, 76, 81, 91, 92, 93). Values used so far match Rev 013; pages and some table numbers differ. Surprises: fx 1004.6 px comes from the 65° depth FOV while the imager is 71° ± 1° (897 px on 1280 px; ROBI's camera 905.9 px; Min-Z points the other way, about 1031 px). The imagers have filter "None", which weakens the zero-ambient justification. No frozen value changed, nothing re-run.
