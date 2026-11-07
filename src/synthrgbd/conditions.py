@@ -2,7 +2,7 @@
 
 C1-C4 are the protocol conditions (PLAN §5.1). The others are descriptive and never enter the fixed sequence:
 metal roughness passes (A-51), bright matte (A-52), reflections off (A-57), the loose matcher (§5.8, A-63), noise redraws (A-59),
-the lower sensor noise (A-64) and the ambient-IR test (A-70).
+the lower sensor noise (A-64), the ambient-IR test (A-70) and the error structure check (A-73).
 """
 
 DEPTH_SCALE_MM = 0.1
@@ -33,4 +33,6 @@ DEPTH_DIRS = {
     "C4e1": "depth_stereo_matte_e1",
     "C3amb": "depth_stereo_metal_amb",              # projector + ambient light, one level (A-70)
     "C4amb": "depth_stereo_matte_amb",
+    "C3shuf": "depth_stereo_metal_shuf",            # C3 with each part's errors permuted among its pixels (A-73)
+    "C3sym": "depth_stereo_metal_sym",              # C3 with each error's sign random (A-73)
 }

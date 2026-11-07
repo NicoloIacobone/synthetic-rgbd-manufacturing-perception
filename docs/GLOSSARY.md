@@ -75,6 +75,7 @@ Fonti: PLAN §5.1, `src/synthrgbd/conditions.py`. Le cartelle sono dentro ogni s
 | `C3looselr`, `C4looselr` | C3 e C4 con tutti e tre i filtri spenti: uniqueness, speckle e controllo sinistra-destra (valore 1000) | Rifacimento del §5.8, scene 0–9 (A-63) | `depth_stereo_metal_looselr`, `depth_stereo_matte_looselr` |
 | `C3nolr1000` | C3 con il solo controllo sinistra-destra spento davvero | §5.8, solo classi del sensore (A-63) | `depth_stereo_metal_nolr1000` |
 | `C3e1`, `C4e1` | C3 e C4 con rumore IR più basso: `e_per_dn` 1 invece del valore in configurazione | Descrittive, scene 0–9 (A-64) | `depth_stereo_metal_e1`, `depth_stereo_matte_e1` |
+| `C3shuf`, `C3sym` | C3 con gli errori rimescolati nello spazio dentro ogni parte, oppure con il segno casuale: stessa distribuzione o stesse ampiezze, senza struttura spaziale o senza un solo verso | Controllo della struttura dell'errore, scene 0–9 (A-73) | `depth_stereo_metal_shuf`, `depth_stereo_metal_sym` |
 | `C3amb`, `C4amb` | C3 e C4 con luce ambiente aggiunta alla radianza del proiettore, un solo livello fissato sui dev | Descrittive, scene 0–9 (A-70) | `depth_stereo_metal_amb`, `depth_stereo_matte_amb` |
 
 **Dal 6 nov 2026 la corsa primaria è a 71° (A-66):** fx 897,25 px, C2b 0,234 px, dati in `data/hfov71/`. I valori attuali sono in `configs/`; quelli della corsa archiviata a 65° sono tra parentesi.
@@ -186,7 +187,7 @@ Fonte: PLAN §2.
 | `D14` | Ambiente separato per BlenderProc con patch per macOS |
 | `D15` | Impostazione di M3: proiettore, punti, criteri del gate, regola sulla risoluzione |
 
-## 9. Assunzioni `A-01`…`A-72`
+## 9. Assunzioni `A-01`…`A-73`
 
 Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 
@@ -264,6 +265,7 @@ Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 | `A-70` | Test con luce ambiente, solo descrittivo: un livello, 21 DN sul metallo, scene 0–9 |
 | `A-71` | Strumenti di consegna: `results/`, `scripts/setup.sh`, `scripts/quick_run.py`, scena di esempio seme 0 |
 | `A-72` | L'ICP non è ripetibile alla lettera: stessa profondità, risultati diversi su alcune viste instabili. Effetto sul recall di test non misurato |
+| `A-73` | Controllo della struttura dell'errore: gli errori di C3 rimescolati o con segno casuale, per verificare se conta la coerenza o la direzione dell'errore |
 
 ## 10. Rischi `R1`…`R7`
 

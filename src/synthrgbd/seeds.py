@@ -13,6 +13,7 @@ STREAMS = {
     "ir_noise": 3,     # shared by C3 and C4
     "init_offset": 4,  # shared by all conditions
     "bootstrap": 5,
+    "error_structure": 6,
 }
 
 
