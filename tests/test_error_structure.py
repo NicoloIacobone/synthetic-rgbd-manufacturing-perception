@@ -30,7 +30,8 @@ def test_sign_keeps_magnitudes_and_removes_one_sidedness():
     sel = mask & (z > 0)
     a, b = z[sel].astype(int) - 8000, out[sel].astype(int) - 8000
     assert np.array_equal(np.abs(a), np.abs(b))
-    assert a.mean() > 40 and abs(b.mean()) < 5
+    # Random signs on these 1055 pixels: standard error of the mean = rms / sqrt(n) = 108 / 32.5 = 3.3, so 15 is about 4.5 standard errors.
+    assert a.mean() > 40 and abs(b.mean()) < 15
 
 
 @pytest.mark.parametrize("mode", ["shuffle", "sign"])
