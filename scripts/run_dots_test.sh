@@ -12,6 +12,10 @@ O=${R}_dots$N
 stamp() { echo "=== $(date '+%H:%M:%S') $1"; }
 mkdir -p "$O/logs"
 for K in $(seq 0 9); do
+  if [ -f "$D/synthrgbd/train_pbr/$(printf %06d "$K")/ir_dots$N/meta.json" ]; then
+    stamp "scene $K already rendered"
+    continue
+  fi
   stamp "render scene $K"
   scripts/bproc.sh scripts/bproc_render_scene.py --scene-seed "$K" --out "$D" --dots "$N" > "$O/logs/render_$K.log" 2>&1
   grep DOT_TEST "$O/logs/render_$K.log"
