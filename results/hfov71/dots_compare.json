@@ -1,0 +1,222 @@
+{
+ "n_instance_views": 98,
+ "scenes": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9
+ ],
+ "recall_5mm": {
+  "C1": 0.7040816326530612,
+  "C2b": 0.47959183673469385,
+  "C3": 0.10204081632653061,
+  "C4": 0.2653061224489796,
+  "C3dots10k": 0.04081632653061224,
+  "C4dots10k": 0.1836734693877551,
+  "C3dots30k": 0.10204081632653061,
+  "C4dots30k": 0.2653061224489796,
+  "C3dots60k": 0.030612244897959183,
+  "C4dots60k": 0.23469387755102042
+ },
+ "repeat": {
+  "C3": {
+   "recall": 0.10204081632653061,
+   "against": "C3",
+   "recall_against": 0.10204081632653061,
+   "diff": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "p": 1.0,
+   "n_up": 0,
+   "n_down": 0,
+   "excludes_zero": false,
+   "moved_gt_0.01mm": 11,
+   "max_abs_d_mssd_mm": 17.774799301759867
+  },
+  "C4": {
+   "recall": 0.2653061224489796,
+   "against": "C4",
+   "recall_against": 0.2653061224489796,
+   "diff": 0.0,
+   "ci95": [
+    0.0,
+    0.0
+   ],
+   "p": 1.0,
+   "n_up": 0,
+   "n_down": 0,
+   "excludes_zero": false,
+   "moved_gt_0.01mm": 6,
+   "max_abs_d_mssd_mm": 12.839429518358415
+  }
+ },
+ "density": {
+  "10000": {
+   "C3": {
+    "recall": 0.04081632653061224,
+    "against": "C3dots30k",
+    "recall_against": 0.10204081632653061,
+    "diff": -0.06122448979591837,
+    "ci95": [
+     -0.11458333333333333,
+     -0.01
+    ],
+    "p": 0.0703125,
+    "n_up": 1,
+    "n_down": 7,
+    "excludes_zero": true
+   },
+   "C4": {
+    "recall": 0.1836734693877551,
+    "against": "C4dots30k",
+    "recall_against": 0.2653061224489796,
+    "diff": -0.0816326530612245,
+    "ci95": [
+     -0.20754716981132076,
+     0.045454545454545456
+    ],
+    "p": 0.11531829833984375,
+    "n_up": 6,
+    "n_down": 14,
+    "excludes_zero": false
+   }
+  },
+  "60000": {
+   "C3": {
+    "recall": 0.030612244897959183,
+    "against": "C3dots30k",
+    "recall_against": 0.10204081632653061,
+    "diff": -0.07142857142857142,
+    "ci95": [
+     -0.11963164251207671,
+     -0.028846153846153848
+    ],
+    "p": 0.0390625,
+    "n_up": 1,
+    "n_down": 8,
+    "excludes_zero": true
+   },
+   "C4": {
+    "recall": 0.23469387755102042,
+    "against": "C4dots30k",
+    "recall_against": 0.2653061224489796,
+    "diff": -0.03061224489795919,
+    "ci95": [
+     -0.09782608695652174,
+     0.0425531914893617
+    ],
+    "p": 0.6072387695312499,
+    "n_up": 6,
+    "n_down": 9,
+    "excludes_zero": false
+   }
+  }
+ },
+ "stereo_vs_noise": {
+  "primary": {
+   "recall": 0.2653061224489796,
+   "against": "C2b",
+   "recall_against": 0.47959183673469385,
+   "diff": -0.21428571428571425,
+   "ci95": [
+    -0.3068181818181818,
+    -0.12727272727272726
+   ],
+   "p": 0.00010371580719947815,
+   "n_up": 4,
+   "n_down": 25,
+   "excludes_zero": true
+  },
+  "10000": {
+   "recall": 0.1836734693877551,
+   "against": "C2b",
+   "recall_against": 0.47959183673469385,
+   "diff": -0.29591836734693877,
+   "ci95": [
+    -0.44446969696969674,
+    -0.16666666666666666
+   ],
+   "p": 2.4299079086631536e-06,
+   "n_up": 5,
+   "n_down": 34,
+   "excludes_zero": true
+  },
+  "30000": {
+   "recall": 0.2653061224489796,
+   "against": "C2b",
+   "recall_against": 0.47959183673469385,
+   "diff": -0.21428571428571425,
+   "ci95": [
+    -0.30952380952380953,
+    -0.12264150943396226
+   ],
+   "p": 0.00010371580719947815,
+   "n_up": 4,
+   "n_down": 25,
+   "excludes_zero": true
+  },
+  "60000": {
+   "recall": 0.23469387755102042,
+   "against": "C2b",
+   "recall_against": 0.47959183673469385,
+   "diff": -0.24489795918367344,
+   "ci95": [
+    -0.3431372549019608,
+    -0.1595744680851064
+   ],
+   "p": 8.430331945419312e-06,
+   "n_up": 3,
+   "n_down": 27,
+   "excludes_zero": true
+  }
+ },
+ "order_held": {
+  "10000": true,
+  "30000": true,
+  "60000": true
+ },
+ "control_against_primary": {
+  "metal": {
+   "views": 20,
+   "ir_identical": 0,
+   "depth_identical": 0,
+   "median_share_pixels_changed": 0.0014067925347222223,
+   "worst_share_valid_moved_gt_5mm": 9.302552736752874e-06
+  },
+  "matte": {
+   "views": 20,
+   "ir_identical": 0,
+   "depth_identical": 0,
+   "median_share_pixels_changed": 0.0012738715277777778,
+   "worst_share_valid_moved_gt_5mm": 7.076431355667337e-06
+  }
+ },
+ "reading": {
+  "repeat": "no detectable effect of a repeat render on these seeds",
+  "density": {
+   "10000": {
+    "C3": "this density moves recall on this material",
+    "C4": "no detectable effect on this material against the control"
+   },
+   "60000": {
+    "C3": "this density moves recall on this material",
+    "C4": "no detectable effect on this material against the control"
+   }
+  },
+  "stereo_vs_noise": {
+   "primary": "holds",
+   "10000": "holds",
+   "30000": "holds",
+   "60000": "holds"
+  }
+ },
+ "note": "Descriptive, 10 scenes. Replaces no primary number. Reading fixed in advance in A-76."
+}

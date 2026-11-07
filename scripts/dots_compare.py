@@ -4,6 +4,7 @@ Usage: .venv/bin/python scripts/dots_compare.py <test_root> --out <json>
 
 Reads the primary results and the three dot runs, all paired on the same instance-views: (1) repeat, control at 30 000 minus primary; (2) density,
 10 000 and 60 000 minus the control on the same path; (3) stereo against noise, C4 at each density minus C2b. The readings are fixed in A-76.
+It also records how far the control's images and depth lie from the primary ones.
 """
 
 import argparse
@@ -11,6 +12,7 @@ import json
 import sys
 from pathlib import Path
 
+import cv2
 import numpy as np
 
 REPO = Path(__file__).resolve().parents[1]
@@ -26,6 +28,27 @@ DENSITIES = (10000, 30000, 60000)
 def load(path):
     lines = path.read_text().splitlines()
     return {(r["scene"], r["im_id"], r["gt_id"]): r for r in map(json.loads, lines[1:])}
+
+
+def control_against_primary(root, scenes):
+    """Per material: are the control's images and depth identical to the primary ones, and how many depth pixels move."""
+    out = {}
+    for name in ("metal", "matte"):
+        same_ir, same_depth, changed, moved = 0, 0, [], []
+        for s in scenes:
+            sc = root / "synthrgbd" / "train_pbr" / f"{s:06d}"
+            for f in sorted((sc / "ir_dots30000").glob(f"*_{name}.npz")):
+                v = f.name.split("_")[0]
+                a, b = np.load(f), np.load(sc / "ir" / f.name)
+                same_ir += all(np.array_equal(a[k], b[k]) for k in ("left", "right"))
+                d0 = cv2.imread(str(sc / f"depth_stereo_{name}" / f"{v}.png"), cv2.IMREAD_UNCHANGED).astype(np.int32)
+                d1 = cv2.imread(str(sc / f"depth_stereo_{name}_dots30000" / f"{v}.png"), cv2.IMREAD_UNCHANGED).astype(np.int32)
+                same_depth += np.array_equal(d0, d1)
+                changed.append(float((d0 != d1).mean()))
+                both = (d0 > 0) & (d1 > 0)
+                moved.append(float((np.abs(d0 - d1)[both] > 50).mean()))    # 50 units of 0.1 mm = 5 mm
+        out[name] = {"views": len(changed), "ir_identical": int(same_ir), "depth_identical": int(same_depth), "median_share_pixels_changed": float(np.median(changed)), "worst_share_valid_moved_gt_5mm": max(moved)}
+    return out
 
 
 def main():
@@ -58,6 +81,11 @@ def main():
            "density": {str(n): {m: paired(f"{m}dots{n // 1000}k", f"{m}dots30k") for m in ("C3", "C4")} for n in (10000, 60000)},
            "stereo_vs_noise": {"primary": paired("C4", "C2b"), **{str(n): paired(f"C4dots{n // 1000}k", "C2b") for n in DENSITIES}},
            "order_held": {str(n): bool(hit[f"C3dots{n // 1000}k"].mean() < hit[f"C4dots{n // 1000}k"].mean() < hit["C2b"].mean()) for n in DENSITIES}}
+
+    for m, v in out["repeat"].items():
+        d = [abs(runs[f"{m}dots30k"][k]["mssd_mm"] - runs[m][k]["mssd_mm"]) for k in keys if runs[f"{m}dots30k"][k].get("mssd_mm") is not None and runs[m][k].get("mssd_mm") is not None]
+        v["moved_gt_0.01mm"], v["max_abs_d_mssd_mm"] = sum(x > 0.01 for x in d), max(d)
+    out["control_against_primary"] = control_against_primary(args.root, out["scenes"])
 
     def word(v):
         return "holds" if v["ci95"][1] < 0.0 else "reversed" if v["ci95"][0] > 0.0 else "not shown on ten scenes"

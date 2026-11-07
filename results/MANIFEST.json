@@ -1,6 +1,6 @@
 {
- "written_at": "2026-11-07T17:09:17+00:00",
- "collected_at_commit": "5eb120c46c99b8de4c1ce959fee4b2a5fb2a5b6f",
+ "written_at": "2026-11-07T19:17:34+00:00",
+ "collected_at_commit": "9a824decf024167ec31dee604af2f221f8540463",
  "primary_run_commits": [
   "7eca5f0517e77148d95c9e8292bb570e40442454"
  ],
@@ -56,6 +56,11 @@
   "hfov71/depth_wrap.json": "3dab0f352ded780614df1412cd588ff0209777e0f504588afab1b138cd99415e",
   "hfov71/dots.json": "808a3cb7c79502a59949a60a5b014834876b80200c9e414b737f2a8f7aea23eb",
   "hfov71/dots_sensor.json": "8e4a88c7dd1700eb7334f1530b07156aef167e1dee877d35c2594550a8421ce1",
+  "hfov71/dots30000.json": "f17643708f1ba14177e652404fe5ada6492658c22dd69291bee67a8d3febd246",
+  "hfov71/dots30000_sensor.json": "c32e084c3bc766de35cc87c997555e124dca2356aa446360383b339d534f7857",
+  "hfov71/dots60000.json": "eef973b880f506e26fe8db00f8405ca9d8c41a5818612a664786c021df2972fb",
+  "hfov71/dots60000_sensor.json": "3c96a7035e4c5cbe2c4f9f8d70166a3c48ccee9f9d28a361f18b048d0043fb86",
+  "hfov71/dots_compare.json": "cc665b53b69fd7a0d14178b4f28edcedf65c3c9594789d3b66f07528f41d5f18",
   "hfov71/ambient_level.json": "e38211ed66cffbd305a89384826cb26e344965711bd1bb843f909885d3114fad",
   "hfov71/unlit_share.json": "6e8217c424b217be87735b7ad4dc75bc772bb2c337245dc622b6618992bf467e",
   "hfov71/mechanism_dev.json": "b596f6453d9d7085dd48f9130af5d682268225525522604316d8278899e232da",
