@@ -12,7 +12,8 @@ python3.11 -m venv .venv-bproc
 SITE=$(.venv-bproc/bin/python -c "import site; print(site.getsitepackages()[0])")
 if [[ "$(uname)" == "Darwin" ]]; then
   P=patches/blenderproc-2.8.0-macos-app-bundle.patch
-  if patch -d "$SITE" -p1 -R --dry-run -s < "$P" >/dev/null 2>&1; then
+  # Look for the patch's marker: Apple's "patch -R --dry-run" reports success on an unpatched file.
+  if grep -q "synthrgbd patch" "$SITE/blenderproc/python/utility/SetupUtility.py"; then
     echo "macOS patch already applied"
   else
     patch -d "$SITE" -p1 < "$P"     # fails loudly if it does not apply
