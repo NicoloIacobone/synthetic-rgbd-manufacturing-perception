@@ -12,7 +12,8 @@ F=$T/figures
 mkdir -p "$F"
 OMP_NUM_THREADS=2 $PY scripts/distance_table.py "$T" "$R" --out "$R/distance.json"
 $PY scripts/fig_results.py "$R/stats.json" "$R/sensor.json" "$R/distance.json" --out "$F/results.png"
+ZR=$($PY -c "import json,sys; a=json.load(open(sys.argv[1]))['part_centre_z_m']; print(f'{a[0]:.2f}-{a[1]:.2f}')" "$R/distance.json")
 $PY scripts/fig_robi.py "$R/sensor.json" "$T/robi_sim/ir_appearance.json" "$ROBI" --out "$F/robi.png" \
-  --note "ROBI Zigzag: 26 views at 0.32-0.41 m, one object. Our scenes: 0.61-1.24 m, 50 scenes; appearance on seeds 0-9. Compatible is not validated."
+  --note "ROBI Zigzag: 26 views at 0.32-0.41 m, one object. Our parts: centres at $ZR m, 50 scenes; appearance on seeds 0-9. Compatible is not validated."
 OMP_NUM_THREADS=2 $PY scripts/fig_examples.py "$T" "$R" --out "$F/examples.png"
 $PY scripts/fig_mechanism.py "$DEV" "reflections off" "$DEV" "reflections on (C3)" -1 -1 --pass-a nogloss --out "$F/mechanism.png"

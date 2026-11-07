@@ -127,7 +127,7 @@ def main():
             for s in a.spines.values():
                 s.set_visible(False)
     ax[0, 0].set_title("left IR, matcher input (√DN)", fontsize=10)
-    ax[0, 1].set_title("C3 depth error (black = invalid)", fontsize=10)
+    ax[0, 1].set_title("depth error (black = invalid)", fontsize=10)
     ax[0, 2].set_title("metal-part masks", fontsize=10)
     ax[1, 2].legend(handles=[Patch(color=GREY, label="mirror ray sees nothing"), Patch(color=BLUE, label="mirror ray sees the scene")],
                     loc="lower center", bbox_to_anchor=(0.5, -0.14), ncols=2, frameon=False, fontsize=9)

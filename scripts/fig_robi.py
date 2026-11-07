@@ -82,6 +82,7 @@ def main():
     ax[2].legend(handles=[plt.Line2D([], [], marker="o", ls="", color=DN_COL, label="median DN"), plt.Line2D([], [], marker="s", ls="", color=SD_COL, label="median 7 × 7 local SD")],
                  frameon=False, fontsize=8, ncols=2, loc="upper center", bbox_to_anchor=(0.45, -0.16), handletextpad=0.2, columnspacing=1.0, labelcolor=INK)
     if args.note:
+        fig.get_layout_engine().set(rect=(0, 0.05, 1, 0.95))  # keep the note clear of the legend under panel (c)
         fig.text(0.01, 0.005, args.note, fontsize=8, color=MUTED, ha="left", va="bottom")
     args.out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(args.out, dpi=170, facecolor="white")

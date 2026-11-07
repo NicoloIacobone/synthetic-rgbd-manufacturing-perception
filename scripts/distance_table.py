@@ -45,6 +45,7 @@ def main():
         return float((R @ centres[inst["obj_id"]] + t)[2]) * 1e-3
 
     out = {"bands": [b[0] for b in BANDS], "threshold_mm": THR_MM, "conditions": {}}
+    out["part_centre_z_m"] = None
     for c in CONDITIONS:
         rows = [json.loads(x) for x in (args.results / f"A_{c}_10.jsonl").read_text().splitlines()[1:]]
         dist = np.array([distance(r) for r in rows])
@@ -56,6 +57,7 @@ def main():
             ci = scene_bootstrap_ci(ok[m], sc[m], cfg["statistics"]["bootstrap_resamples"], g)
             res.append({"band": name, "n": int(m.sum()), "n_scenes": int(len(np.unique(sc[m]))), "recall": float(ok[m].mean()), "ci95": list(ci)})
         out["conditions"][c] = res
+        out["part_centre_z_m"] = [float(dist.min()), float(dist.max())]
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(out, indent=1))
     print(json.dumps({c: [round(b["recall"], 3) for b in v] for c, v in out["conditions"].items()}), [b["n"] for b in out["conditions"]["C1"]])
