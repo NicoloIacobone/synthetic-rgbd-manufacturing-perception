@@ -1,0 +1,100 @@
+{
+ "chosen": {
+  "e_per_dn": 0.4204482076268573,
+  "median_subpixel_rms_px": 0.08973111066167258
+ },
+ "runs": [
+  {
+   "e_per_dn": null,
+   "median_subpixel_rms_px": 0.0749310316642848
+  },
+  {
+   "e_per_dn": 0.0625,
+   "median_subpixel_rms_px": 0.16155943526542937
+  },
+  {
+   "e_per_dn": 0.08838834764831845,
+   "median_subpixel_rms_px": 0.14106844817261055
+  },
+  {
+   "e_per_dn": 0.125,
+   "median_subpixel_rms_px": 0.12457919176724286
+  },
+  {
+   "e_per_dn": 0.1767766952966369,
+   "median_subpixel_rms_px": 0.11097491063731191
+  },
+  {
+   "e_per_dn": 0.25,
+   "median_subpixel_rms_px": 0.10041574717068628
+  },
+  {
+   "e_per_dn": 0.3535533905932738,
+   "median_subpixel_rms_px": 0.09285390322804192
+  },
+  {
+   "e_per_dn": 0.5,
+   "median_subpixel_rms_px": 0.08714217184269157
+  },
+  {
+   "e_per_dn": 0.7071067811865476,
+   "median_subpixel_rms_px": 0.08328259020884013
+  },
+  {
+   "e_per_dn": 1.0,
+   "median_subpixel_rms_px": 0.08047993673489602
+  },
+  {
+   "e_per_dn": 1.4142135623730951,
+   "median_subpixel_rms_px": 0.07866555353022461
+  },
+  {
+   "e_per_dn": 2.0,
+   "median_subpixel_rms_px": 0.07741844561625459
+  },
+  {
+   "e_per_dn": 2.8284271247461903,
+   "median_subpixel_rms_px": 0.07669152713484166
+  },
+  {
+   "e_per_dn": 4.0,
+   "median_subpixel_rms_px": 0.0760424072075757
+  },
+  {
+   "e_per_dn": 5.656854249492381,
+   "median_subpixel_rms_px": 0.07568539240219742
+  },
+  {
+   "e_per_dn": 8.0,
+   "median_subpixel_rms_px": 0.07535114978534338
+  },
+  {
+   "e_per_dn": 11.313708498984761,
+   "median_subpixel_rms_px": 0.07516291558359842
+  },
+  {
+   "e_per_dn": 16.0,
+   "median_subpixel_rms_px": 0.0750659515462734
+  },
+  {
+   "e_per_dn": 22.627416997969522,
+   "median_subpixel_rms_px": 0.07495748525197658
+  },
+  {
+   "e_per_dn": 32.0,
+   "median_subpixel_rms_px": 0.07491053217437509
+  },
+  {
+   "e_per_dn": 45.254833995939045,
+   "median_subpixel_rms_px": 0.07477669952752664
+  },
+  {
+   "e_per_dn": 64.0,
+   "median_subpixel_rms_px": 0.07477413306018599
+  },
+  {
+   "e_per_dn": 0.4204482076268573,
+   "median_subpixel_rms_px": 0.08973111066167258
+  }
+ ]
+}

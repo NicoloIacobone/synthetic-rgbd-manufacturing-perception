@@ -1,0 +1,24 @@
+{
+ "n_instance_views": 460,
+ "recall_5mm": {
+  "C3": 0.06956521739130435,
+  "C4": 0.34347826086956523,
+  "C3redraw1": 0.06086956521739131,
+  "C3redraw2": 0.06304347826086956
+ },
+ "C3_range": [
+  0.06086956521739131,
+  0.06956521739130435
+ ],
+ "C3_spread_points": 0.8695652173913042,
+ "C3_minus_C4_per_draw": {
+  "C3": -0.2739130434782609,
+  "C3redraw1": -0.28260869565217395,
+  "C3redraw2": -0.2804347826086957
+ },
+ "views_changed_vs_primary": {
+  "C3redraw1": 24,
+  "C3redraw2": 21
+ },
+ "note": "Only the sensor noise is redrawn; the render and the C4 draw stay."
+}

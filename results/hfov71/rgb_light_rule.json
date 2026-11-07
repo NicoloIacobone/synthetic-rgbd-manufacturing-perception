@@ -1,0 +1,80 @@
+{
+ "n_views": 10,
+ "median_saturated": 0.0,
+ "max_saturated": 0.026559003794143398,
+ "median_part_grey": 180.5,
+ "passes": true,
+ "grey_ok": true,
+ "per_view": [
+  {
+   "scene": 1000,
+   "im_id": 0,
+   "saturated_part_share": 0.0,
+   "median_part_grey": 163.0,
+   "median_image_grey": 121.0
+  },
+  {
+   "scene": 1000,
+   "im_id": 1,
+   "saturated_part_share": 0.0,
+   "median_part_grey": 212.0,
+   "median_image_grey": 126.0
+  },
+  {
+   "scene": 1001,
+   "im_id": 0,
+   "saturated_part_share": 0.0,
+   "median_part_grey": 191.0,
+   "median_image_grey": 130.0
+  },
+  {
+   "scene": 1001,
+   "im_id": 1,
+   "saturated_part_share": 0.0,
+   "median_part_grey": 187.0,
+   "median_image_grey": 126.0
+  },
+  {
+   "scene": 1002,
+   "im_id": 0,
+   "saturated_part_share": 0.0,
+   "median_part_grey": 199.0,
+   "median_image_grey": 124.0
+  },
+  {
+   "scene": 1002,
+   "im_id": 1,
+   "saturated_part_share": 0.026559003794143398,
+   "median_part_grey": 214.0,
+   "median_image_grey": 127.0
+  },
+  {
+   "scene": 1003,
+   "im_id": 0,
+   "saturated_part_share": 0.0,
+   "median_part_grey": 174.0,
+   "median_image_grey": 126.0
+  },
+  {
+   "scene": 1003,
+   "im_id": 1,
+   "saturated_part_share": 0.0,
+   "median_part_grey": 97.0,
+   "median_image_grey": 126.0
+  },
+  {
+   "scene": 1004,
+   "im_id": 0,
+   "saturated_part_share": 0.0,
+   "median_part_grey": 115.5,
+   "median_image_grey": 125.0
+  },
+  {
+   "scene": 1004,
+   "im_id": 1,
+   "saturated_part_share": 0.0,
+   "median_part_grey": 109.0,
+   "median_image_grey": 124.0
+  }
+ ]
+}

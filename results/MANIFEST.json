@@ -1,0 +1,72 @@
+{
+ "written_at": "2026-11-07T01:18:30+00:00",
+ "collected_at_commit": "dab2f77213313d1afabb8099b75711e5c3db8404",
+ "primary_run_commits": [
+  "7eca5f0517e77148d95c9e8292bb570e40442454"
+ ],
+ "primary_run_dirty_tree": false,
+ "unit": {
+  "instance_views": 460,
+  "scenes": 50,
+  "excluded_visib_lt_0.1": 0,
+  "profile": 342,
+  "bracket": 118
+ },
+ "seeds": {
+  "master": 0,
+  "test_scenes": {
+   "start": 0,
+   "count": 50
+  },
+  "dev_scenes": {
+   "start": 1000,
+   "count": 5
+  }
+ },
+ "camera": {
+  "width": 1280,
+  "height": 720,
+  "hfov_deg": 71.0,
+  "baseline_m": 0.055,
+  "disparity_search_px": 126,
+  "sgbm_num_disparities": 128,
+  "min_z_m": 0.45
+ },
+ "noise": {
+  "c2a_eps_d_px": 0.08,
+  "c2b_eps_d_px": 0.234
+ },
+ "platform": "macOS-27.2-arm64-arm-64bit",
+ "python": "3.11.6",
+ "archive_hfov65_note": "Descriptive sensitivity to the focal length only; commit 26cd449. Never compared to choose settings (A-66).",
+ "missing_optional": [],
+ "sha256": {
+  "hfov71/stats.json": "4dbd2eb2c9fe5fadc528b55caf82db6ad77c4629df1b47d52823ebd982d06763",
+  "hfov71/sensor.json": "a23514997b10c5d5c371d51e733784bdec8707181e1f82d712939f8b8f3fe046",
+  "hfov71/distance.json": "c77510f9a9cd3af0567c14d30d954ee7377d1b00702590de0e12342b0d9df1be",
+  "hfov71/s58_robustness.json": "2f62caa2807c2eda1223801d50d34c4d8e06d96e58c501fb0c60a7738fb9ddc6",
+  "hfov71/s58_sensor.json": "dec0ac8ac408b1df41b21c98dc68fefc47c2871a3df703dc18ce26402e4fcbfd",
+  "hfov71/redraw.json": "b5f990039a3f29ad5e78d455f4a81663a74e5898ba3db206f93d5bb6aafe35ee",
+  "hfov71/redraw_sensor.json": "621bd75e2115b0940dfba359ed304d03b8236a19dcf04eaea5f4f0730d9c1117",
+  "hfov71/ambient.json": "b646c7a14e91cd6fce44d033dadfa6db0d795d7f3a6e698205642215d48cd387",
+  "hfov71/ambient_sensor.json": "dca02ef461a430cfb6f65d44f7011e1cce1edd73705f7cd281baa749b6ff936f",
+  "hfov71/ambient_level.json": "e38211ed66cffbd305a89384826cb26e344965711bd1bb843f909885d3114fad",
+  "hfov71/unlit_share.json": "6e8217c424b217be87735b7ad4dc75bc772bb2c337245dc622b6618992bf467e",
+  "hfov71/mechanism_dev.json": "b596f6453d9d7085dd48f9130af5d682268225525522604316d8278899e232da",
+  "hfov71/ir_appearance.json": "093edd3cf28d460f780d4cdf6c61b899913597014445ca3ad5ab3b421895ea5b",
+  "hfov71/robi_zigzag_real.json": "e725f0a7eaf04abc4e397166b7da7f03ba5474c3072d6a725a30b8d00f7ca60c",
+  "hfov71/plane_gate_no_noise.json": "a8ba8e3e1a917d78a1c44d783d317aa02c1c261a51092aff1836e0b86abe9264",
+  "hfov71/anchor_a.json": "b55b6cd847a3dcdb5d4c0d77a0864a8ffb80f2d76f8ad24a6f94838e54e25d22",
+  "hfov71/anchor_a_calibration.json": "857ee597392fd1d1dd79a672548c772d33b7863f5125422f48497f32b85b40e2",
+  "hfov71/intrinsics_check.json": "a3db8553ccbfde092240792720d34ff4ef5cc05f493f867ef904fdf66c067850",
+  "hfov71/rgb_light_rule.json": "b4fa9d89d8089595a92fee9df8890a8b75ad1a5e07ce1c0ce38922418be3d890",
+  "archive_hfov65/stats.json": "c31a1775fdb48e06c087d40fc2ec7dad7651a809158f81346eba20baee4ed330",
+  "archive_hfov65/sensor.json": "811f339e5580cb1ed3920bcdf6d97677856c6c757bfaeddd57804074c40da105",
+  "archive_hfov65/s58_robustness.json": "be96b86a6d2cdf305500355f332b57663f64625ab7573cb9a28830a52f653110",
+  "archive_hfov65/s58_sensor.json": "912329f7fee3e4dd1f677ce45411d43a60ca0f7ec8885b4733faaee151e54640",
+  "figures/results.png": "b6cfaccd9ad7b63c14b68baeaa5c46e940d6046b578ff624d9bcf7ed7f4ac80e",
+  "figures/robi.png": "266003c476ac77a6050bdc803a86343c07163d845191e759de4de52420e96aad",
+  "figures/examples.png": "930914e686b9b0471cd917369597a46b395077754aa0f9460448a6818b095d42",
+  "figures/mechanism.png": "5f238145664d570046f263d55d1a89c5551c67d547691be9b78c1fc4ca19bed7"
+ }
+}

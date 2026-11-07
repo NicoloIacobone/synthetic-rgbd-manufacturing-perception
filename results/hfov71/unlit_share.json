@@ -1,0 +1,61 @@
+{
+ "n_instance_views": 460,
+ "part_px": 1674189,
+ "part_px_unlit": 1077,
+ "part_px_unlit_share": 0.0006432965453721175,
+ "instance_views_any_unlit": 2,
+ "instance_views_unlit_gt_10pct": 1,
+ "instance_views_unlit_gt_50pct": 1,
+ "image_unlit_share_mean_over_views": 0.13573780381944442,
+ "by_type": {
+  "profile": 9.149476590268538e-05,
+  "bracket": 0.005659831470832881
+ },
+ "worst": [
+  {
+   "scene": 19,
+   "im_id": 1,
+   "gt_id": 3,
+   "type": "bracket",
+   "n_px": 1103,
+   "n_unlit": 939,
+   "share": 0.8513145965548504
+  },
+  {
+   "scene": 35,
+   "im_id": 0,
+   "gt_id": 3,
+   "type": "profile",
+   "n_px": 8383,
+   "n_unlit": 138,
+   "share": 0.01646188715257068
+  },
+  {
+   "scene": 0,
+   "im_id": 0,
+   "gt_id": 0,
+   "type": "profile",
+   "n_px": 4797,
+   "n_unlit": 0,
+   "share": 0.0
+  },
+  {
+   "scene": 0,
+   "im_id": 0,
+   "gt_id": 1,
+   "type": "profile",
+   "n_px": 5540,
+   "n_unlit": 0,
+   "share": 0.0
+  },
+  {
+   "scene": 0,
+   "im_id": 0,
+   "gt_id": 2,
+   "type": "profile",
+   "n_px": 3448,
+   "n_unlit": 0,
+   "share": 0.0
+  }
+ ]
+}
