@@ -34,7 +34,17 @@ def test_sign_keeps_magnitudes_and_removes_one_sidedness():
     assert a.mean() > 40 and abs(b.mean()) < 15
 
 
-@pytest.mark.parametrize("mode", ["shuffle", "sign"])
+def test_both_keeps_magnitudes_as_a_set_and_removes_their_layout():
+    z, z_true, mask = _maps()
+    out = scramble_errors(z, z_true, mask, np.random.default_rng(0), "both")
+    sel = mask & (z > 0)
+    a, b = z[sel].astype(int) - 8000, out[sel].astype(int) - 8000
+    assert np.array_equal(np.sort(np.abs(a)), np.sort(np.abs(b)))
+    assert not np.array_equal(np.abs(a), np.abs(b))
+    assert abs(b.mean()) < 15   # same bound as the sign test
+
+
+@pytest.mark.parametrize("mode", ["shuffle", "sign", "both"])
 def test_invalid_pixels_and_pixels_outside_the_mask_are_untouched(mode):
     z, z_true, mask = _maps()
     out = scramble_errors(z, z_true, mask, np.random.default_rng(0), mode)

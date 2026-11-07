@@ -35,4 +35,5 @@ DEPTH_DIRS = {
     "C4amb": "depth_stereo_matte_amb",
     "C3shuf": "depth_stereo_metal_shuf",            # C3 with each part's errors permuted among its pixels (A-73)
     "C3sym": "depth_stereo_metal_sym",              # C3 with each error's sign random (A-73)
+    "C3both": "depth_stereo_metal_both",            # both: independent zero-mean noise of the part's own error sizes (A-73)
 }

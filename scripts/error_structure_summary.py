@@ -37,17 +37,19 @@ def main():
     cfg = load_config()
     g = rng(cfg["seeds"]["master"], 0, 6, "bootstrap")
     metas, runs = {}, {}
-    for c in ("C3shuf", "C3sym"):
+    for c in ("C3shuf", "C3sym", "C3both"):
         metas[c], runs[c] = load(args.check / f"A_{c}_10.jsonl")
     keys = sorted(runs["C3shuf"])
-    if sorted(runs["C3sym"]) != keys:
+    if sorted(runs["C3sym"]) != keys or sorted(runs["C3both"]) != keys:
         raise ValueError("instance-views differ")
     _, base = load(args.results / "A_C3_10.jsonl")
     _, c4 = load(args.results / "A_C4_10.jsonl")
+    _, c1 = load(args.results / "A_C1_10.jsonl")
+    _, c2b = load(args.results / "A_C2b_10.jsonl")
     scenes = np.array([k[0] for k in keys])
     types = np.array([base[k]["type"] for k in keys])
     a = np.array([ok(base[k]) for k in keys], bool)
-    out = {"n_instance_views": len(keys), "scenes": sorted(set(int(s) for s in scenes)), "recall_5mm": {"C3": float(a.mean()), "C4": float(np.mean([ok(c4[k]) for k in keys]))},
+    out = {"n_instance_views": len(keys), "scenes": sorted(set(int(s) for s in scenes)), "recall_5mm": {"C1": float(np.mean([ok(c1[k]) for k in keys])), "C2b": float(np.mean([ok(c2b[k]) for k in keys])), "C3": float(a.mean()), "C4": float(np.mean([ok(c4[k]) for k in keys]))},
            "median_mssd_mm": {"C3": float(np.median([1e9 if base[k].get("mssd_mm") is None else base[k]["mssd_mm"] for k in keys]))}, "against_C3": {},
            "commits": sorted({m["commit"] for m in metas.values()}), "dirty_tree_any": any(m["dirty_tree"] for m in metas.values())}
     for c, run in runs.items():
@@ -58,13 +60,17 @@ def main():
         out["median_mssd_mm"][c] = float(np.median([1e9 if run[k].get("mssd_mm") is None else run[k]["mssd_mm"] for k in keys]))
         out["against_C3"][c] = {"diff": float(b.mean() - a.mean()), "ci95": [lo, hi], "p": m["p"], "n_up": m["n_a_only"], "n_down": m["n_b_only"], "excludes_zero": not lo <= 0.0 <= hi,
                                 "profile": float(b[types == "profile"].mean()), "bracket": float(b[types == "bracket"].mean())}
+    x, y = np.array([ok(runs["C3both"][k]) for k in keys], bool), np.array([ok(runs["C3shuf"][k]) for k in keys], bool)
+    lo, hi = scene_bootstrap_ci(x.astype(float) - y.astype(float), scenes, cfg["statistics"]["bootstrap_resamples"], g)
+    m = mcnemar_exact(x, y)
+    out["C3both_against_C3shuf"] = {"diff": float(x.mean() - y.mean()), "ci95": [lo, hi], "p": m["p"]}
     shuf, sym = out["against_C3"]["C3shuf"], out["against_C3"]["C3sym"]
     up = lambda x: x["excludes_zero"] and x["diff"] > 0   # noqa: E731
     out["reading"] = ("coherence matters" if up(shuf) else "one-sidedness matters" if up(sym) else "claim refuted: the size of the error is enough")
-    out["note"] = "Descriptive, 10 scenes. Replaces no primary number. Reading fixed in advance in the ledger, row Error structure check (A-73)."
+    out["note"] = "Descriptive, 10 scenes. Replaces no primary number. Reading fixed in advance in the ledger, rows Error structure check and its second part (A-73)."
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(out, indent=1) + "\n")
-    print(json.dumps({k: out[k] for k in ("recall_5mm", "median_mssd_mm", "against_C3", "reading")}))
+    print(json.dumps({k: out[k] for k in ("recall_5mm", "median_mssd_mm", "against_C3", "C3both_against_C3shuf", "reading")}))
 
 
 if __name__ == "__main__":

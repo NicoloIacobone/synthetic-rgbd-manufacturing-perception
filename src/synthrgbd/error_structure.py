@@ -2,12 +2,13 @@
 
 For one part's visible mask, on the pixels valid in both maps, the error e = z - z_true is either permuted among those pixels ("shuffle":
 same distribution, including bias and tail; no spatial coherence) or has its sign flipped with probability 1/2 ("sign": same magnitudes;
-no one-sidedness, no coherence). Invalid pixels (0) and pixels outside the mask are not touched. Depth stays in the integer units of the input.
+no one-sidedness, but the large errors stay where they are) or both ("both": independent zero-mean draws from the part's own error sizes, the best
+additive noise a per-part model could offer). Invalid pixels (0) and pixels outside the mask are not touched. Depth stays in the integer units of the input.
 """
 
 import numpy as np
 
-MODES = ("shuffle", "sign")
+MODES = ("shuffle", "sign", "both")
 
 
 def scramble_errors(z: np.ndarray, z_true: np.ndarray, mask: np.ndarray, rng: np.random.Generator, mode: str) -> np.ndarray:
@@ -17,6 +18,9 @@ def scramble_errors(z: np.ndarray, z_true: np.ndarray, mask: np.ndarray, rng: np
     out = z.copy()
     sel = mask & (z > 0) & (z_true > 0)
     e = z[sel].astype(np.int64) - z_true[sel].astype(np.int64)
-    e = rng.permutation(e) if mode == "shuffle" else e * rng.choice(np.array([-1, 1]), size=e.size)
+    if mode in ("shuffle", "both"):
+        e = rng.permutation(e)
+    if mode in ("sign", "both"):
+        e = e * rng.choice(np.array([-1, 1]), size=e.size)
     out[sel] = np.clip(z_true[sel].astype(np.int64) + e, 1, 65535).astype(z.dtype)
     return out

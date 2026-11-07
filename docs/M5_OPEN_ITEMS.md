@@ -90,4 +90,4 @@ Commit 7eca5f0, clean tree, 460 instance-views, `results/hfov71/`. The items kee
 **New at 71°, for the report.**
 - `e_per_dn` went from 0.087 to 0.42 on the same plane rule, because the no-noise plane floor rose from 0.053 to 0.0749 px (pixel locking), leaving less room for noise under the 0.09 px target. σ at 21 DN falls from 15.6 to 7.1 DN. A reader comparing the two runs needs this.
 - Unlit part pixels: 0.064% (1 077 of 1 674 189), on 2 instance-views: a bracket in scene 19 view 1 at 85%, a profile in scene 35 at 1.6%. Unlit image share 13.6%. `results/hfov71/unlit_share.json`.
-- ICP is not strictly repeatable on identical depth (A-72). Its effect on the recall of the test scenes is not measured; one repeat has been proposed and not run.
+- ICP is not strictly repeatable on identical depth (A-72). **Measured 2026-11-07:** one full repeat of C1, C2b, C3, C4 changes no view's side of 5 mm, so recall is identical; at most 6 of 460 views move by more than 0.01 mm, the largest by 33.3 mm on views that fail in both runs.

@@ -1,7 +1,7 @@
-"""Surrogate depth for the error structure check (A-73): C3 with the errors of each part shuffled, or with random signs.
+"""Surrogate depth for the error structure check (A-73): C3 with the errors of each part shuffled, with random signs, or both.
 
 Usage: .venv/bin/python scripts/error_structure_depth.py <dataset_root> <scene_seed>...
-Writes depth_stereo_metal_shuf/ and depth_stereo_metal_sym/ in each scene. Seeds from the stream error_structure of (master, scene, view).
+Writes depth_stereo_metal_shuf/, _sym/ and _both/ in each scene; the order of the modes is kept, so the first two do not change. Seeds from the stream error_structure of (master, scene, view).
 """
 
 import json
@@ -18,7 +18,7 @@ from synthrgbd.config import load_config  # noqa: E402
 from synthrgbd.error_structure import scramble_errors  # noqa: E402
 from synthrgbd.seeds import rng  # noqa: E402
 
-OUT = {"shuffle": DEPTH_DIRS["C3shuf"], "sign": DEPTH_DIRS["C3sym"]}
+OUT = {"shuffle": DEPTH_DIRS["C3shuf"], "sign": DEPTH_DIRS["C3sym"], "both": DEPTH_DIRS["C3both"]}
 
 
 def main():

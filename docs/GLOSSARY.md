@@ -75,7 +75,7 @@ Fonti: PLAN §5.1, `src/synthrgbd/conditions.py`. Le cartelle sono dentro ogni s
 | `C3looselr`, `C4looselr` | C3 e C4 con tutti e tre i filtri spenti: uniqueness, speckle e controllo sinistra-destra (valore 1000) | Rifacimento del §5.8, scene 0–9 (A-63) | `depth_stereo_metal_looselr`, `depth_stereo_matte_looselr` |
 | `C3nolr1000` | C3 con il solo controllo sinistra-destra spento davvero | §5.8, solo classi del sensore (A-63) | `depth_stereo_metal_nolr1000` |
 | `C3e1`, `C4e1` | C3 e C4 con rumore IR più basso: `e_per_dn` 1 invece del valore in configurazione | Descrittive, scene 0–9 (A-64) | `depth_stereo_metal_e1`, `depth_stereo_matte_e1` |
-| `C3shuf`, `C3sym` | C3 con gli errori rimescolati nello spazio dentro ogni parte, oppure con il segno casuale: stessa distribuzione o stesse ampiezze, senza struttura spaziale o senza un solo verso | Controllo della struttura dell'errore, scene 0–9 (A-73) | `depth_stereo_metal_shuf`, `depth_stereo_metal_sym` |
+| `C3shuf`, `C3sym`, `C3both` | C3 con gli errori rimescolati nello spazio dentro ogni parte, con il segno casuale, o entrambe le cose. `C3both` è il miglior rumore additivo possibile per parte: stesse ampiezze, media nulla, indipendente | Controllo della struttura dell'errore, scene 0–9 (A-73) | `depth_stereo_metal_shuf`, `_sym`, `_both` |
 | `C3amb`, `C4amb` | C3 e C4 con luce ambiente aggiunta alla radianza del proiettore, un solo livello fissato sui dev | Descrittive, scene 0–9 (A-70) | `depth_stereo_metal_amb`, `depth_stereo_matte_amb` |
 
 **Dal 6 nov 2026 la corsa primaria è a 71° (A-66):** fx 897,25 px, C2b 0,234 px, dati in `data/hfov71/`. I valori attuali sono in `configs/`; quelli della corsa archiviata a 65° sono tra parentesi.
