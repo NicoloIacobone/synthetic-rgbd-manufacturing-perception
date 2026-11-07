@@ -265,7 +265,7 @@ Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 | `A-70` | Test con luce ambiente, solo descrittivo: un livello, 21 DN sul metallo, scene 0–9 |
 | `A-71` | Strumenti di consegna: `results/`, `scripts/setup.sh`, `scripts/quick_run.py`, scena di esempio seme 0 |
 | `A-72` | L'ICP non è ripetibile alla lettera: stessa profondità, risultati diversi su alcune viste instabili. Effetto sul recall di test non misurato |
-| `A-73` | Controllo della struttura dell'errore: gli errori di C3 rimescolati o con segno casuale, per verificare se conta la coerenza o la direzione dell'errore |
+| `A-73` | Controllo della struttura dell'errore: gli errori di C3 rimescolati o con segno casuale. Esito: conta dove cadono e quanto sono grandi, non la direzione |
 
 ## 10. Rischi `R1`…`R7`
 
