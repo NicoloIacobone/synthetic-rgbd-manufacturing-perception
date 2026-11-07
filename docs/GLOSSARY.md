@@ -268,6 +268,7 @@ Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 | `A-72` | L'ICP non è ripetibile alla lettera: stessa profondità, risultati diversi su alcune viste instabili. Effetto sul recall di test non misurato |
 | `A-73` | Controllo della struttura dell'errore: gli errori di C3 rimescolati o con segno casuale. Esito: conta dove cadono e quanto sono grandi, non la direzione |
 | `A-74` | Prova sulla densità dei punti, solo descrittiva: 10 000 punti invece di 30 000, scene 0–9, lettura fissata prima della corsa |
+| `A-75` | Overflow della profondità in uint16 oltre 6,55 m: 0,09% dei pixel dell'immagine, nessun pixel di parte in C3 e C4. Documentato, non corretto |
 
 ## 10. Rischi `R1`…`R7`
 

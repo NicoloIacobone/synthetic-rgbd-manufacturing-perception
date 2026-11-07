@@ -1,0 +1,31 @@
+{
+ "measure": "clipped exposed DN on left-image part pixels, gain of the C3 left image, no noise",
+ "dev": {
+  "n_views": 10,
+  "n_part_pixels": 138093,
+  "c3_dn_mean": 15.957592807209902,
+  "c4_dn_mean": 15.968769365592788,
+  "ratio_pixel_weighted": 1.000700391250605,
+  "ratio_per_view": {
+   "p5": 0.4870486755951243,
+   "p50": 1.3418716188614128,
+   "p95": 3.0305534274270722,
+   "min": 0.44867462646033923,
+   "max": 3.0839579646775532
+  }
+ },
+ "test": {
+  "n_views": 100,
+  "n_part_pixels": 1674189,
+  "c3_dn_mean": 20.939100935156628,
+  "c4_dn_mean": 15.082160458021471,
+  "ratio_pixel_weighted": 0.7202869170327468,
+  "ratio_per_view": {
+   "p5": 0.17011050242545414,
+   "p50": 1.1133426221727407,
+   "p95": 3.016201046616282,
+   "min": 0.09474719940092184,
+   "max": 4.349120453422607
+  }
+ }
+}

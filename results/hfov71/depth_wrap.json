@@ -1,0 +1,36 @@
+{
+ "limit_m": 6.5535000000000005,
+ "disparity_below_px": 7.530110614994213,
+ "counts": {
+  "C3": {
+   "frame_px": 92160000,
+   "frame_wrapped": 84889,
+   "part_px": 1674189,
+   "part_wrapped": 0
+  },
+  "C4": {
+   "frame_px": 92160000,
+   "frame_wrapped": 82652,
+   "part_px": 1674189,
+   "part_wrapped": 0
+  },
+  "C3looselr_seeds_0_9": {
+   "frame_px": 18432000,
+   "frame_wrapped": 45380,
+   "part_px": 334989,
+   "part_wrapped": 136
+  }
+ },
+ "c3_stored_mm_of_wrapped_pixels_seeds_0_9": {
+  "n": 22949,
+  "min": 26.200000000000003,
+  "median": 2418.9,
+  "max": 6390.3,
+  "share_below_500mm": 0.22057605995903962
+ },
+ "c3_views_reproducing_the_stored_depth": {
+  "identical": 100,
+  "views": 100
+ },
+ "note": "Not fixed: recall and part metrics of C3 and C4 do not change, and a fix changes the quick run's expected hashes."
+}

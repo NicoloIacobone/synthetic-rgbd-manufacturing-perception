@@ -28,8 +28,9 @@ INK, MUTED, GRID = "#0b0b0b", "#52514e", "#e6e5e0"
 SLOTS = {"C1": "#2a78d6", "C2a": "#eb6834", "C2b": "#1baf7a", "C3": "#eda100", "C4": "#e87ba4"}
 DESCRIPTIVE = "#8a8983"
 ORDER = ["C1", "C2a", "C2b", "C3", "C4", "C4bright", "C3r04", "C3r02", "C3nogloss"]
-CLASS_ORDER = [("correct", "correct, within 5 mm", "#2a78d6"), ("towards_bg", "behind the surface, up to the tray", "#eb6834"),
-               ("in_front", "in front of the surface", "#1baf7a"), ("invalid", "invalid", "#eda100")]
+# Not the condition colours of panels (a), (b) and (d): these are pixel classes
+CLASS_ORDER = [("correct", "correct, within 5 mm", "#008300"), ("towards_bg", "behind the surface, up to the tray or beyond", "#6250d6"),
+               ("in_front", "in front of the surface", "#e34948"), ("invalid", "invalid", "#c3c2b7")]
 
 
 def style(ax):
@@ -54,7 +55,7 @@ def main():
     ir = load_config(REPO / "configs" / "camera_d415_ir.yaml")
     rough, albedo = ir["materials_metal"]["roughness"], ir["materials_matte"]["part_albedo"]
     labels = {"C1": "C1 ideal depth", "C2a": f"C2a noise, {noise['c2a_eps_d_px']:g} px", "C2b": f"C2b noise, {noise['c2b_eps_d_px']:g} px", "C3": "C3 metal (camera model)",
-              "C4": "C4 matte, matched", "C4bright": "matte, albedo 0.5", "C3r04": "metal, roughness 0.4", "C3r02": "metal, roughness 0.2", "C3nogloss": "metal, reflections off"}
+              "C4": "C4 matte (camera model)", "C4bright": "matte, albedo 0.5", "C3r04": "metal, roughness 0.4", "C3r02": "metal, roughness 0.2", "C3nogloss": "metal, reflections off"}
     short = {"C3": f"C3 metal, roughness {rough:g}", "C4": f"C4 matte, albedo {albedo:g}", "C4bright": "matte, albedo 0.5", "C3r04": "metal, roughness 0.4", "C3r02": "metal, roughness 0.2",
              "C3nogloss": "metal, reflections off"}
     fig, ax = plt.subplots(2, 2, figsize=(11.2, 7.0), constrained_layout=True, gridspec_kw={"width_ratios": [1.15, 1.0]})
@@ -102,7 +103,7 @@ def main():
             w = cl.get(key, 0.0) + (cl.get("beyond_bg", 0.0) if key == "towards_bg" else 0.0)
             d.barh(i, w, left=left, height=0.62, color=col, edgecolor="white", linewidth=1.2)
             if w >= 0.09:
-                d.text(left + w / 2, i, f"{100 * w:.0f}", ha="center", va="center", fontsize=8, color="white" if col in ("#2a78d6", "#eb6834") else INK)
+                d.text(left + w / 2, i, f"{100 * w:.0f}", ha="center", va="center", fontsize=8, color="white" if col != "#c3c2b7" else INK)
             left += w
     d.set_yticks(range(len(rows)), [short[c] for c in rows], color=INK)
     d.invert_yaxis()

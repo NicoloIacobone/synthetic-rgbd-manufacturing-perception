@@ -1,6 +1,6 @@
 {
- "written_at": "2026-11-07T03:19:23+00:00",
- "collected_at_commit": "e720aeaa4fae6368b7b7bb1f1483aa4abdfaa519",
+ "written_at": "2026-11-07T17:09:17+00:00",
+ "collected_at_commit": "5eb120c46c99b8de4c1ce959fee4b2a5fb2a5b6f",
  "primary_run_commits": [
   "7eca5f0517e77148d95c9e8292bb570e40442454"
  ],
@@ -52,6 +52,10 @@
   "hfov71/ambient_sensor.json": "dca02ef461a430cfb6f65d44f7011e1cce1edd73705f7cd281baa749b6ff936f",
   "hfov71/icp_repeat.json": "4304548254b9a51a8d009a481dd5763a9bd75d9ad99eb6c759ca6b55b5771dfb",
   "hfov71/error_structure.json": "b60dd6577d7c6a84601ec041a4dbfba4bd89d582382a540f544bea98cb7597e6",
+  "hfov71/brightness_match.json": "ed0ae76585792d64f0b9fb477f7829abc6b749b57e7b622f0d79c44e78c5c3ad",
+  "hfov71/depth_wrap.json": "3dab0f352ded780614df1412cd588ff0209777e0f504588afab1b138cd99415e",
+  "hfov71/dots.json": "808a3cb7c79502a59949a60a5b014834876b80200c9e414b737f2a8f7aea23eb",
+  "hfov71/dots_sensor.json": "8e4a88c7dd1700eb7334f1530b07156aef167e1dee877d35c2594550a8421ce1",
   "hfov71/ambient_level.json": "e38211ed66cffbd305a89384826cb26e344965711bd1bb843f909885d3114fad",
   "hfov71/unlit_share.json": "6e8217c424b217be87735b7ad4dc75bc772bb2c337245dc622b6618992bf467e",
   "hfov71/mechanism_dev.json": "b596f6453d9d7085dd48f9130af5d682268225525522604316d8278899e232da",
@@ -66,7 +70,7 @@
   "archive_hfov65/sensor.json": "811f339e5580cb1ed3920bcdf6d97677856c6c757bfaeddd57804074c40da105",
   "archive_hfov65/s58_robustness.json": "be96b86a6d2cdf305500355f332b57663f64625ab7573cb9a28830a52f653110",
   "archive_hfov65/s58_sensor.json": "912329f7fee3e4dd1f677ce45411d43a60ca0f7ec8885b4733faaee151e54640",
-  "figures/results.png": "b6cfaccd9ad7b63c14b68baeaa5c46e940d6046b578ff624d9bcf7ed7f4ac80e",
+  "figures/results.png": "fb88e6230fdbf4fff422783550bd4b9ffaf3376f5c6980418045582f0188095b",
   "figures/robi.png": "266003c476ac77a6050bdc803a86343c07163d845191e759de4de52420e96aad",
   "figures/examples.png": "c05eb818aecbea2976e8f29d45cc8870271ab9f393b228a5924cbeab0b236e30",
   "figures/mechanism.png": "5f238145664d570046f263d55d1a89c5551c67d547691be9b78c1fc4ca19bed7"

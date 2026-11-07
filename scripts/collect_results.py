@@ -33,6 +33,8 @@ def main():
            "redraw.json": t / "results_redraw" / "redraw.json", "redraw_sensor.json": t / "results_redraw" / "sensor.json",
            "ambient.json": t / "results_ambient" / "ambient.json", "ambient_sensor.json": t / "results_ambient" / "sensor.json",
            "icp_repeat.json": t / "results_repeat" / "icp_repeat.json", "error_structure.json": t / "results_structure" / "error_structure.json",
+           "brightness_match.json": t / "brightness_match.json", "depth_wrap.json": t / "depth_wrap.json",
+           "dots.json": t / "results_dots10000" / "dots.json", "dots_sensor.json": t / "results_dots10000" / "sensor.json",
            "ambient_level.json": d / "ambient_level.json", "unlit_share.json": t / "unlit_share.json", "mechanism_dev.json": t / "mechanism" / "dev_final.json",
            "ir_appearance.json": t / "robi_sim" / "ir_appearance.json", "robi_zigzag_real.json": args.archive / "robi" / "zigzag.json",
            "plane_gate_no_noise.json": args.root / "plane" / "gate_results.json", "anchor_a.json": args.root / "plane" / "anchor_a.json",
