@@ -10,6 +10,9 @@ Handoff note between sessions. **Read first**, then CLAUDE.md's other context fi
 - **Left to the user:** verifying and editing the report, freeze and tag, push, Release, visibility, what becomes public, mail. The sample-scene URL (`SAMPLE_SCENE_URL` in `scripts/quick_run.py`) is empty until the archive is published.
 - **Pre-publication check (2026-11-07, nothing rewritten):** no secrets, no absolute local paths, no generated data, largest blob 968 KB. Personal data for the user to decide on: the author's address on all commits (a rewrite would be needed to change it), `jpetrik@ethz.ch` in this file and in commit b132514, "J. Petrik" in A-02. Also the user's call: `task_description.md`, `docs/DIARY.md`, `docs/AI_USE_LOG.md`, `CLAUDE.md` and the ROBI-derived numbers in `results/` are tracked.
 
+## Report, first draft
+`report/report.pdf`, 7 pages, source `report/report.tex`. Written by the agent; **the user verifies it.** To confirm: author name, the AI-note sentence "checked the results and this text", other AI tools used if any, the repository link (private today). Check: `.venv/bin/python report/check_numbers.py`. Two checks added while writing: ICP repeat (no view crosses 5 mm, A-72), error structure (direction does not matter, size and layout do, A-73).
+
 ## Primary result at 71° (commit 7eca5f0, clean tree, `results/hfov71/stats.json`)
 460 instance-views, seeds 0–49. A1 recall@5 mm: C1 0.717, C2a 0.735, C2b 0.561, C3 0.070, C4 0.343. Fixed sequence, all reject: C1−C3 +0.648, C2b−C3 +0.491, C3−C4 −0.274. Task B brackets: 0.771, 0.737, 0.534, 0.110, 0.381. Roughness 0.2 0.139, 0.4 0.276; reflections off 0.076; albedo 0.5 0.363. C3 redraws 0.061, 0.063. Ambient on seeds 0–9: C3amb 0.031, C4amb 0.224, next to C3 0.102, C4 0.265. No stop rule fired. New numbers by open item: `docs/M5_OPEN_ITEMS.md` section 5.
 

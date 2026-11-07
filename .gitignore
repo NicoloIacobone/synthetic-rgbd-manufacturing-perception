@@ -27,3 +27,10 @@ renders/
 
 # Vendor datasheet, kept locally only (cited in docs/D415_DATASHEET_SUMMARY.md)
 docs/Intel-RealSense-D400-Series-Datasheet-September-2023.pdf
+
+# LaTeX build files of the report (report.tex and report.pdf are tracked)
+report/*.aux
+report/*.fdb_latexmk
+report/*.fls
+report/*.log
+report/*.out

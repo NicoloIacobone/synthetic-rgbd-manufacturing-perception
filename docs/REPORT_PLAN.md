@@ -4,6 +4,8 @@ Page budget and reflection outline for the PDF report (≤ 8 pages including ref
 
 **When to read:** when choosing which results or figures to produce, and during report writing (M6).
 
+**State 2026-11-07:** first draft in `report/report.pdf`, 7 pages (reflection about 0.75 page). The agent wrote it at the user's request; the user verifies it. `.venv/bin/python report/check_numbers.py` checks the printed numbers against `results/`. Related work (section 2 of the report) was added to the outline below, sources S-17 to S-28.
+
 ## 1. Report outline (≤ 8 pages total)
 
 | § | Content | Pages |

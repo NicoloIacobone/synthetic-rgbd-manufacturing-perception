@@ -114,9 +114,10 @@ All randomness derives from `(master, scene, view, stream)` through `numpy.rando
 | `scripts/stats_m5.py`, `sensor_metrics.py`, `distance_table.py` | Statistics with the fixed sequence, sensor metrics, recall by distance |
 | `scripts/plane_gate.py`, `anchor_a.py` | Gate on the plane without and with noise |
 | `scripts/run_m5.sh`, `run_m5_followup.sh`, `run_final.sh`, `check_stop.py` | Experiment, descriptive follow-ups, orchestrator, stop rules |
-| `scripts/mechanism_check.py`, `robi_compare.py`, `ir_appearance.py`, `ambient_level.py`, `ambient_summary.py`, `redraw_summary.py` | Diagnostics and descriptive comparisons |
+| `scripts/mechanism_check.py`, `robi_compare.py`, `ir_appearance.py`, `ambient_level.py`, `ambient_summary.py`, `redraw_summary.py`, `icp_repeat_summary.py`, `error_structure_depth.py`, `error_structure_summary.py` | Diagnostics and descriptive comparisons |
 | `scripts/fig_*.py`, `make_figures.sh` | Figures |
 | `scripts/setup.sh`, `quick_run.py`, `make_sample_archive.py`, `collect_results.py` | Install, quick run, sample scene, tracked results |
+| `report/` | The report: LaTeX source, PDF, and `check_numbers.py`, which checks the printed numbers against `results/` |
 | `docs/` | Plan and frozen protocol, assumptions register, sources, working diary, AI-use log |
 
 ## Known limits
@@ -126,5 +127,5 @@ All randomness derives from `(master, scene, view, stream)` through `numpy.rando
 - **The imager is wider than the projector** (71° against 67°), so the image has unlit margins. The matcher fills narrow unlit strips with depth.
 - **Zero ambient light in the primary run.** The simulated metal is far darker than the real camera on ROBI: 5 DN against 21 DN. `results/hfov71/ambient.json` holds one descriptive test with ambient light, at an unsourced level and spectrum.
 - **Renders are not bit-reproducible.** Stereo depth repeats exactly from stored IR images, but the IR images differ slightly between renders.
-- **ICP is not strictly repeatable on identical depth.** On unstable views, mostly brackets that have already failed, repeated runs differ by tens of millimetres. See A-72 in `docs/ASSUMPTIONS.md`.
+- **ICP is not strictly repeatable on identical depth.** On unstable views, already failed, repeated runs differ by tens of millimetres. A full repeat of C1, C2b, C3 and C4 on the 50 test scenes moves no view across 5 mm, so recall does not change (`results/hfov71/icp_repeat.json`, A-72 in `docs/ASSUMPTIONS.md`).
 - **The sample count, the harness and the focal length were changed after earlier test results had been seen.** All of this is logged in `docs/PLAN.md` §5.12 and disclosed in the report.

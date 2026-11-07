@@ -322,6 +322,7 @@ Fonte: `docs/SOURCES.md`.
 | `configs/camera_d415_ir.yaml` | Parametri del modello di camera |
 | `configs/harness.yaml` | Parametri di ICP e ventosa, oggi H3 con 200 000 campioni |
 | `data/hfov71/` | **Corsa finale a 71° (A-66):** `plane/`, `intrinsics/`, `dev_iter<k>/`, `rgb_sweep/`, `dev/`, `test/` (scene 0–49 e risultati) |
+| `report/` | Il report: sorgente LaTeX, PDF e `check_numbers.py`, che confronta i numeri stampati con `results/` |
 | `results/` | Risultati tracciati in git: `hfov71/`, `archive_hfov65/`, `figures/`, `MANIFEST.json` (A-71) |
 | `dist/` | Archivio della scena di esempio per il quick-run, fuori da git (A-71) |
 | `data/m5/` | **Corsa archiviata a 65°.** Dati di test, 50 scene. `results/` contiene solo il sanity fallito; `results_v2/` i risultati con H3; `results_v2_s58/` il primo §5.8 sulle scene 0–9; `results_s58_v2/` il §5.8 rifatto e la prova sul rumore (A-63, A-64) |
