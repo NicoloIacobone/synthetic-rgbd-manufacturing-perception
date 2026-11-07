@@ -8,7 +8,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 python3.11 -m venv .venv-bproc
 .venv-bproc/bin/pip install -q -r requirements-bproc.lock.txt
-SITE=$(.venv-bproc/bin/python -c "import blenderproc, os; print(os.path.dirname(os.path.dirname(blenderproc.__file__)))")
+# Not "import blenderproc": it refuses to load outside "blenderproc run".
+SITE=$(.venv-bproc/bin/python -c "import site; print(site.getsitepackages()[0])")
 if [[ "$(uname)" == "Darwin" ]]; then
   P=patches/blenderproc-2.8.0-macos-app-bundle.patch
   if patch -d "$SITE" -p1 -R --dry-run -s < "$P" >/dev/null 2>&1; then
