@@ -59,7 +59,7 @@ I chose the D415 for four reasons. It is an active infrared stereo camera, so ma
 
 \para{Labels.} Each view is written in BOP format: RGB, ideal z-depth, visible and full masks, 6D poses, intrinsics and CAD models (Fig.~\ref{fig:examples}). Two checks guard the labels: masked depth back-projected through the labelled pose lies on the CAD surface on all 460 part views (worst median 0.045\,mm, no point beyond 1\,mm), and rendered depth on a tilted plane matches the analytic plane within 0.002\,mm, with the camera matrix returned within $10^{-6}$\,px.
 
-\para{Cost.} On an 8\,GB Apple M2 a scene with all passes takes a median of 178\,s; the 50 scenes take 2\,h\,28 and 1.4\,GB, and the whole experiment 9\,h\,38. \texttt{scripts/setup.sh} installs from a lock file and runs 105 tests, and \texttt{scripts/quick\_run.py} reproduces one scene's numbers without Blender in about 2 minutes (tested in a clean clone, on macOS only).
+\para{Cost.} On an 8\,GB Apple M2 a scene with all passes takes a median of 178\,s; the 50 scenes take 2\,h\,28 and 1.4\,GB, and the whole experiment 9\,h\,38. \texttt{scripts/setup.sh} installs from a lock file and runs 112 tests, and \texttt{scripts/quick\_run.py} reproduces one scene's numbers without Blender in about 2 minutes (tested in a clean clone, on macOS only).
 
 \section{Camera model}
 The model follows the sensing chain, so effects emerge rather than being painted on.
