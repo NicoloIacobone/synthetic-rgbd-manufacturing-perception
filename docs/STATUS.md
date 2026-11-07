@@ -2,19 +2,23 @@
 
 Handoff note between sessions. **Read first**, then CLAUDE.md's other context files (task_description, PLAN, ASSUMPTIONS). Keep it short; overwrite outdated content (history is in DIARY.md and git).
 
-- **Updated:** 2026-11-07 (Saturday), after the full review of report, code, figures and results.
+- **Updated:** 2026-11-07 (Saturday), after applying the review's report corrections and running the dot-density test.
 - **Phase:** **final run at 71° done, steps 0–11 of the user's prompt of 2026-11-06 complete.** It is the primary result (A-66, PLAN §5.12); M1–M5 at 65° are the archived run. **Report: first draft in `report/report.pdf` (2026-11-07, at the user's request), written by the agent; the user verifies it.**
 - **Protocol:** tag `protocol-v1`; 7 rows in PLAN §5.12. Primary endpoint and fixed sequence unchanged. **Disclosed: the earlier test results had been seen.** 65° is a descriptive sensitivity.
 - **Dates:** code freeze Sat 7 Nov 20:00, submission Sun 8 Nov 23:59 CET, both triggered by the user. Mail to jpetrik@ethz.ch: the user sends it.
-- **Git:** pushed to `origin/main` on 2026-11-07 at the user's request, through the commit that records this line. The repository is still private. Push again only when the user asks.
+- **Git:** pushed to `origin/main` on 2026-11-07 at the user's request, up to c5d41d9. Later commits are local only. The repository is still private. Push again only when the user asks.
 - **Left to the user:** verifying and editing the report, freeze and tag, push, Release, visibility, what becomes public, mail. The sample-scene URL (`SAMPLE_SCENE_URL` in `scripts/quick_run.py`) is empty until the archive is published.
 - **Pre-publication check (2026-11-07, nothing rewritten):** no secrets, no absolute local paths, no generated data, largest blob 968 KB. Personal data for the user to decide on: the author's address on all commits (a rewrite would be needed to change it), `jpetrik@ethz.ch` in this file and in commit b132514, "J. Petrik" in A-02. Also the user's call: `task_description.md`, `docs/DIARY.md`, `docs/AI_USE_LOG.md`, `CLAUDE.md` and the ROBI-derived numbers in `results/` are tracked.
 
 ## Report, first draft
 `report/report.pdf`, 7 pages, source `report/report.tex`. Written by the agent; **the user verifies it.** To confirm: author name, the AI-note sentence "checked the results and this text", other AI tools used if any, the repository link (private today). Check: `.venv/bin/python report/check_numbers.py`. Two checks added while writing: ICP repeat (no view crosses 5 mm, A-72), error structure (direction does not matter, size and layout do, A-73).
 
-## Review of 2026-11-07 (at commit c5d41d9; only this note and the diary changed)
-Numbers, 112 tests, clean-clone quick run, manifest and protocol diff hold; no finding changes a conclusion. **Open, the user decides:** (1) report wording that claims more than the data: matte and metal brightness match on dev only (test scenes 15.1 against 20.9 DN, per frame 0.09–4.35), ROBI "matches", "factor of eight", the detectable-effect sentence against the report's own intervals, the ICP rule wording, no intervals on suction, the IR gap also on the background, 32-sample convergence not mentioned; (2) uint16 wrap in `scripts/stereo_scene.py` for z > 6.55 m: 0.09% of frame pixels, 0 part pixels on seeds 0–49: document or fix; (3) quick-run pass rule untested off macOS; README lacks the commands of the ICP repeat and error structure checks. Numbers: DIARY.
+## After the review of 2026-11-07
+**Applied at the user's request:** all wording corrections in the report (still 7 pages, `check_numbers` 87 of 87); the uint16 depth wrap documented in the README and under "What did not work", not fixed (A-75); results figure panel (c) with its own colours. Primary numbers unchanged.
+
+**Dot-density test, done, not in the report (A-74, `results/hfov71/dots.json`):** seeds 0–9, 10 000 dots, new render: C3 0.102 → 0.041, −6.1 points (−11.4 to −1.0); C4 0.265 → 0.184, −8.2 points (−20.6 to +4.4); order held. The report only says the density is assumed.
+
+**Open, the user decides:** (1) whether the dot test enters the report: a row in Table 3 and one sentence in Limitations are proposed; optional extra runs, not started: a 30 000 re-render as control and 60 000 dots, about 20 min each; (2) quick run off macOS: the pass rule demands identical pixels; proposed: tolerance off the reference platform plus a Dockerfile tested here on Linux ARM and emulated x86; (3) README commands for the ICP repeat and error structure checks, and the stale comments in `conditions.py` and `camera_d415_ir.yaml`.
 
 ## Primary result at 71° (commit 7eca5f0, clean tree, `results/hfov71/stats.json`)
 460 instance-views, seeds 0–49. A1 recall@5 mm: C1 0.717, C2a 0.735, C2b 0.561, C3 0.070, C4 0.343. Fixed sequence, all reject: C1−C3 +0.648, C2b−C3 +0.491, C3−C4 −0.274. Task B brackets: 0.771, 0.737, 0.534, 0.110, 0.381. Roughness 0.2 0.139, 0.4 0.276; reflections off 0.076; albedo 0.5 0.363. C3 redraws 0.061, 0.063. Ambient on seeds 0–9: C3amb 0.031, C4amb 0.224, next to C3 0.102, C4 0.265. No stop rule fired. New numbers by open item: `docs/M5_OPEN_ITEMS.md` section 5.
