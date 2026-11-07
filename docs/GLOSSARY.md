@@ -78,6 +78,8 @@ Fonti: PLAN §5.1, `src/synthrgbd/conditions.py`. Le cartelle sono dentro ogni s
 | `C3shuf`, `C3sym`, `C3both` | C3 con gli errori rimescolati nello spazio dentro ogni parte, con il segno casuale, o entrambe le cose. `C3both` è il miglior rumore additivo possibile per parte: stesse ampiezze, media nulla, indipendente | Controllo della struttura dell'errore, scene 0–9 (A-73) | `depth_stereo_metal_shuf`, `_sym`, `_both` |
 | `C3amb`, `C4amb` | C3 e C4 con luce ambiente aggiunta alla radianza del proiettore, un solo livello fissato sui dev | Descrittive, scene 0–9 (A-70) | `depth_stereo_metal_amb`, `depth_stereo_matte_amb` |
 | `C3dots10k`, `C4dots10k` | C3 e C4 con un nuovo render a 10 000 punti invece di 30 000 | Descrittive, scene 0–9 (A-74) | `depth_stereo_metal_dots10000`, `depth_stereo_matte_dots10000` |
+| `C3dots30k`, `C4dots30k` | Controllo: C3 e C4 con un nuovo render agli stessi 30 000 punti del primario | Descrittive, scene 0–9 (A-76) | `depth_stereo_metal_dots30000`, `depth_stereo_matte_dots30000` |
+| `C3dots60k`, `C4dots60k` | C3 e C4 con un nuovo render a 60 000 punti, pattern più denso | Descrittive, scene 0–9 (A-76) | `depth_stereo_metal_dots60000`, `depth_stereo_matte_dots60000` |
 
 **Dal 6 nov 2026 la corsa primaria è a 71° (A-66):** fx 897,25 px, C2b 0,234 px, dati in `data/hfov71/`. I valori attuali sono in `configs/`; quelli della corsa archiviata a 65° sono tra parentesi.
 
@@ -268,6 +270,7 @@ Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 | `A-72` | L'ICP non è ripetibile alla lettera: stessa profondità, risultati diversi su alcune viste instabili. Effetto sul recall di test non misurato |
 | `A-73` | Controllo della struttura dell'errore: gli errori di C3 rimescolati o con segno casuale. Esito: conta dove cadono e quanto sono grandi, non la direzione |
 | `A-74` | Prova sulla densità dei punti, solo descrittiva: 10 000 punti invece di 30 000, scene 0–9, lettura fissata prima della corsa |
+| `A-76` | Controllo a 30 000 punti e pattern a 60 000 punti per la prova sulla densità, scene 0–9, lettura fissata prima della corsa |
 | `A-75` | Overflow della profondità in uint16 oltre 6,55 m: 0,09% dei pixel dell'immagine, nessun pixel di parte in C3 e C4. Documentato, non corretto |
 
 ## 10. Rischi `R1`…`R7`
@@ -339,7 +342,8 @@ Fonte: `docs/SOURCES.md`.
 | `scripts/run_eval.py` | Lancia sanity, poi Task A e B. **Se un file di risultato esiste, non lo rifà** |
 | `scripts/select_harness.py` | Sceglie la variante ICP con leximin su dev. `data/m5_dev/selection_fix/` = scelta dopo il fix |
 | `scripts/run_final.sh` | Orchestratore della corsa finale a 71°: render, metriche, controlli, ridisegni, test ambiente. Riprende da dove si è fermato |
-| `scripts/run_dots_test.sh` | Prova sulla densità dei punti (A-74): render, stereo, valutazione e riepilogo sulle scene 0–9 |
+| `scripts/run_dots_test.sh` | Prova sulla densità dei punti (A-74, A-76): render, stereo, valutazione e riepilogo sulle scene 0–9, per il numero di punti indicato |
+| `scripts/dots_compare.py` | Confronta 10 000 e 60 000 punti con il controllo a 30 000 e rilegge "stereo costa più del rumore" (A-76) |
 | `scripts/setup.sh` | Installazione da zero: controlla Python 3.11, crea `.venv`, lancia i test (A-71) |
 | `scripts/quick_run.py` | Una scena di esempio senza Blender, confronto con i numeri committati, stampa `QUICK_RUN_PASS` o `QUICK_RUN_FAIL` (A-71, A-72) |
 | `scripts/make_sample_archive.py` | Costruisce l'archivio della scena di esempio e i numeri attesi (A-71) |

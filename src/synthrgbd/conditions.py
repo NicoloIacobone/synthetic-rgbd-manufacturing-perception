@@ -38,4 +38,8 @@ DEPTH_DIRS = {
     "C3both": "depth_stereo_metal_both",            # both: independent zero-mean noise of the part's own error sizes (A-73)
     "C3dots10k": "depth_stereo_metal_dots10000",    # 10 000 dots instead of 30 000, new render (A-74)
     "C4dots10k": "depth_stereo_matte_dots10000",
+    "C3dots30k": "depth_stereo_metal_dots30000",    # control: the primary pattern, new render on the same path (A-76)
+    "C4dots30k": "depth_stereo_matte_dots30000",
+    "C3dots60k": "depth_stereo_metal_dots60000",    # 60 000 dots, new render (A-76)
+    "C4dots60k": "depth_stereo_matte_dots60000",
 }
