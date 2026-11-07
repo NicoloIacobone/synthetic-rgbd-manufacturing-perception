@@ -47,6 +47,7 @@ def main():
     se, red, amb, rob = J("hfov71/sensor.json")["conditions"], J("hfov71/redraw.json"), J("hfov71/ambient.json"), J("hfov71/s58_robustness.json")
     dist, mech, app, robi = J("hfov71/distance.json")["conditions"], J("hfov71/mechanism_dev.json")["summary"], J("hfov71/ir_appearance.json"), J("hfov71/robi_zigzag_real.json")
     anchor, gate, intr, unlit = J("hfov71/anchor_a.json"), J("hfov71/plane_gate_no_noise.json"), J("hfov71/intrinsics_check.json"), J("hfov71/unlit_share.json")
+    robi_f = 905.9  # fx of ROBI's real camera (report, What did not work)
     claims = []
 
     def add(label, text):
@@ -72,10 +73,18 @@ def main():
     assert s["unit"]["excluded_visib_lt_0.1"] == 0 and not s["dirty_tree_any"] and s["commits"] == [s["commits"][0]] and s["commits"][0].startswith("7eca5f0")
     add("factor eight", "factor of eight")
     assert round(s["A1_recall_5mm"]["C2b"]["all"]["recall"] / s["A1_recall_5mm"]["C3"]["all"]["recall"]) == 8
+    add("factor two", "a factor of two at roughness 0.4 (" + f3(s["A1_recall_5mm"]["C2b"]["all"]["recall"]) + " against " + f3(s["A1_recall_5mm"]["C3"]["all"]["recall"]) + " and " + f3(s["A1_recall_5mm"]["C3r04"]["all"]["recall"]) + ")")
+    assert round(s["A1_recall_5mm"]["C2b"]["all"]["recall"] / s["A1_recall_5mm"]["C3r04"]["all"]["recall"]) == 2
+    # Detectable effect implied by each interval: 2.8 standard errors, with the half-width at 1.96
+    implied = [2.8 * (f["ci95"][1] - f["ci95"][0]) / 2 / 1.96 * 100 for f in s["fixed_sequence"]]
+    assert 7 <= min(implied) and max(implied) <= 10, implied
+    add("detectable from intervals", "about 7--10 points are detectable at 80\\% power")
+    add("detectable in limitations", "Detectable effects are about 7--10 points on 50 scenes")
+    assert all(abs(f["diff"]) > f["mde_scenes"] for f in s["fixed_sequence"])
     # Sensor
     c3, c4, c2b = se["C3"], se["C4"], se["C2b"]
     add("C3 invalid", f"{c3['parts']['invalid_frac'] * 100:.1f}\\% of metal-part pixels are invalid")
-    add("C3 > 5 mm", f"{c3['parts']['frac_gt_5mm'] * 100:.1f}\\% are off by more than 5\\,mm")
+    add("C3 > 5 mm", f"{c3['parts']['frac_gt_5mm'] * 100:.1f}\\% of the valid ones are off by more than 5\\,mm")
     add("C3 signed", f"median +{c3['parts']['median_signed_mm']:.1f}\\,mm, 5th and 95th percentiles $-${abs(c3['parts']['quantiles_mm']['5']):.1f} and +{c3['parts']['quantiles_mm']['95']:.1f}\\,mm")
     add("C2b symmetric", f"$\\pm${c2b['parts']['quantiles_mm']['95']:.1f}\\,mm")
     add("C4 edge", f"{c4['edge']['frac_gt_5mm'] * 100:.1f}\\% of edge pixels and {c4['interior']['frac_gt_5mm'] * 100:.1f}\\% of interior pixels")
@@ -108,6 +117,28 @@ def main():
     add("suction C1", f"against {b['C1']['bracket']['has_grasp'] * 100:.1f}\\% and {b['C1']['bracket']['success'] / b['C1']['bracket']['has_grasp'] * 100:.1f}\\% for C1")
     add("suction profiles", f"{b['C1']['profile']['has_grasp'] * 100:.1f}\\% of profile views in C1 and on {b['C3']['profile']['has_grasp'] * 100:.1f}\\% in C3")
     assert all(s["B_success"][c]["profile"]["success"] == 0 for c in s["B_success"])
+    # Suction intervals on brackets
+    bk = {c: s["B_success"][c]["bracket"] for c in ("C1", "C2a", "C2b", "C3", "C4")}
+    add("suction intervals", ", ".join(f"{c} {f3(bk[c]['success'])} ({f3(bk[c]['ci95'][0])}--{f3(bk[c]['ci95'][1])})" for c in ("C1", "C2a", "C2b", "C4", "C3")))
+    pb = {(x["a"], x["b"]): x for x in s["B_pairs_bracket"]}[("C1", "C3")]
+    add("suction C1-C3", f"{signed(pb['diff'])} points ({plain(pb['ci95'][0])} to {plain(pb['ci95'][1])})")
+    add("suction n", f"the {pb['n']} bracket views")
+    # Brightness match of matte and metal
+    br = J("hfov71/brightness_match.json")
+    add("brightness dev", f"({br['dev']['c4_dn_mean']:.1f}\\,DN each)")
+    assert f1(br["dev"]["c4_dn_mean"]) == f1(br["dev"]["c3_dn_mean"])
+    add("brightness test", f"{br['test']['c4_dn_mean']:.1f}\\,DN against {br['test']['c3_dn_mean']:.1f}\\,DN on average, with a per-view ratio from {br['test']['ratio_per_view']['min']:.2f} to {br['test']['ratio_per_view']['max']:.2f}")
+    # Depth overflow
+    w = J("hfov71/depth_wrap.json")
+    wc = w["counts"]
+    assert wc["C3"]["part_wrapped"] == 0 and wc["C4"]["part_wrapped"] == 0 and wc["C3"]["part_px"] == wc["C4"]["part_px"]
+    assert w["c3_views_reproducing_the_stored_depth"]["identical"] == w["c3_views_reproducing_the_stored_depth"]["views"]
+    add("wrap limit", f"beyond {w['limit_m']:.2f}\\,m (disparity below {w['disparity_below_px']:.1f}\\,px)")
+    add("wrap lowest", f"as low as {w['c3_stored_mm_of_wrapped_pixels_seeds_0_9']['min']:.0f}\\,mm")
+    frame = (wc["C3"]["frame_wrapped"] + wc["C4"]["frame_wrapped"]) / (wc["C3"]["frame_px"] + wc["C4"]["frame_px"])
+    add("wrap frame", f"{frame * 100:.2f}\\% of image pixels but none of the " + f"{wc['C3']['part_px']:,}".replace(",", "\\,") + " part pixels")
+    lw = wc["C3looselr_seeds_0_9"]
+    add("wrap filters off", f"{lw['part_wrapped'] / lw['part_px'] * 100:.2f}\\% of part pixels on seeds 0--9")
     # Table of what moves recall
     add("roughness", f"{f3(s['A1_recall_5mm']['C3r02']['all']['recall'])}, {f3(s['A1_recall_5mm']['C3r04']['all']['recall'])}")
     add("redraws", f"{f3(red['recall_5mm']['C3redraw1'])}, {f3(red['recall_5mm']['C3redraw2'])}")
@@ -143,6 +174,10 @@ def main():
     add("ROBI appearance", f"{robi['ir_appearance_mean_over_views']['obj_dn_median']:.0f}\\,DN median and {robi['ir_appearance_mean_over_views']['obj_local_sd_median']:.1f}\\,DN local contrast on real parts, against {app['metal']['obj_dn_median']:.0f}\\,DN and {app['metal']['obj_local_sd_median']:.1f}\\,DN")
     add("range", f"({J('hfov71/distance.json')['part_centre_z_m'][0]:.2f}--{J('hfov71/distance.json')['part_centre_z_m'][1]:.2f}\\,m)")
     add("ROBI views", f"{robi['n_views']} ROBI Zigzag views")
+    ra, am, at = robi["ir_appearance_mean_over_views"], app["metal"], app["matte"]
+    add("background", f"{ra['back_dn_median']:.0f}\\,DN and {ra['back_local_sd_median']:.1f}\\,DN on ROBI, against {am['back_dn_median']:.0f}\\,DN and {am['back_local_sd_median']:.1f}\\,DN here")
+    add("matte parts", f"({at['obj_dn_median']:.0f}\\,DN, {at['obj_local_sd_median']:.1f}\\,DN)")
+    add("annotation", f"{robi_f * 0.055 * 0.001 / 0.365 ** 2:.2f}\\,px at this range")
     zq = robi["z_gt_mm_quantiles"]
     assert 0.31 < zq["5"] / 1000 and zq["95"] / 1000 < 0.42
     # Camera and plane
@@ -174,7 +209,7 @@ def main():
     add("both vs permuted", f"{signed(b2['diff'])} points, {plain(b2['ci95'][0])} to {signed(b2['ci95'][1])}")
     add("C1 on these seeds", f"from C1 ({f3(rc['C1'])} on these seeds)")
     add("both vs C3 text", f"gives {f3(rc['C3both'])} against {f3(rc['C3'])} on the same scenes")
-    add("C2b > 5 mm", f"{se['C3']['parts']['frac_gt_5mm'] * 100:.1f}\\% of pixels beyond 5\\,mm against {se['C2b']['parts']['frac_gt_5mm'] * 100:.1f}\\% in C2b")
+    add("C2b > 5 mm", f"{se['C3']['parts']['frac_gt_5mm'] * 100:.1f}\\% of valid pixels beyond 5\\,mm against {se['C2b']['parts']['frac_gt_5mm'] * 100:.1f}\\% in C2b")
 
     # Descriptive contrast and part-type discordance, from the per-view files
     d = REPO / "data/hfov71/test/results"

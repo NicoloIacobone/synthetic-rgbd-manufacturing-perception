@@ -114,7 +114,7 @@ All randomness derives from `(master, scene, view, stream)` through `numpy.rando
 | `scripts/stats_m5.py`, `sensor_metrics.py`, `distance_table.py` | Statistics with the fixed sequence, sensor metrics, recall by distance |
 | `scripts/plane_gate.py`, `anchor_a.py` | Gate on the plane without and with noise |
 | `scripts/run_m5.sh`, `run_m5_followup.sh`, `run_final.sh`, `check_stop.py` | Experiment, descriptive follow-ups, orchestrator, stop rules |
-| `scripts/mechanism_check.py`, `robi_compare.py`, `ir_appearance.py`, `ambient_level.py`, `ambient_summary.py`, `redraw_summary.py`, `icp_repeat_summary.py`, `error_structure_depth.py`, `error_structure_summary.py` | Diagnostics and descriptive comparisons |
+| `scripts/mechanism_check.py`, `robi_compare.py`, `ir_appearance.py`, `ambient_level.py`, `ambient_summary.py`, `redraw_summary.py`, `icp_repeat_summary.py`, `error_structure_depth.py`, `error_structure_summary.py`, `run_dots_test.sh`, `dots_summary.py`, `brightness_match.py`, `depth_wrap_count.py` | Diagnostics and descriptive comparisons |
 | `scripts/fig_*.py`, `make_figures.sh` | Figures |
 | `scripts/setup.sh`, `quick_run.py`, `make_sample_archive.py`, `collect_results.py` | Install, quick run, sample scene, tracked results |
 | `report/` | The report: LaTeX source, PDF, and `check_numbers.py`, which checks the printed numbers against `results/` |
@@ -123,8 +123,10 @@ All randomness derives from `(master, scene, view, stream)` through `numpy.rando
 ## Known limits
 
 - **Not a physical D415.** The matcher is OpenCV SGBM, not Intel's chip. The metal is a material model with an assumed roughness, and C3's level depends on it: 0.070 at roughness 0.15, 0.139 at 0.2, 0.276 at 0.4 (`results/hfov71/stats.json`).
+- **The dot density is assumed.** The D415's pattern is not published. The primary run uses 30 000 dots, 3.76% of lit pixels, inside the band in Intel's guidance. One descriptive test on seeds 0–9 with 10 000 dots, a new render, gives 0.041 on metal and 0.184 on matte, against 0.102 and 0.265 on the same seeds (`results/hfov71/dots.json`, A-74 in `docs/ASSUMPTIONS.md`). Denser patterns are untested.
 - **The stereo search range and the datasheet's minimum range disagree at this focal length.** With a 126 px search the depth transition is at 392 mm, against the datasheet's 450 mm. No scene pixel is that close.
 - **The imager is wider than the projector** (71° against 67°), so the image has unlit margins. The matcher fills narrow unlit strips with depth.
+- **Depth wraps around beyond 6.55 m.** `scripts/stereo_scene.py` stores depth as uint16 at 0.1 mm, so a match beyond 6.5535 m (disparity below 7.5 px) wraps to a false value, as low as 26 mm. On the test scenes this is 0.09% of image pixels and none of the part pixels in C3 and C4, so recall and part metrics do not change. With all matcher filters off it is 0.04% of part pixels on seeds 0–9 (`results/hfov71/depth_wrap.json`). Not fixed: a fix changes pixels outside the parts and the quick run's expected hashes.
 - **Zero ambient light in the primary run.** The simulated metal is far darker than the real camera on ROBI: 5 DN against 21 DN. `results/hfov71/ambient.json` holds one descriptive test with ambient light, at an unsourced level and spectrum.
 - **Renders are not bit-reproducible.** Stereo depth repeats exactly from stored IR images, but the IR images differ slightly between renders.
 - **ICP is not strictly repeatable on identical depth.** On unstable views, already failed, repeated runs differ by tens of millimetres. A full repeat of C1, C2b, C3 and C4 on the 50 test scenes moves no view across 5 mm, so recall does not change (`results/hfov71/icp_repeat.json`, A-72 in `docs/ASSUMPTIONS.md`).
