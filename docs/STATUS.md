@@ -6,7 +6,7 @@ Handoff note between sessions. **Read first**, then CLAUDE.md's other context fi
 - **Phase:** **final run at 71° done, steps 0–11 of the user's prompt of 2026-11-06 complete.** It is the primary result (A-66, PLAN §5.12); M1–M5 at 65° are the archived run. **Report: first draft in `report/report.pdf` (2026-11-07, at the user's request), written by the agent; the user verifies it.**
 - **Protocol:** tag `protocol-v1`; 7 rows in PLAN §5.12. Primary endpoint and fixed sequence unchanged. **Disclosed: the earlier test results had been seen.** 65° is a descriptive sensitivity.
 - **Dates:** code freeze Sat 7 Nov 20:00, submission Sun 8 Nov 23:59 CET, both triggered by the user. Mail to jpetrik@ethz.ch: the user sends it.
-- **Git:** pushed to `origin/main` through 7ecbcb0. All later commits are local: push only when the user asks.
+- **Git:** pushed to `origin/main` on 2026-11-07 at the user's request, through the commit that records this line. The repository is still private. Push again only when the user asks.
 - **Left to the user:** verifying and editing the report, freeze and tag, push, Release, visibility, what becomes public, mail. The sample-scene URL (`SAMPLE_SCENE_URL` in `scripts/quick_run.py`) is empty until the archive is published.
 - **Pre-publication check (2026-11-07, nothing rewritten):** no secrets, no absolute local paths, no generated data, largest blob 968 KB. Personal data for the user to decide on: the author's address on all commits (a rewrite would be needed to change it), `jpetrik@ethz.ch` in this file and in commit b132514, "J. Petrik" in A-02. Also the user's call: `task_description.md`, `docs/DIARY.md`, `docs/AI_USE_LOG.md`, `CLAUDE.md` and the ROBI-derived numbers in `results/` are tracked.
 
