@@ -18,6 +18,8 @@ depth_stereo_<pass>_redraw<k>/: same IR images, same gain, same matcher. Protoco
 same IR images, gain, noise draws and matcher. Protocol depth always uses the value in the config.
 --ambient (A-70, descriptive) adds ambient_test.level x <scene>/ir_ambient/<im_id>_<pass>.npz to the projector radiance of the
 metal and matte passes before the same auto exposure, noise draws and matcher; written to depth_stereo_<pass>_amb/.
+--dots N (A-74, descriptive) reads the metal and matte pairs rendered with N dots from <scene>/ir_dots<N>/ instead of <scene>/ir/, with
+the same auto exposure rule, noise draws and matcher; written to depth_stereo_<pass>_dots<N>/.
 """
 
 import argparse
@@ -52,6 +54,7 @@ def main():
     ap.add_argument("--noise-redraw", type=int, default=0, help="k > 0: independent noise draw for the A-59 bound; view ids + 1000 k are never real views")
     ap.add_argument("--e-per-dn", type=float, help="A-64 sensitivity: this e_per_dn instead of the config's, in separate folders")
     ap.add_argument("--ambient", action="store_true", help="A-70 test: add the ambient-only passes at ambient_test.level, in separate folders")
+    ap.add_argument("--dots", type=int, help="A-74 test: the pairs rendered with this many dots, in separate folders")
     args = ap.parse_args()
     cam = load_config()["camera"]
     ir = load_config(args.ir_config)
@@ -72,11 +75,16 @@ def main():
             raise SystemExit("ambient_test.level is not set (scripts/ambient_level.py)")
         args.passes = ["metal", "matte"]
         suffix += "_amb"
+    ir_dir = scene / "ir"
+    if args.dots is not None:
+        ir_dir = scene / f"ir_dots{args.dots}"
+        args.passes = ["metal", "matte"]
+        suffix += f"_dots{args.dots}"
     pad, gain = ir["ir_render"]["pad_px"], float(ir["exposure"]["gain"])
     auto = ir["exposure"].get("mode") == "auto"
     meta = {"commit": subprocess.check_output(["git", "-C", str(REPO), "rev-parse", "HEAD"], text=True).strip(),
             "ir_config": str(args.ir_config.relative_to(REPO)), "exposure": ir["exposure"],
-            "sensor_noise": noise, "variant": args.variant, "noise_redraw": args.noise_redraw, "ambient_level": amb_level, "frames": []}
+            "sensor_noise": noise, "variant": args.variant, "noise_redraw": args.noise_redraw, "ambient_level": amb_level, "dots": args.dots, "frames": []}
     sheet = []
     for im_id in sorted(cams, key=int):
         K = np.array(cams[im_id]["cam_K"]).reshape(3, 3)
@@ -84,19 +92,19 @@ def main():
         seg = np.load(scene / "segmap" / f"{int(im_id):06d}.npz")["instance"]
         parts = np.isin(seg, [i for i in seg_index[im_id] if i >= 0])
         if auto:   # A-42: gain from the C3 (metal) left image, shared by C4 and the right image; A-12 noise, shared draws
-            Lm = np.load(scene / "ir" / f"{int(im_id):06d}_metal.npz")["left"].astype(np.float32)
+            Lm = np.load(ir_dir / f"{int(im_id):06d}_metal.npz")["left"].astype(np.float32)
             if args.ambient:
                 Lm = Lm + amb_level * np.load(scene / "ir_ambient" / f"{int(im_id):06d}_metal.npz")["left"].astype(np.float32)
             g_frame = auto_exposure_gain(Lm[:, pad:], exposure_roi_x0(K[0, 0], cam["baseline_m"], cam["min_z_m"]),
                                          float(ir["exposure"]["setpoint_dn"]))
             r = rng(cfg_all["seeds"]["master"], args.scene_seed, int(im_id) + 1000 * args.noise_redraw, "ir_noise")
             zl, zr = r.standard_normal(Lm.shape), r.standard_normal(Lm.shape)
-        rendered = sorted(p.stem.split("_", 1)[1] for p in (scene / "ir").glob(f"{int(im_id):06d}_*.npz"))
+        rendered = sorted(p.stem.split("_", 1)[1] for p in ir_dir.glob(f"{int(im_id):06d}_*.npz"))
         shared = [n for n in ("metal", "metalproxy", "matte") if n in rendered]
         for name in shared + [n for n in rendered if n not in shared]:
             if args.passes and name not in args.passes:
                 continue
-            f = scene / "ir" / f"{int(im_id):06d}_{name}.npz"
+            f = ir_dir / f"{int(im_id):06d}_{name}.npz"
             t = time.perf_counter()
             d = np.load(f)
             L, R = d["left"].astype(np.float32), d["right"].astype(np.float32)

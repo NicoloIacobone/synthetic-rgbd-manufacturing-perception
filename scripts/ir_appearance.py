@@ -1,6 +1,6 @@
 """IR appearance of parts vs background on our renders, with the same measures as scripts/robi_compare.py on real images.
 
-Usage: .venv/bin/python scripts/ir_appearance.py <dataset_root> <scene_seed>... --passes metal matte r02 r04 --out <json> [--ambient]
+Usage: .venv/bin/python scripts/ir_appearance.py <dataset_root> <scene_seed>... --passes metal matte r02 r04 --out <json> [--ambient] [--dots N]
 
 Per view, on the 8-bit left image the matcher receives (auto exposure and sensor noise as in scripts/stereo_scene.py):
 median DN, 99th percentile, 7 x 7 local SD and saturation on part pixels vs background pixels (non-part pixels at least 7 px
@@ -36,6 +36,7 @@ def main():
     ap.add_argument("--passes", nargs="+", required=True)
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--ambient", action="store_true", help="add ambient_test.level x the ambient-only passes to metal and matte (A-70)")
+    ap.add_argument("--dots", type=int, help="the pairs rendered with this many dots, from <scene>/ir_dots<N>/ (A-74)")
     args = ap.parse_args()
     cfg, ir = load_config(), load_config(REPO / "configs" / "camera_d415_ir.yaml")
     cam, sn = cfg["camera"], ir["sensor_noise"]
@@ -56,14 +57,15 @@ def main():
             back = ~cv2.dilate(parts.astype(np.uint8), np.ones((15, 15), np.uint8)).astype(bool)
             back[:, :x0] = False
             r = rng(cfg["seeds"]["master"], seed, int(im), "ir_noise")
-            metal = np.load(sc / "ir" / f"{f}_metal.npz")
+            ir_dir = sc / ("ir" if args.dots is None else f"ir_dots{args.dots}")
+            metal = np.load(ir_dir / f"{f}_metal.npz")
             zl, zr = r.standard_normal(metal["left"].shape), r.standard_normal(metal["left"].shape)
             lm = metal["left"].astype(np.float64)
             if args.ambient:
                 lm = lm + amb * np.load(sc / "ir_ambient" / f"{f}_metal.npz")["left"].astype(np.float64)
             g_c3 = auto_exposure_gain(lm[:, pad:], x0, sp)
             for p in args.passes:
-                d = np.load(sc / "ir" / f"{f}_{p}.npz")
+                d = np.load(ir_dir / f"{f}_{p}.npz")
                 L, R = d["left"].astype(np.float32), d["right"].astype(np.float32)
                 if args.ambient:
                     da = np.load(sc / "ir_ambient" / f"{f}_{p}.npz")

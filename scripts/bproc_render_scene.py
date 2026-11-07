@@ -17,6 +17,8 @@ Tray and table are matte in all passes. --metal-roughness / --matte-part-albedo 
 --ir-samples / --extra-pass / --rgb-light-energy / --rgb-world-fill override the config (checks only).
 With --ambient: nothing but the ambient-only IR passes of an existing scene (A-70): uniform world, projector off, metal and matte,
 to <scene>/ir_ambient/<im_id>_<pass>.npz. The poses are checked against the stored scene_gt.json first; no other output changes.
+With --dots N: nothing but the projector IR passes of an existing scene, metal and matte, with a pattern of N dots instead of
+dots.count (A-74), to <scene>/ir_dots<N>/<im_id>_<pass>.npz. Same pose check; no other output changes.
 Output: <scene>/ir/<im_id:06d>_<pass>.npz (left, right: float16 linear radiance, both extended by
 pad px on the left, A-40). M3 renders used the M2 RGB placeholder instead of "metal" ("metalproxy").
 
@@ -84,6 +86,7 @@ def parse_args():
     ap.add_argument("--rgb-light-energy", type=float, help="override rgb_render.light_energy (A-69 sweep)")
     ap.add_argument("--rgb-world-fill", type=float, help="override rgb_render.world_fill (A-69 sweep)")
     ap.add_argument("--ambient", action="store_true", help="only the ambient-only IR passes of an existing scene (A-70)")
+    ap.add_argument("--dots", type=int, help="only the metal and matte IR passes of an existing scene, with this many dots (A-74)")
     return ap.parse_args()
 
 
@@ -232,6 +235,39 @@ def render_ambient_passes(cfg, ir, area_light, mats, T_cams, K, scene_dir, parts
     print("AMBIENT", json.dumps({"scene": scene_dir.name, "pose_worst_mm": worst, "time_s": time.perf_counter() - t0}))
 
 
+def render_dot_test_passes(cfg, ir, area_light, mats, T_cams, K, scene_dir, parts, count):
+    """Projector IR stereo pairs with another dot count, metal then matte parts, for all views (A-74). Linear radiance, as the primary passes."""
+    from synthrgbd.bproc_ir import add_ir_frames, extended_K, ir_render_settings, make_projector, matte, metal, render_ir
+    from synthrgbd.projector import make_pattern
+
+    t0 = time.perf_counter()
+    worst = verify_poses(scene_dir, parts, T_cams)
+    area_light.delete()
+    ir_render_settings(ir)
+    pattern, _, pts = make_pattern(cfg["camera"], {**ir, "dots": {**ir["dots"], "count": count}})
+    assert len(pts) == count, (len(pts), count)
+    proj = make_projector(pattern, ir["projector"]["fov_deg"], ir["projector"]["power_w"])
+    assert_ir_lighting(["ir_projector"], ir["ir_render"]["ambient"])
+    W, H, pad = cfg["camera"]["width"], cfg["camera"]["height"], ir["ir_render"]["pad_px"]
+    mm, mt = ir["materials_matte"], ir["materials_metal"]
+    matte(mats["tray"], mm["tray_albedo"])
+    matte(mats["table"], mm["table_albedo"])
+    add_ir_frames(T_cams, cfg["camera"]["baseline_m"], ir["projector"]["position_x_m"], proj, extended_K(K, pad), W + pad, H)
+    out = scene_dir / f"ir_dots{count}"
+    out.mkdir(exist_ok=True)
+    for name in ("metal", "matte"):
+        if name == "metal":
+            metal(mats["parts"], mt["base_reflectance"], mt["roughness"], mt["diffuse_albedo"])
+        else:
+            matte(mats["parts"], mm["part_albedo"])
+        imgs = render_ir()
+        for v in range(len(T_cams)):
+            np.savez_compressed(out / f"{v:06d}_{name}.npz", left=imgs[2 * v].astype(np.float16), right=imgs[2 * v + 1].astype(np.float16))
+    (out / "meta.json").write_text(json.dumps({"commit": git_commit(), "dots": count, "pose_worst_mm": worst, "samples": ir["ir_render"]["samples"],
+                                               "time_s": time.perf_counter() - t0}, indent=1))
+    print("DOT_TEST", json.dumps({"scene": scene_dir.name, "dots": count, "pose_worst_mm": worst, "time_s": time.perf_counter() - t0}))
+
+
 def render_ir_passes(cfg, ir, area_light, mats, T_cams, K, scene_dir):
     """IR stereo pairs for all views, metal then matte parts (see module docstring)."""
     from synthrgbd.bproc_ir import add_ir_frames, extended_K, ir_render_settings, make_projector, matte, metal, render_ir
@@ -371,6 +407,10 @@ def main():
     if args.ambient:
         render_ambient_passes(cfg, load_config(args.ir_config), light, {"parts": alu, "tray": grey, "table": table_mat}, T_cams, K,
                               args.out / "synthrgbd" / "train_pbr" / f"{args.scene_seed:06d}", parts)
+        return
+    if args.dots is not None:
+        render_dot_test_passes(cfg, load_config(args.ir_config), light, {"parts": alu, "tray": grey, "table": table_mat}, T_cams, K,
+                               args.out / "synthrgbd" / "train_pbr" / f"{args.scene_seed:06d}", parts, args.dots)
         return
 
     # Render RGB + z-depth (no antialiasing on depth) + instance segmentation.

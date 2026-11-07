@@ -4,7 +4,7 @@ Per tenere sul secondo schermo mentre leggi le risposte degli agent. Cerca con `
 
 - **Se una sigla non c'è:** chiedi all'agent che l'ha usata di aggiungerla qui (è una regola in `CLAUDE.md`).
 - **In caso di contrasto** valgono i file di origine indicati in ogni sezione (`docs/PLAN.md`, `docs/ASSUMPTIONS.md`, `docs/SOURCES.md`). Questo file riassume e va corretto.
-- **Aggiornato a:** 6 nov 2026, dopo la revisione di M5. Lo stato del lavoro non è qui, è in `docs/STATUS.md`.
+- **Aggiornato a:** 7 nov 2026, prova sulla densità dei punti. Lo stato del lavoro non è qui, è in `docs/STATUS.md`.
 
 ## 1. Sigle che si confondono
 
@@ -77,6 +77,7 @@ Fonti: PLAN §5.1, `src/synthrgbd/conditions.py`. Le cartelle sono dentro ogni s
 | `C3e1`, `C4e1` | C3 e C4 con rumore IR più basso: `e_per_dn` 1 invece del valore in configurazione | Descrittive, scene 0–9 (A-64) | `depth_stereo_metal_e1`, `depth_stereo_matte_e1` |
 | `C3shuf`, `C3sym`, `C3both` | C3 con gli errori rimescolati nello spazio dentro ogni parte, con il segno casuale, o entrambe le cose. `C3both` è il miglior rumore additivo possibile per parte: stesse ampiezze, media nulla, indipendente | Controllo della struttura dell'errore, scene 0–9 (A-73) | `depth_stereo_metal_shuf`, `_sym`, `_both` |
 | `C3amb`, `C4amb` | C3 e C4 con luce ambiente aggiunta alla radianza del proiettore, un solo livello fissato sui dev | Descrittive, scene 0–9 (A-70) | `depth_stereo_metal_amb`, `depth_stereo_matte_amb` |
+| `C3dots10k`, `C4dots10k` | C3 e C4 con un nuovo render a 10 000 punti invece di 30 000 | Descrittive, scene 0–9 (A-74) | `depth_stereo_metal_dots10000`, `depth_stereo_matte_dots10000` |
 
 **Dal 6 nov 2026 la corsa primaria è a 71° (A-66):** fx 897,25 px, C2b 0,234 px, dati in `data/hfov71/`. I valori attuali sono in `configs/`; quelli della corsa archiviata a 65° sono tra parentesi.
 
@@ -266,6 +267,7 @@ Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 | `A-71` | Strumenti di consegna: `results/`, `scripts/setup.sh`, `scripts/quick_run.py`, scena di esempio seme 0 |
 | `A-72` | L'ICP non è ripetibile alla lettera: stessa profondità, risultati diversi su alcune viste instabili. Effetto sul recall di test non misurato |
 | `A-73` | Controllo della struttura dell'errore: gli errori di C3 rimescolati o con segno casuale. Esito: conta dove cadono e quanto sono grandi, non la direzione |
+| `A-74` | Prova sulla densità dei punti, solo descrittiva: 10 000 punti invece di 30 000, scene 0–9, lettura fissata prima della corsa |
 
 ## 10. Rischi `R1`…`R7`
 
@@ -336,6 +338,7 @@ Fonte: `docs/SOURCES.md`.
 | `scripts/run_eval.py` | Lancia sanity, poi Task A e B. **Se un file di risultato esiste, non lo rifà** |
 | `scripts/select_harness.py` | Sceglie la variante ICP con leximin su dev. `data/m5_dev/selection_fix/` = scelta dopo il fix |
 | `scripts/run_final.sh` | Orchestratore della corsa finale a 71°: render, metriche, controlli, ridisegni, test ambiente. Riprende da dove si è fermato |
+| `scripts/run_dots_test.sh` | Prova sulla densità dei punti (A-74): render, stereo, valutazione e riepilogo sulle scene 0–9 |
 | `scripts/setup.sh` | Installazione da zero: controlla Python 3.11, crea `.venv`, lancia i test (A-71) |
 | `scripts/quick_run.py` | Una scena di esempio senza Blender, confronto con i numeri committati, stampa `QUICK_RUN_PASS` o `QUICK_RUN_FAIL` (A-71, A-72) |
 | `scripts/make_sample_archive.py` | Costruisce l'archivio della scena di esempio e i numeri attesi (A-71) |
