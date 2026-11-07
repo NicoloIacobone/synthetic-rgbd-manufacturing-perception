@@ -93,32 +93,40 @@ def main():
         overlays.append((m["pts"][::60], T_gt, T_est))
 
     aspect = (y1 - y0) / (x1 - x0)
-    fig, ax = plt.subplots(2, 3, figsize=(10.6, 2 * 3.3 * aspect + 1.0), constrained_layout=True)
-    show = lambda a, img, **kw: a.imshow(img, **kw)   # noqa: E731
-    show(ax[0, 0], rgb)
-    ax[0, 0].set_title("RGB", fontsize=10, color=INK, loc="left")
+    # One row at full text width in the report: fixed grid, so all six panels align; a thin row below holds the colour bar and the legend.
+    fig = plt.figure(figsize=(7.0, 1.13 * aspect + 0.62))
+    gs = fig.add_gridspec(2, 6, height_ratios=[1.13 * aspect, 0.09], left=0.004, right=0.996, top=0.945, bottom=0.135, wspace=0.05, hspace=0.04)
+    ax = np.array([fig.add_subplot(gs[0, k]) for k in range(6)])
+    show = lambda a, img, **kw: a.imshow(img, aspect="auto", **kw)   # noqa: E731
+    title = lambda a, text: a.set_title(text, fontsize=7.5, color=INK, loc="left", pad=2)   # noqa: E731
+    show(ax[0], rgb)
+    title(ax[0], "RGB")
     lo, hi = np.percentile(z1[y0:y1, x0:x1][z1[y0:y1, x0:x1] > 0], [1, 99])
     cmap = plt.get_cmap("Blues_r").copy()
     cmap.set_bad(INVALID)
-    for a, z, title in ((ax[0, 1], z1, "ideal depth (C1)"), (ax[0, 2], z3, "stereo depth, metal (C3)"), (ax[1, 0], z4, "stereo depth, matte (C4)")):
+    for a, z, name in ((ax[1], z1, "ideal depth, C1"), (ax[2], z3, "stereo, metal, C3"), (ax[3], z4, "stereo, matte, C4")):
         im_ = show(a, np.where(z > 0, z, np.nan), cmap=cmap, vmin=lo, vmax=hi)
-        a.set_title(title, fontsize=10, color=INK, loc="left")
-    fig.colorbar(im_, ax=ax[1, 0], location="bottom", fraction=0.04, pad=0.02).set_label("z (mm)", fontsize=8.5, color=MUTED)
+        title(a, name)
+    cb = fig.colorbar(im_, cax=fig.add_subplot(gs[1, 1:4]), orientation="horizontal")
+    cb.set_label("z (mm); orange = invalid", fontsize=7, color=MUTED, labelpad=1)
+    cb.ax.tick_params(labelsize=6.5, length=2, pad=1)
     lab = np.full((H, W, 3), 1.0)
     for k, m_ in enumerate(masks):
         lab[m_] = matplotlib.colors.to_rgb(SLOTS[k % len(SLOTS)])
-    show(ax[1, 1], lab)
-    ax[1, 1].set_title("instance masks", fontsize=10, color=INK, loc="left")
-    show(ax[1, 2], cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY), cmap="gray", vmin=0, vmax=255, alpha=0.55)
+    show(ax[4], lab)
+    title(ax[4], "instance masks")
+    show(ax[5], cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY), cmap="gray", vmin=0, vmax=255, alpha=0.55)
     for pts, T_gt, T_est in overlays:
         u, v = project(pts, T_gt, K)
-        ax[1, 2].scatter(u, v, s=0.4, color=GT_COL, linewidths=0)
+        ax[5].scatter(u, v, s=0.25, color=GT_COL, linewidths=0)
         if T_est is not None:
             u, v = project(pts, T_est, K)
-            ax[1, 2].scatter(u, v, s=0.4, color=EST_COL, linewidths=0)
-    ax[1, 2].set_title("poses: ground truth, C3 ICP at 10 mm / 10°", fontsize=10, color=INK, loc="left")
-    ax[1, 2].legend(handles=[Patch(color=GT_COL, label="ground truth"), Patch(color=EST_COL, label="C3 estimate")], frameon=False, fontsize=8.5, ncols=2, loc="upper center", bbox_to_anchor=(0.5, -0.02), labelcolor=INK)
-    ax[0, 2].legend(handles=[Patch(color=INVALID, label="invalid depth")], frameon=False, fontsize=8.5, loc="upper center", bbox_to_anchor=(0.5, -0.02), labelcolor=INK)
+            ax[5].scatter(u, v, s=0.25, color=EST_COL, linewidths=0)
+    title(ax[5], "poses, ICP on C3")
+    leg = fig.add_subplot(gs[1, 4:6])
+    leg.axis("off")
+    leg.legend(handles=[Patch(color=GT_COL, label="true pose"), Patch(color=EST_COL, label="estimate on C3")], frameon=False, fontsize=7, ncols=2, loc="center right", labelcolor=INK,
+               handlelength=1, columnspacing=0.8, handletextpad=0.3, borderaxespad=0)
     for a in ax.ravel():
         a.set_xlim(x0, x1)
         a.set_ylim(y1, y0)
@@ -127,7 +135,7 @@ def main():
         for s in a.spines.values():
             s.set_visible(False)
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(args.out, dpi=170, facecolor="white")
+    fig.savefig(args.out, dpi=300, facecolor="white")
     print(args.out, "scene", seed, "view", im)
 
 
