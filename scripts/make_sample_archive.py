@@ -5,7 +5,7 @@ Usage: .venv/bin/python scripts/make_sample_archive.py <dataset_root> <results_d
 
 Archive: only what the quick run needs: IR metal and matte, ideal depth, masks, annotations, segmentation, RGB and the BOP models. It is
 byte-reproducible (sorted names, zeroed times and owners). Expected: per instance-view MSSD and Task B outcome of the full run at 10 mm / 10 deg, and
-a hash of the pixels of each computed depth image, which unlike the ICP result repeats exactly (A-72).
+a hash of the pixels of each computed depth image, which unlike the ICP result repeats exactly (A-72), and a summary of each, for the rule off the reference platform (A-77).
 """
 
 import argparse
@@ -22,6 +22,7 @@ import cv2
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
 from synthrgbd.conditions import DEPTH_DIRS  # noqa: E402
+from synthrgbd.stats import depth_summary  # noqa: E402
 
 CONDITIONS = ("C1", "C2a", "C2b", "C3", "C4")
 FOLDERS = ("depth", "mask", "mask_visib", "segmap", "rgb")
@@ -69,6 +70,7 @@ def main():
                                      "B": [{"im_id": r["im_id"], "gt_id": r["gt_id"], "type": r["type"], "success": bool(r["success"]), "has_grasp": bool(r["has_grasp"])} for r in rb]}
     expected["depth_pixels_sha256"] = {c: {p.stem: hashlib.sha256(cv2.imread(str(p), cv2.IMREAD_UNCHANGED).tobytes()).hexdigest() for p in sorted((sc / DEPTH_DIRS[c]).glob("*.png"))}
                                        for c in ("C2a", "C2b", "C3", "C4")}
+    expected["depth_summary"] = {c: {p.stem: depth_summary(cv2.imread(str(p), cv2.IMREAD_UNCHANGED)) for p in sorted((sc / DEPTH_DIRS[c]).glob("*.png"))} for c in ("C2a", "C2b", "C3", "C4")}
     expected["run_commits"] = sorted(commits)
     expected["built_at_commit"] = subprocess.check_output(["git", "-C", str(REPO), "rev-parse", "HEAD"], text=True).strip()
     args.expected.parent.mkdir(parents=True, exist_ok=True)
