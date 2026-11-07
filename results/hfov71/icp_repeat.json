@@ -1,0 +1,94 @@
+{
+ "threshold_mm": 5.0,
+ "moved_mm": 0.01,
+ "conditions": {
+  "C1": {
+   "n": 460,
+   "recall_primary": 0.717391304347826,
+   "recall_repeat": 0.717391304347826,
+   "side_changes": 0,
+   "up": 0,
+   "down": 0,
+   "moved_gt_0.01mm": 6,
+   "max_abs_d_mssd_mm": 33.340197032283314,
+   "no_estimate_primary": 2,
+   "no_estimate_repeat": 2
+  },
+  "C2b": {
+   "n": 460,
+   "recall_primary": 0.5608695652173913,
+   "recall_repeat": 0.5608695652173913,
+   "side_changes": 0,
+   "up": 0,
+   "down": 0,
+   "moved_gt_0.01mm": 3,
+   "max_abs_d_mssd_mm": 24.797602740929158,
+   "no_estimate_primary": 0,
+   "no_estimate_repeat": 0
+  },
+  "C3": {
+   "n": 460,
+   "recall_primary": 0.06956521739130435,
+   "recall_repeat": 0.06956521739130435,
+   "side_changes": 0,
+   "up": 0,
+   "down": 0,
+   "moved_gt_0.01mm": 2,
+   "max_abs_d_mssd_mm": 0.2943870657629617,
+   "no_estimate_primary": 0,
+   "no_estimate_repeat": 0
+  },
+  "C4": {
+   "n": 460,
+   "recall_primary": 0.34347826086956523,
+   "recall_repeat": 0.34347826086956523,
+   "side_changes": 0,
+   "up": 0,
+   "down": 0,
+   "moved_gt_0.01mm": 1,
+   "max_abs_d_mssd_mm": 0.020200615338751504,
+   "no_estimate_primary": 0,
+   "no_estimate_repeat": 0
+  }
+ },
+ "commits": [
+  "8ff80c6d691f07b89f17835b993327aee27b8cab"
+ ],
+ "dirty_tree_any": false,
+ "fixed_sequence_repeat": [
+  {
+   "a": "C1",
+   "b": "C3",
+   "diff": 0.6478260869565217,
+   "ci95": [
+    0.5940138282387191,
+    0.6986309014187867
+   ],
+   "p": 3.331279745505856e-75,
+   "rejects": true
+  },
+  {
+   "a": "C2b",
+   "b": "C3",
+   "diff": 0.49130434782608695,
+   "ci95": [
+    0.42477644684711374,
+    0.5560344827586207
+   ],
+   "p": 5.659336265440568e-55,
+   "rejects": true
+  },
+  {
+   "a": "C3",
+   "b": "C4",
+   "diff": -0.2739130434782609,
+   "ci95": [
+    -0.3310810810810811,
+    -0.21621621621621623
+   ],
+   "p": 5.456553451893425e-30,
+   "rejects": true
+  }
+ ],
+ "note": "Descriptive. Same depth, offsets and harness as the primary run; only the ICP is repeated. Replaces no primary number."
+}

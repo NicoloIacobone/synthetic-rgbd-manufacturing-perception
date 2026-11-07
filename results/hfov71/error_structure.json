@@ -1,0 +1,86 @@
+{
+ "n_instance_views": 98,
+ "scenes": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9
+ ],
+ "recall_5mm": {
+  "C1": 0.7040816326530612,
+  "C2b": 0.47959183673469385,
+  "C3": 0.10204081632653061,
+  "C4": 0.2653061224489796,
+  "C3shuf": 0.25510204081632654,
+  "C3sym": 0.10204081632653061,
+  "C3both": 0.2755102040816326
+ },
+ "median_mssd_mm": {
+  "C3": 18.08838920301436,
+  "C3shuf": 6.872966310492953,
+  "C3sym": 16.800539747375907,
+  "C3both": 8.813992309917314
+ },
+ "against_C3": {
+  "C3shuf": {
+   "diff": 0.15306122448979592,
+   "ci95": [
+    0.022222222222222223,
+    0.32653061224489793
+   ],
+   "p": 0.002599477767944336,
+   "n_up": 19,
+   "n_down": 4,
+   "excludes_zero": true,
+   "profile": 0.3125,
+   "bracket": 0.14705882352941177
+  },
+  "C3sym": {
+   "diff": 0.0,
+   "ci95": [
+    -0.05319148936170213,
+    0.04716981132075472
+   ],
+   "p": 1.0,
+   "n_up": 5,
+   "n_down": 5,
+   "excludes_zero": false,
+   "profile": 0.125,
+   "bracket": 0.058823529411764705
+  },
+  "C3both": {
+   "diff": 0.173469387755102,
+   "ci95": [
+    0.06666666666666667,
+    0.2857142857142857
+   ],
+   "p": 0.0015137195587158203,
+   "n_up": 22,
+   "n_down": 5,
+   "excludes_zero": true,
+   "profile": 0.390625,
+   "bracket": 0.058823529411764705
+  }
+ },
+ "commits": [
+  "1655a00fb650a46856a38ce9066102968b80ae82",
+  "83e59ba1adbb03c2fa13da49d32635b944c10f11"
+ ],
+ "dirty_tree_any": false,
+ "C3both_against_C3shuf": {
+  "diff": 0.02040816326530609,
+  "ci95": [
+   -0.0784313725490196,
+   0.11627906976744186
+  ],
+  "p": 0.803619384765625
+ },
+ "reading": "coherence matters",
+ "note": "Descriptive, 10 scenes. Replaces no primary number. Reading fixed in advance in the ledger, rows Error structure check and its second part (A-73)."
+}

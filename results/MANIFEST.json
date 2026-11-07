@@ -1,6 +1,6 @@
 {
- "written_at": "2026-11-07T01:18:30+00:00",
- "collected_at_commit": "dab2f77213313d1afabb8099b75711e5c3db8404",
+ "written_at": "2026-11-07T03:19:23+00:00",
+ "collected_at_commit": "e720aeaa4fae6368b7b7bb1f1483aa4abdfaa519",
  "primary_run_commits": [
   "7eca5f0517e77148d95c9e8292bb570e40442454"
  ],
@@ -50,6 +50,8 @@
   "hfov71/redraw_sensor.json": "621bd75e2115b0940dfba359ed304d03b8236a19dcf04eaea5f4f0730d9c1117",
   "hfov71/ambient.json": "b646c7a14e91cd6fce44d033dadfa6db0d795d7f3a6e698205642215d48cd387",
   "hfov71/ambient_sensor.json": "dca02ef461a430cfb6f65d44f7011e1cce1edd73705f7cd281baa749b6ff936f",
+  "hfov71/icp_repeat.json": "4304548254b9a51a8d009a481dd5763a9bd75d9ad99eb6c759ca6b55b5771dfb",
+  "hfov71/error_structure.json": "b60dd6577d7c6a84601ec041a4dbfba4bd89d582382a540f544bea98cb7597e6",
   "hfov71/ambient_level.json": "e38211ed66cffbd305a89384826cb26e344965711bd1bb843f909885d3114fad",
   "hfov71/unlit_share.json": "6e8217c424b217be87735b7ad4dc75bc772bb2c337245dc622b6618992bf467e",
   "hfov71/mechanism_dev.json": "b596f6453d9d7085dd48f9130af5d682268225525522604316d8278899e232da",
@@ -66,7 +68,7 @@
   "archive_hfov65/s58_sensor.json": "912329f7fee3e4dd1f677ce45411d43a60ca0f7ec8885b4733faaee151e54640",
   "figures/results.png": "b6cfaccd9ad7b63c14b68baeaa5c46e940d6046b578ff624d9bcf7ed7f4ac80e",
   "figures/robi.png": "266003c476ac77a6050bdc803a86343c07163d845191e759de4de52420e96aad",
-  "figures/examples.png": "930914e686b9b0471cd917369597a46b395077754aa0f9460448a6818b095d42",
+  "figures/examples.png": "c05eb818aecbea2976e8f29d45cc8870271ab9f393b228a5924cbeab0b236e30",
   "figures/mechanism.png": "5f238145664d570046f263d55d1a89c5551c67d547691be9b78c1fc4ca19bed7"
  }
 }
