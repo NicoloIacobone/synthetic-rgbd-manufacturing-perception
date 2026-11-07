@@ -53,3 +53,10 @@ def fixed_sequence(rejected: list[bool]) -> list[str]:
 def mde_mcnemar(discordance: float, n: float) -> float:
     """Minimum detectable paired difference at 80% power, two-sided alpha 0.05 (A-18): 2.8 * sqrt(pi_d / n)."""
     return float(2.8 * np.sqrt(discordance / n)) if n > 0 else float("nan")
+
+
+def depth_summary(depth: np.ndarray, mm_per_unit: float = 0.1) -> dict:
+    """Share of valid pixels and depth percentiles in mm of a stored depth image (0 = no depth). The quick run compares these off its reference platform (A-77)."""
+    valid = depth > 0
+    p5, p50, p95 = np.percentile(depth[valid], (5, 50, 95)) * mm_per_unit if valid.any() else (0.0, 0.0, 0.0)
+    return {"valid_frac": float(valid.mean()), "p5_mm": float(p5), "p50_mm": float(p50), "p95_mm": float(p95)}

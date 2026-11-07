@@ -1,0 +1,9 @@
+# Only what the quick run needs: data, environments and Blender stay out of the build context.
+*
+!.git
+!src
+!scripts
+!configs
+!results
+!requirements.lock.txt
+**/__pycache__
