@@ -2,7 +2,7 @@
 
 Everything uncertain, unexplained or left undone when M5 was closed. The user asked for these to be written down rather than stopping for each (2026-11-05), so that a reviewer can check them after the milestone. Nothing here was hidden from the results: where an item affects a number, it says which.
 
-Results are in `data/m5/results_v2/stats.json`, `sensor.json` and `data/m5/results_v2_s58/robustness.json`, all from commit 26cd449 with a clean tree. Item numbers are stable identifiers, not a ranking. No item needs a decision any more.
+**Sections 1–4 are history: their numbers come from the archived 65° run.** The primary run is now at 71°: its numbers, and what it closes, are in section 5. Results of the 65° run are in `data/m5/results_v2/stats.json`, `sensor.json` and `data/m5/results_v2_s58/robustness.json`, all from commit 26cd449 with a clean tree. Item numbers are stable identifiers, not a ranking. No item needs a decision any more.
 
 **Triage by the review of 2026-11-06.** Test: if the outcome were different, would the 8 pages change? **Can change a conclusion:** 10, 20, 21, 23. **One line or a small fix is enough:** 1, 2, 4, 18, 19, 22, 24, 25, 26, 30, 31, 32. **Ignore until submission:** 3, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16, 17, 27, 28, 29, 33. Items 34–37 were added by the review.
 
@@ -62,3 +62,32 @@ Results are in `data/m5/results_v2/stats.json`, `sensor.json` and `data/m5/resul
 | 35 | **The simulated IR differs from real IR.** Part pixels, median DN and median 7 × 7 local SD: real ROBI Zigzag 21 and 4.6; C3 1.9 and 23; roughness 0.4 16.8 and 69 (seeds 0–9). Zero ambient (A-03) is not tested | `data/m5/robi/zigzag.json`, `scripts/ir_appearance.py` | Limitation, and evidence for the reflection |
 | 36 | **ROBI must be read in pixels, not at 5 mm.** Disparity error p5 / p25 / p50: real D415 −2.07 / −0.71 / −0.19 px, C3 −2.44 / −0.72 / −0.23 px, roughness 0.4 −0.80 / −0.22 / −0.02 px. Invalid 21% vs 5%. "71% vs 54% correct" compares different tolerances in px. ROBI's ground-truth error is unknown | `data/m5/robi/zigzag.json`, `sensor.json` | Compatible, not a validation. Framing fixed in A-65 |
 | 37 | **A third of the IR noise does not move C3.** C3 0.143 → 0.143, C4 0.357 → 0.408; the noise level, calibrated on the plane anchor, was therefore not what set C3's level at this value | A-64, `data/m5/results_s58_v2` | One line in the limitations. Anchor (a) cannot validate the noise level, since it calibrates it |
+
+## 5. New numbers from the final run at 71° (2026-11-07)
+
+Commit 7eca5f0, clean tree, 460 instance-views, `results/hfov71/`. The items keep their numbers; the text above stays as history. **Closed by this run:** 4 and 31 for C3, 10, 30, 32, 34.
+
+| # | Item | New numbers |
+|---|---|---|
+| 2 | Sample count and earlier results seen | Disclosed as before. In addition the earlier **recall** results had been seen before this run was defined (A-66) |
+| 4, 31 | **Closed for C3: noise redraws on all 50 scenes** | C3 0.070, redraws 0.061 and 0.063: spread 0.9 points, 24 and 21 of 460 views change side. C3−C4 −27.4, −28.3, −28.0 points. The primary draw is the highest of the three. C4 redraws were not run |
+| 10 | **Closed: ROBI comparison done,** Zigzag only | `results/figures/robi.png`, A-55 |
+| 19, 18, 30 | §5.8, seeds 0–9, all three filters off | C3 0.102 → 0.112, C4 0.265 → 0.245, no sign change. C3 correct part pixels 62.2 → 63.0%, invalid 2.7 → 0.0%, MAE 6.75 → 13.92 mm |
+| 20 | C3 depends on the assumed roughness | 0.070 at 0.15, 0.139 at 0.2, 0.276 at 0.4 |
+| 21 | Reflections hardly change recall | C3 0.070, reflections off 0.076: −0.7 points [−2.7, +1.5], p 0.68. Correct part pixels 55% and 60%. A-58 has the mechanism re-run; note the collapse of the "no texture" share |
+| 22 | C2a vs C1 by part type | All parts −1.7 points [−4.1, +0.7], p 0.18. Profiles C2a higher, 0.737 and 0.696; brackets C1 higher, 0.780 and 0.729: same signs as at 65° |
+| 23 | C1 largely a harness limit | Zero offset 460/460, 2 mm 1.00, 5 mm 0.90, 10 mm 0.717, 20 mm 0.633 |
+| 24 | Task B on C3 | Bracket success 0.110, grasp planned on 0.441 of views, success given a grasp 0.250 (C1 0.901, C2b 0.656, C4 0.570) |
+| 25 | Noise creates grasps on profiles | Grasp proposed on 0.3% of profile views in C1, 45.6% C2a, 97.1% C2b, 93.9% C3, 97.7% C4; success still 0 |
+| 26 | MDE (minimum detectable effect) | A1: 11.0 / 9.7 / 7.3 points with instance-views as n, 33.2 / 29.3 / 22.2 with scenes as n. Task B brackets: 21.2 / 17.8 / 14.2 and 35.6 / 29.8 / 23.9 |
+| 29 | No-estimate counts at A1 | C1 2, C2a 6, C3nogloss 1, others 0 |
+| 32 | **Closed:** results figure | Titles apart, three decimals, labels read from the config. `results/figures/results.png` |
+| 34 | **Closed:** distance panel in the results figure | A1 recall by part distance, < 0.7 m (46 views), 0.7–0.9 m (273), ≥ 0.9 m (141): C1 0.630, 0.714, 0.752; C2b 0.609, 0.586, 0.496; C4 0.565, 0.388, 0.184; C3 0.217, 0.070, 0.021. `results/hfov71/distance.json` |
+| 35 | Simulated IR against real IR | Part pixels, median DN and median 7 × 7 local SD: real ROBI Zigzag 21 and 4.6; C3 5.05 and 22.5 (1.9 and 23 at 65°); C4 3.95 and 22.8; roughness 0.4 29.8 and 69. Zero ambient is now tested once (A-70): 22.05 and 17.2, so the mean can be matched but the local contrast not |
+| 36 | ROBI in pixels | Disparity error p5 / p25 / p50: real −2.07 / −0.71 / −0.19 px; C3 −2.24 / −0.68 / −0.23 px; roughness 0.4 −0.98 / −0.22 / −0.04 px. Invalid 21% against 2.3% |
+| 37 | Noise sensitivity | A smaller step than at 65°, since `e_per_dn` is now 0.42: C3 0.102 → 0.102, C4 0.265 → 0.286 (A-64) |
+
+**New at 71°, for the report.**
+- `e_per_dn` went from 0.087 to 0.42 on the same plane rule, because the no-noise plane floor rose from 0.053 to 0.0749 px (pixel locking), leaving less room for noise under the 0.09 px target. σ at 21 DN falls from 15.6 to 7.1 DN. A reader comparing the two runs needs this.
+- Unlit part pixels: 0.064% (1 077 of 1 674 189), on 2 instance-views: a bracket in scene 19 view 1 at 85%, a profile in scene 35 at 1.6%. Unlit image share 13.6%. `results/hfov71/unlit_share.json`.
+- ICP is not strictly repeatable on identical depth (A-72). Its effect on the recall of the test scenes is not measured; one repeat has been proposed and not run.

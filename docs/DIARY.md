@@ -393,3 +393,24 @@ Dev final (commit b459488, data/hfov71/dev): 156–191 s per scene with all pass
 
 ## 2026-11-06 (Fri evening): ICP is not repeatable on identical depth (A-72)
 Found while testing the quick run on dev scene 1000, seed-for-seed. Depth re-matched from the stored IR is bit-identical. C3 at 10 mm / 10°, 8 instance-views: 2 brackets change between runs at OMP_NUM_THREADS 2 and 1 (67.9, 42.8, 44.1, 71.4, 65.3 mm; 36.8, 32.6, 52.3, 32.6 mm, once no_correspondences); the other 6 agree within 1e-12 mm. C4 up to 8.8 mm on one run, C1 1.4e-3 mm on one run. Source not traced; candidate: Embree BVH build in the ray-cast visibility. All already failures on this scene. Quick-run rule changed before any test result: identical depth pixels, identical suction, median |ΔMSSD| ≤ 0.01 mm, at most one side change per condition. Proposed, not run: one repeat of the protocol conditions on the test scenes to bound the effect on recall. Quick run on dev scene: 178 s with the render running, PASS, archive 6.7 MB.
+
+## 2026-11-07: final run at 71°, results, delivery tooling
+
+**Run.** `scripts/run_final.sh data/hfov71/test data/hfov71/dev`, detached, 16:33 on 6 Nov to 02:11 on 7 Nov, 9 h 38, no restart. Commit 7eca5f0, clean tree in all 45 result files; seeds 0-49, master 0. Render 2 h 28 (median 178 s per scene, swap peak 9.2 GB with other apps open), metrics 5 h 36 (estimate 4 h 46), §5.8 16 min, redraws 58 min, mechanism and appearance 46 s, ambient 18 min.
+
+**Result.** 460 instance-views (459 at 65°). §5.11 460/460. A1 recall@5 mm: C1 0.717, C2a 0.735, C2b 0.561, C3 0.070, C4 0.343. Fixed sequence, all reject: +0.648 [0.596, 0.700], +0.491 [0.425, 0.559], -0.274 [-0.330, -0.217]. No stop rule fired. Ranking holds at 2, 5, 10, 20 mm. Task B brackets 0.771, 0.737, 0.534, 0.110, 0.381. r02 0.139, r04 0.276, nogloss 0.076, bright 0.363. Redraws 0.061, 0.063: the primary C3 draw is the highest of three. Every number moved a little down from 65°, C4 most (0.386 to 0.343).
+
+**Surprises.**
+- Ambient made C3 worse, 0.102 to 0.031 on seeds 0-9, with invalid 2.7 to 7.2%. The stop rule looks only at C3amb reaching C4amb or C2b, so it did not fire. C3 parts 22.05 DN, local SD 17.2 (ROBI 21.27 and 4.57): the mean matches, the contrast does not.
+- The "no texture" share in the mechanism check collapsed, 63.7% to 3.2% of part pixels, and C3 did not recover. The 65° reading of the mechanism leaned on it, so A-58 now says it depends on the noise model.
+- The noise sensitivity (e_per_dn 1.0) is a much smaller step now that the configured value is 0.42. Worth saying when comparing to the 65° row.
+
+**Figures.** `scripts/make_figures.sh`. Fixed after looking: the ROBI note carried the 65° range and sat on the legend, the mechanism column title said C3 on the reflections-off row. Example frame scene 1 view 0, mechanism view dev 1001 view 0, both by rule. `fig_examples` re-ran MSSD on that scene and all 5 instances agreed to 3 decimals.
+
+**Clean clone.** Install and quick run passed first time. Trying the BlenderProc steps as well found two real bugs in `scripts/setup_blenderproc.sh`, invisible because the working env already carries the patch. (1) `import blenderproc` raises outside `blenderproc run`, 352e1ca. (2) After that fix it printed "macOS patch already applied" on a fresh env: Apple's `patch -R --dry-run -s` returns 0 on an unpatched file, so the patch was silently skipped, 137d6d0. I only caught (2) because the message looked wrong on a new env. Now detected by a marker, and the patched file matches the working env byte for byte.
+
+**Protected folders.** Snapshot differs only in two `.DS_Store` files written by Finder (`data/m5/.DS_Store` changed, `data/m5/synthrgbd/.DS_Store` new). No data file changed.
+
+**Correction to a commit message.** The body of 352e1ca says the working `.venv-bproc` "had been set up by hand before the script took this form". Not verified, and git says otherwise: the script has had both bugs since its first version, 0c85357 (M1, 2026-11-03). How the working env got its patch is not recorded. History not rewritten. What holds: its `SetupUtility.py` is patched, so no render is affected.
+
+**Clean-clone numbers.** Commit d8c03ec and later, scratchpad clone. `scripts/setup.sh` 93 s, or 94 s with `PIP_NO_CACHE_DIR=1`, 105 tests. Quick run on seed 0: 121 s in the clone, 102 s in main, 6.5 MB archive, 12 instance-views, PASS, largest |dMSSD| below 1e-12 mm. Also in the clone: BlenderProc env 8 s, Blender download and quickstart 154 s, intrinsics 13 s (K within 9e-7 px), planes 89 s, gate 9 s and anchor 4 s, all criteria pass, RMS 0.08974 px against 0.08974 px in main, so the plane step reproduces on a new install.

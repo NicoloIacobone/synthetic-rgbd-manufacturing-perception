@@ -63,9 +63,9 @@ Fonti: PLAN §5.1, `src/synthrgbd/conditions.py`. Le cartelle sono dentro ogni s
 |---|---|---|---|
 | `C1` | Profondità ideale del simulatore | Limite superiore; usata per il sanity check | `depth` |
 | `C2a` | Ideale + rumore gaussiano, ε_d = 0.08 px | Baseline ingenua, solo descrittiva | `depth_c2a` |
-| `C2b` | Ideale + rumore gaussiano, ε_d = 0.262 px (tarato su Carfagni a 1 m) | Baseline ingenua usata nei test | `depth_c2b` |
+| `C2b` | Ideale + rumore gaussiano, ε_d = 0.234 px (tarato su Carfagni a 1 m; 0.262 px a 65°) | Baseline ingenua usata nei test | `depth_c2b` |
 | `C3` | Stereo simulato, parti di metallo, roughness 0.15 | **Il modello di camera** | `depth_stereo_metal` |
-| `C4` | Stereo simulato, parti opache, albedo 0.247 | Isola l'effetto del materiale | `depth_stereo_matte` |
+| `C4` | Stereo simulato, parti opache, albedo 0.25 (0.247 a 65°) | Isola l'effetto del materiale | `depth_stereo_matte` |
 | `C3r02`, `C3r04` | Come C3 con roughness 0.2 e 0.4 | Descrittive, 50 scene (A-51) | `depth_stereo_r02`, `_r04` |
 | `C3nogloss` | Come C3 senza riflessi | Descrittiva: com'era prima del bug fix (A-57) | `depth_stereo_nogloss` |
 | `C4bright` | Come C4 con albedo 0.5 | Descrittiva: separa "scuro" da "opaco" (A-52) | `depth_stereo_bright` |
@@ -77,7 +77,7 @@ Fonti: PLAN §5.1, `src/synthrgbd/conditions.py`. Le cartelle sono dentro ogni s
 | `C3e1`, `C4e1` | C3 e C4 con rumore IR più basso: `e_per_dn` 1 invece del valore in configurazione | Descrittive, scene 0–9 (A-64) | `depth_stereo_metal_e1`, `depth_stereo_matte_e1` |
 | `C3amb`, `C4amb` | C3 e C4 con luce ambiente aggiunta alla radianza del proiettore, un solo livello fissato sui dev | Descrittive, scene 0–9 (A-70) | `depth_stereo_metal_amb`, `depth_stereo_matte_amb` |
 
-**Dal 6 nov 2026 la corsa primaria è a 71° (A-66):** fx 897,25 px, C2b 0,234 px, dati in `data/hfov71/`. I valori di questa tabella con cifre vecchie (0,262 px, albedo 0,247) sono quelli della corsa archiviata a 65°; i valori nuovi sono in `configs/`.
+**Dal 6 nov 2026 la corsa primaria è a 71° (A-66):** fx 897,25 px, C2b 0,234 px, dati in `data/hfov71/`. I valori attuali sono in `configs/`; quelli della corsa archiviata a 65° sono tra parentesi.
 
 Solo C1, C2a, C2b, C3 e C4 sono condizioni del protocollo. Le altre non entrano mai nei test confermativi.
 
@@ -205,7 +205,7 @@ Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 | `A-11` | Materiale metallo: riflettanza 0.868, roughness 0.15 |
 | `A-12` | Modello di rumore IR: shot + read, stessa estrazione per C3 e C4 |
 | `A-13` | ε_d = 0.08 px, livello di C2a |
-| `A-14` | Livello di C2b da Carfagni: ε_d ≈ 0.26 px |
+| `A-14` | Livello di C2b da Carfagni: ε_d = 0.234 px a 71° (0.26 px a 65°) |
 | `A-15` | Atteso C1 ≈ C2 perché ICP media il rumore |
 | `A-16` | Min-Z 450 mm: i pezzi sono sempre oltre |
 | `A-17` | L'unità indipendente è la scena |
@@ -215,7 +215,7 @@ Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 | `A-21` | 5 mm come soglia sensata (senza fonte) |
 | `A-22` | Multipath non modellato di proposito |
 | `A-23` | BlenderProc gira su macOS 27.2 con patch |
-| `A-24` | Regola di luminosità di C4: oggi albedo 0.247 |
+| `A-24` | Regola di luminosità di C4: albedo 0.25 a 71° (0.247 a 65°) |
 | `A-25` | Ricerca di 126 px emulata con 128 + maschera |
 | `A-26` | 5 scene dev bastano per i parametri |
 | `A-27` | Il sanity a offset zero rivela i bug |
@@ -243,7 +243,7 @@ Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 | `A-49` | Inclusi solo visib_fract ≥ 0.1; stima mancante = fallimento |
 | `A-50` | Check di planarità della ventosa |
 | `A-51` | Opzione (B): roughness 0.2 e 0.4 su 50 scene |
-| `A-52` | Opzione (D): passata opaca chiara, albedo 0.5. L'albedo di C4 è 0.247 |
+| `A-52` | Opzione (D): passata opaca chiara, albedo 0.5. L'albedo di C4 è 0.25 a 71° (0.247 a 65°) |
 | `A-53` | Opzione (C) rifiutata. Niente cambia dopo i dati di test, salvo un §5.11 fallito, che ha la precedenza: usato una volta per l'harness (H3, A-62) |
 | `A-54` | Controllo con figura prima del render: ha trovato il bug A-57 |
 | `A-55` | ROBI obbligatorio dopo M5. Ridotto da A-65: solo Zigzag, 1 ora |
@@ -255,8 +255,8 @@ Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 | `A-61` | Regioni del sensore: bordo e interno |
 | `A-62` | Diagnosi del gate §5.11: il §5.11 prevale su A-53; solo C1, offset zero, scene di test. Primo giro: nessun candidato passa, trovato il bug della cache del ray-cast. Secondo giro, con cache corretta e 200 000 campioni: H0–H3 passano tutte |
 | `A-63` | Rifacimento del §5.8 con il controllo sinistra-destra spento davvero: valore 1000, perché −1 non lo spegne in OpenCV 5.0.0. Fatto il 6 nov: nessuna inversione |
-| `A-64` | Prova descrittiva col rumore IR a circa un terzo (`e_per_dn` 1), scene 0–9. Fatta il 6 nov: C3 non si muove (0.143), C4 da 0.357 a 0.408. Non cambia nessun numero del protocollo |
-| `A-65` | Decisioni su report e consegna: metallo come 0.085 con intervallo 0.085–0.288; ROBI solo Zigzag; quick-run con una scena di esempio |
+| `A-64` | Prova descrittiva col rumore IR a circa un terzo (`e_per_dn` 1), scene 0–9. A 65°: C3 non si muove (0.143), C4 da 0.357 a 0.408. A 71° il passo è minore: C3 0.102 fermo, C4 da 0.265 a 0.286. Non cambia nessun numero del protocollo |
+| `A-65` | Decisioni su report e consegna: metallo come valore confermativo con l'intervallo descrittivo (a 71°: 0.070 e 0.070–0.276; a 65°: 0.085 e 0.085–0.288); ROBI solo Zigzag; quick-run con una scena di esempio |
 | `A-66` | **Corsa finale a 71°:** focale del sensore, si rifà tutto, risultato primario qualunque sia la direzione; 65° solo come sensibilità. Risultati precedenti già visti, da dichiarare |
 | `A-67` | Gate sul piano a 71°: ROI all'80% di larghezza e altezza e criteri (ii′), (iii′), (iv′). Sostituisce per questa corsa i criteri (ii), (iii), (iv) di A-38 |
 | `A-68` | Pattern a punti a 71°: stessi 30 000 punti e stesso seed, punto di 0,7 px, 3,76% dei pixel illuminati |
@@ -333,6 +333,11 @@ Fonte: `docs/SOURCES.md`.
 | `scripts/run_eval.py` | Lancia sanity, poi Task A e B. **Se un file di risultato esiste, non lo rifà** |
 | `scripts/select_harness.py` | Sceglie la variante ICP con leximin su dev. `data/m5_dev/selection_fix/` = scelta dopo il fix |
 | `scripts/run_final.sh` | Orchestratore della corsa finale a 71°: render, metriche, controlli, ridisegni, test ambiente. Riprende da dove si è fermato |
+| `scripts/setup.sh` | Installazione da zero: controlla Python 3.11, crea `.venv`, lancia i test (A-71) |
+| `scripts/quick_run.py` | Una scena di esempio senza Blender, confronto con i numeri committati, stampa `QUICK_RUN_PASS` o `QUICK_RUN_FAIL` (A-71, A-72) |
+| `scripts/make_sample_archive.py` | Costruisce l'archivio della scena di esempio e i numeri attesi (A-71) |
+| `scripts/make_figures.sh` | Rigenera le quattro figure dai risultati (Step 6) |
+| `scripts/collect_results.py` | Copia i risultati in `results/` con il manifest di commit e semi (A-71) |
 | `scripts/run_m5.sh` | Lancia le metriche principali su una cartella dati indicata esplicitamente, riprende da dove si è fermato |
 | `scripts/run_m5_followup.sh` | Lancia il §5.8, la prova sul rumore e i ridisegni, sempre su una cartella indicata esplicitamente (A-63, A-64) |
 | `scripts/check_stop.py` | Applica le regole di stop della corsa finale e ferma l'orchestratore (ledger "Final-run stop rules") |

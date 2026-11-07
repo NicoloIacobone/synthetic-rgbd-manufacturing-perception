@@ -178,26 +178,29 @@ Ricerca sull'intero testo estratto, senza distinguere maiuscole. **Limite:** il 
 |---|---|---|---|
 | Baseline | 55 mm (p. 71) | 55 mm (`configs/default.yaml`) | ✅ Coincide |
 | Risoluzione profondità | 1280 x 720 (p. 81) | 1280 × 720 | ✅ Coincide |
-| Min-Z | 450 mm (p. 91) | 450 mm in configurazione; 0,43–0,44 m in simulazione | ✅ Vicino |
+| Min-Z | 450 mm (p. 91) | 450 mm in configurazione; transizione simulata a 392 mm (f·B/126), misurata tra 0,38 e 0,40 m | ⚠️ Scarto di 58 mm, va in "what did not work" (A-67). Nessun pixel della scena è così vicino |
 | Profondità Z, riferita al sensore sinistro | p. 19, 97 | Stessa convenzione | ✅ Coincide |
-| Banda invalida | B·F/Z (p. 90) | Entro circa 1 px dalla formula | ✅ Coincide |
+| Banda invalida | B·F/Z (p. 90) | Prima colonna valida a f·B/z anche dove il margine non illuminato è più largo: SGBM riempie la striscia non illuminata (A-67) | ✅ Coincide, ma il riempimento è un artefatto del matcher |
 | Pattern statico, 850 nm | p. 45 | Pattern statico, riflettanza a 848 nm | ✅ Coincide |
 | Campo del proiettore | 67/41 (p. 41, 71) o 64/41 (p. 45) | 67° × 41° | ✅ Una delle due versioni, va dichiarato |
 | Otturatore rolling | p. 43 | Scena ferma, effetto escluso | ✅ Coerente con la nostra esclusione |
 | Formato IR | Sensore 10-bit RAW (p. 43), stream 8 bit Y8 (p. 81) | 8 bit | ✅ Coincide con lo stream, ma il datasheet non dice con quanti bit lavori il matcher interno |
-| **Focale** | Sensore 71° ± 1° (p. 43); FOV profondità 65° a 2 m (p. 42) | **fx = 1004,6 px, ricavata da 65°** | ⚠️ Da discutere, vedi sotto |
-| **Luce ambiente** | Filtro "None" (p. 43), "All pass" (p. 71) | **Solo proiettore, ambiente zero** | ⚠️ Da discutere, vedi sotto |
+| **Focale** | Sensore 71° ± 1° (p. 43); FOV profondità 65° a 2 m (p. 42) | **fx = 897,25 px, da 71°** (prima 1004,6 px, da 65°) | ✅ Corretta il 6 nov 2026, vedi sotto |
+| **Luce ambiente** | Filtro "None" (p. 43), "All pass" (p. 71) | **Solo proiettore, ambiente zero** nella corsa primaria; una prova descrittiva con ambiente (A-70) | ⚠️ Limite dichiarato, vedi sotto |
 
-**Focale.** Le formule di p. 88 e p. 90 usano il FOV del *sensore*, mentre noi abbiamo ricavato fx dal FOV della *profondità*.
-- Con 71° su 1280 px si otterrebbe fx ≈ 897 px, contro i nostri 1004,6 px (circa il 12% in più).
+**Focale. Risolto il 6 nov 2026 per decisione dell'utente: la corsa primaria usa 71° (A-66, PLAN §5.12); quella a 65° resta archiviata come sensibilità descrittiva.** Il motivo è il controllo qui sotto, non i risultati. Le formule di p. 88 e p. 90 usano il FOV del *sensore*, mentre prima avevamo ricavato fx dal FOV della *profondità*.
+- Con 71° su 1280 px si ottiene fx = 897,25 px, contro i 1004,6 px di prima (circa il 12% in più).
 - La camera reale del dataset ROBI, che **non** è il datasheet, ha fx = 905,9 px (`data/m5/robi/zigzag.json`), pari a un FOV di 70,5°: molto più vicina a 71° che a 65°.
 - Il segnale non è univoco. Min-Z 450 mm con 126 px di ricerca richiederebbe fx ≈ 1031 px, che è vicino al nostro valore; il valore 126 però viene da Carfagni, non dal datasheet.
 - Il datasheet non si riconcilia da solo: la formula di p. 88 con 71° dà 69,9° a 2 m, non 65°.
-- **Effetto stimato:** a 0,9 m, 5 mm valgono 0,34 px da noi e circa 0,31 px con la camera ROBI. Su questo punto il nostro modello è leggermente ottimista.
+- **Effetto:** a 0,9 m, 5 mm valgono ora 0,305 px da noi (0,34 px a 65°) e 0,308 px con la camera ROBI.
+- **Risultato misurato a 71°, 460 viste-istanza:** C1 0,717, C2a 0,735, C2b 0,561, C3 0,070, C4 0,343 (a 65°: 0,732, 0,749, 0,590, 0,085, 0,386). La classifica non cambia e la sequenza fissa rigetta tre volte.
+- **Conseguenza nota:** Min-Z con 126 px di ricerca passa a 392 mm contro i 450 mm del datasheet. Il valore 126 viene da Carfagni e non è stato toccato.
 
 **Luce ambiente.** Un filtro "None" o "All pass" significa che la luce visibile arriva ai sensori IR, e p. 81 aggiunge uno stream a colori dal sensore sinistro.
 - Questa è una mia deduzione, ma indebolisce la motivazione "cella al chiuso, quindi niente ambiente": anche al chiuso le lampade contribuiscono all'immagine.
-- Il datasheet non dice quanto. Il dato che indica un contributo reale resta il confronto con ROBI: 21 DN contro i nostri 1,9 DN sul metallo.
+- Il datasheet non dice quanto. Il dato che indica un contributo reale resta il confronto con ROBI: 21 DN contro i nostri 5 DN sul metallo a 71° (1,9 DN a 65°).
+- **Prova del 7 nov 2026, descrittiva, scene 0–9 (A-70):** un solo livello di luce uniforme, fissato sui dev per arrivare a 21 DN; livello e spettro senza fonte. Sui pezzi di metallo si arriva a 22 DN, ma il contrasto locale resta 17 DN contro i 4,6 DN reali. C3 scende da 0,102 a 0,031, C4 da 0,265 a 0,224. Il titolo non cambia.
 
 **Specifica contro endpoint (calcolo mio).** A 0,9 m, il ±2% vale ±18 mm. La nostra soglia di 5 mm è quindi molto più stretta di ciò che il costruttore dichiara, e la specifica vale per un bersaglio bianco, non per il metallo.
 
