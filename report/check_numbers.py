@@ -190,6 +190,21 @@ def main():
     assert all(r["valid_frac_roi"] == 1.0 for r in rows)
     add("plane band", f"within {max(abs(r['band_measured_px'] - r['band_expected_px']) for r in rows):.1f}\\,px of $B f/z$")
     add("unlit", f"{unlit['image_unlit_share_mean_over_views'] * 100:.1f}\\% of the image, {unlit['part_px_unlit_share'] * 100:.3f}\\% of part pixels")
+    # Dot density: control and two other densities (A-74, A-76)
+    dc = J("hfov71/dots_compare.json")
+    drec = dc["recall_5mm"]
+    assert all(v["n_up"] + v["n_down"] == 0 for v in dc["repeat"].values()) and all(dc["order_held"].values()) and dc["reading"]["stereo_vs_noise"]["60000"] == "holds"
+    add("dots repeat row", f"Same 30\\,000 dots, rendered again & {f3(drec['C3dots30k'])} & {f3(drec['C4dots30k'])} & No view crosses 5\\,mm")
+    for n, k in ((10000, "10k"), (60000, "60k")):
+        m3, m4 = dc["density"][str(n)]["C3"], dc["density"][str(n)]["C4"]
+        add(f"dots {k} row", f"{n // 1000}\\,000 dots, new render & {f3(m3['recall'])} & {f3(m4['recall'])} & Metal {signed(m3['diff'])} points ({signed(m3['ci95'][0])} to {signed(m3['ci95'][1])}), "
+            f"matte {signed(m4['diff'])} ({signed(m4['ci95'][0])} to {signed(m4['ci95'][1])})")
+    g60 = dc["stereo_vs_noise"]["60000"]
+    add("dots gap", f"C4 still sits {abs(g60['diff']) * 100:.1f} points below C2b ({abs(g60['ci95'][1]) * 100:.1f} to {abs(g60['ci95'][0]) * 100:.1f})")
+    add("dots limitation", f"from {f3(drec['C3dots30k'])} to {f3(drec['C3dots10k'])} and {f3(drec['C3dots60k'])}")
+    add("dots repeat pixels", f"it changed {dc['control_against_primary']['metal']['median_share_pixels_changed'] * 100:.2f}\\% of metal depth pixels")
+    a60 = J("hfov71/dots60000.json")["ir_appearance"]["metal"]
+    add("dots appearance", f"background {a60['back_dn_median']:.0f}\\,DN, local contrast {a60['back_local_sd_median']:.1f}\\,DN")
     # ICP repeat
     rep = J("hfov71/icp_repeat.json")
     ir = rep["conditions"]
