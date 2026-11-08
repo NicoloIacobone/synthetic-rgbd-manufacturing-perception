@@ -4,7 +4,7 @@
 # Changing a value here is a camera-model change: record it in docs/ASSUMPTIONS.md and docs/DIARY.md.
 
 projector:
-  fov_deg: [67.0, 41.0]        # H x V field of projection (A-36, S-01 Tables 3-11/3-48)
+  fov_deg: [67.0, 41.0]        # H x V field of projection (A-36, S-01 Rev 017 Tables 3-11/3-49)
   position_x_m: 0.0275         # in the left-imager frame, between the imagers: baseline midpoint (A-41)
   power_w: 1.0                 # Blender spot power; absolute scale is irrelevant, exposure.gain sets DN
 

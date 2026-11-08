@@ -191,11 +191,11 @@ Ricerca sull'intero testo estratto, senza distinguere maiuscole. **Limite:** il 
 **Focale. Risolto il 6 nov 2026 per decisione dell'utente: la corsa primaria usa 71° (A-66, PLAN §5.12); quella a 65° resta archiviata come sensibilità descrittiva.** Il motivo è il controllo qui sotto, non i risultati. Le formule di p. 88 e p. 90 usano il FOV del *sensore*, mentre prima avevamo ricavato fx dal FOV della *profondità*.
 - Con 71° su 1280 px si ottiene fx = 897,25 px, contro i 1004,6 px di prima (circa il 12% in più).
 - La camera reale del dataset ROBI, che **non** è il datasheet, ha fx = 905,9 px (`data/m5/robi/zigzag.json`), pari a un FOV di 70,5°: molto più vicina a 71° che a 65°.
-- Il segnale non è univoco. Min-Z 450 mm con 126 px di ricerca richiederebbe fx ≈ 1031 px, che è vicino al nostro valore; il valore 126 però viene da Carfagni, non dal datasheet.
+- Il segnale non è univoco. Min-Z 450 mm con 126 px di ricerca richiederebbe fx ≈ 1031 px, vicino al valore a 65° (1004,6 px), non al nostro (897,25 px); il valore 126 però viene da Carfagni e dalla guida Intel BKMs, non dal datasheet. La guida BKMs calcola con "HFOV=65deg" e dà Min-Z ≈ 43,8 cm a 1280×720, cioè f·B/126 con 65° (verificato nel PDF il 2026-11-08).
 - Il datasheet non si riconcilia da solo: la formula di p. 88 con 71° dà 69,9° a 2 m, non 65°.
 - **Effetto:** a 0,9 m, 5 mm valgono ora 0,305 px da noi (0,34 px a 65°) e 0,308 px con la camera ROBI.
 - **Risultato misurato a 71°, 460 viste-istanza:** C1 0,717, C2a 0,735, C2b 0,561, C3 0,070, C4 0,343 (a 65°: 0,732, 0,749, 0,590, 0,085, 0,386). La classifica non cambia e la sequenza fissa rigetta tre volte.
-- **Conseguenza nota:** Min-Z con 126 px di ricerca passa a 392 mm contro i 450 mm del datasheet. Il valore 126 viene da Carfagni e non è stato toccato.
+- **Conseguenza nota:** Min-Z con 126 px di ricerca passa a 392 mm contro i 450 mm del datasheet. Il valore 126 viene da Carfagni e dalla guida Intel BKMs e non è stato toccato.
 
 **Luce ambiente.** Un filtro "None" o "All pass" significa che la luce visibile arriva ai sensori IR, e p. 81 aggiunge uno stream a colori dal sensore sinistro.
 - Questa è una mia deduzione, ma indebolisce la motivazione "cella al chiuso, quindi niente ambiente": anche al chiuso le lampade contribuiscono all'immagine.

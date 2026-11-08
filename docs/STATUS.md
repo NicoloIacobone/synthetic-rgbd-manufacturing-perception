@@ -2,7 +2,7 @@
 
 Handoff note between sessions. **Read first**, then CLAUDE.md's other context files (task_description, PLAN, ASSUMPTIONS). Keep it short; overwrite outdated content (history is in DIARY.md and git).
 
-- **Updated:** 2026-11-07 (Saturday), after applying the review's report corrections and running the dot-density test.
+- **Updated:** 2026-11-08 (Sunday), after the full-text source check against `docs/references/` and the citation fixes it led to.
 - **Phase:** **final run at 71° done, steps 0–11 of the user's prompt of 2026-11-06 complete.** It is the primary result (A-66, PLAN §5.12); M1–M5 at 65° are the archived run. **Report: first draft in `report/report.pdf` (2026-11-07, at the user's request), written by the agent; the user verifies it.**
 - **Protocol:** tag `protocol-v1`; 7 rows in PLAN §5.12. Primary endpoint and fixed sequence unchanged. **Disclosed: the earlier test results had been seen.** 65° is a descriptive sensitivity.
 - **Dates:** code freeze Sat 7 Nov 20:00, submission Sun 8 Nov 23:59 CET, both triggered by the user. Mail to jpetrik@ethz.ch: the user sends it.
@@ -12,6 +12,12 @@ Handoff note between sessions. **Read first**, then CLAUDE.md's other context fi
 
 ## Report, first draft
 `report/report.pdf`, 8 pages (contents list on page 1; "The first six months" is now Section 11, AI-use note Section 12; page 8 holds only the end of the references), source `report/report.tex`. Written by the agent; **the user verifies it.** To confirm: author name, the AI-note sentence "checked the results and this text", other AI tools used if any, the repository link (private today). Check: `.venv/bin/python report/check_numbers.py`. Two checks added while writing: ICP repeat (no view crosses 5 mm, A-72), error structure (direction does not matter, size and layout do, A-73).
+
+## Source check against the PDFs, 2026-11-08
+Every cited claim checked against `docs/references/` (results in `docs/SOURCES.md`, paragraph "Full-text check of 2026-11-08"). **Fixes applied at the user's request, citations and wording only; no number or result changed** (report still 8 pages, `check_numbers` 94 of 94; list in DIARY 2026-11-08):
+- Report: Zhang et al. "replicas" corrected in Related work and Reflection; 126 px cited to [13, 22]; "1.62 mm … with my f"; ROBI's 0.8 mm camera-pose residual named; Intel's guide computing with 65° added to the focal-length item; XYZ-IBD "on metal parts in cluttered bins"; references [3] full title, [10] v3 2026, [22] now the BKMs PDF Rev 2.0.
+- Docs: datasheet summary §10, A-16, A-25, A-36, the projector comment in `configs/camera_d415_ir.yaml`, SOURCES S-03 and S-16.
+- **Still missing from the folder:** the CGF paper and GGX supplement for [18] (the file there is a different workshop paper); Carfagni [13]. Both were re-read online; the values match.
 
 ## After the review of 2026-11-07
 **Applied at the user's request:** all wording corrections in the report (still 7 pages, `check_numbers` 87 of 87); the uint16 depth wrap documented in the README and under "What did not work", not fixed (A-75); results figure panel (c) with its own colours. Primary numbers unchanged.
