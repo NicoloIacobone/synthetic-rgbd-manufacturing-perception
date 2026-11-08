@@ -24,6 +24,7 @@ renders/
 *.hdf5
 *.exr
 *.npz
+docs/references
 
 # Vendor datasheet, kept locally only (cited in docs/D415_DATASHEET_SUMMARY.md)
 docs/Intel-RealSense-D400-Series-Datasheet-September-2023.pdf

@@ -460,3 +460,40 @@ At the user's request, at commit c5d41d9, clean tree. Nothing changed in report,
 **Report.** All wording corrections applied in a temporary worktree, so that the run kept a clean tree, then fast-forwarded to main (f12749d, 49378a1). 7 pages, 0 overfull, fonts embedded. check_numbers 87 of 87 (72 before). 112 tests pass. QUICK_RUN_PASS in 87 s after the merge, in the main checkout. Panel (c) of the results figure has its own colours. Primary numbers unchanged. "Untested" dot density removed from the text once the test existed: the report now says only that the density is assumed, until the user decides. Nothing pushed.
 
 **Correction to the entry above:** "I expected metal to suffer most" was written after the result; no such prediction was recorded before the run. What stands is the observation: at 10 000 dots matte lost 10 points of correct part pixels and metal 3. "Metal was already limited by something other than dot count" is an inference, not tested.
+
+## 2026-11-07 evening: control and 60 000-dot runs, report updated
+
+User decisions after the 10 000-dot result: put the test in the report, run both extra renders, accept the quick-run proposal.
+
+Reading fixed in A-76 at commit 4c4e2f1, before the run. Master seed 0, dot seed 415, seeds 0-9, 98 instance-views, sanity 98/98 on both runs, ICP at 10 mm / 10°, no Task B. Clean tree (`dirty_tree_any` false); evaluation at 17aa688.
+
+**Control at 30 000 dots:** C3 0.102, C4 0.265, identical to the primary on these seeds, 0 views up, 0 down. Zero discordant views looked too good, so I checked that the files were really new before trusting it: none of the 40 image pairs equals the primary, depth changes on a median 0.14% of pixels (metal) and 0.13% (matte), at most 0.001% of valid pixels by more than 5 mm; ICP moves 11 and 6 views by more than 0.01 mm, the largest 17.8 mm, none across 5 mm. So the control is real. The 79.4% flip of A-59 (1 of 10 dev views) did not recur in these 20 views.
+
+**Density against the control:** 10 000 dots metal 0.041, -6.1 points (-11.5 to -1.0), p 0.070; matte 0.184, -8.2 (-20.8 to +4.5), p 0.115. 60 000 dots metal 0.031, -7.1 (-12.0 to -2.9), p 0.039; matte 0.235, -3.1 (-9.8 to +4.3), p 0.607. C4 - C2b at 60 000: -24.5 (-34.3 to -16.0), reading "holds". Order held at all densities.
+
+**Surprise:** metal falls in both directions. I saw only after the result that changing the count moves every dot, because the spacing rule depends on the count, so density is mixed with layout and the control cannot separate them. Recorded in A-76 as a limit found after the run, and stated in the report. A run at 30 000 with another dot seed would test it; proposed, not run.
+
+**Report:** three rows in the table, Limitations, one sentence on the stereo gap, one on render repeat. 7 pages, 94 of 94 claims, 0 overfull, 116 tests. The first version spilled one reference onto page 8; shortening the table rows fixed it.
+
+**Failures on the way, all mine:**
+- 19:33: Blender trapped in macOS malloc (`_xzm_reclaim_force_sync`, SIGTRAP) on exit from scene 4 of the control, 1.5 min after I started a 3 GB Colima VM next to it; free memory had dropped to 13%. Scene files intact (meta.json written before exit, all npz load). The exit code stopped the run. Added a resume rule to `scripts/run_dots_test.sh` (17aa688); scenes 5-9 rendered at that commit.
+- 19:40-19:49: `colima stop` then `start` on the vz profile hung for 8 min waiting for SSH (Colima 0.5.6). Deleted the profile; a new one starts fine.
+- 20:00: a wait loop ended on its own time limit and I started the VM while Blender was on scene 7, the thing I had just said I would not do. Found it in the same output, removed the VM within 2 min, no crash, scene 9 finished. Later the same loop stopped early because `run_eval.py` also prints `ALL_DONE`; nothing depended on it. The next start was gated on the actual end-of-render line.
+
+## 2026-11-08 — Report: contents list and six-month plan as its own section
+At the user's request: added a compact three-column contents list after the summary (tocloft, section level only) and turned "The first six months" from a paragraph inside the Reflection into Section 11; the AI-use note is now Section 12. The PDF grew from 7 to 8 pages (page 8 holds only the tail of the references), still within the 8-page limit. No numbers changed.
+
+## 2026-11-08 — Source check against the downloaded PDFs
+The user downloaded the cited works to `docs/references/` (22 PDFs, git-ignored) and asked for a double check of the report and the repo docs. Text extracted with `pdftotext`; datasheet split page by page (printed page = PDF page). Report at commit 7cf56a8 plus the uncommitted tree; `report/check_numbers.py`: 94 of 94 claims found, 24 references cited.
+- Confirmed: all datasheet pages cited (43, 45, 71, 81, 84, 90–93), Dex-Net 2.0/3.0 (quote exact), Landau, DepthSynth, DREDS (19/49 = 38.78%, 25/26 = 96.15%), T-LESS, ROBI, XYZ-IBD, BOP 2020/2022 (82.7 ARC), BlenderProc2, projector and subpixel white papers, Keselman eq. 1–2, Hirschmüller (TPAMI 30(2) now confirmed), ICP, Tobin. Rakić recomputed from its Table 2: n = 2.531, k = 8.013, R = 0.8679 at 848 nm.
+- Derived numbers recomputed: fx 897.25 px, 1.621 mm at 1 m (0.08 px), ε_d 0.2339 px, Min-Z 391.7 mm, 5 mm = 0.3046 px at 0.9 m, lit fraction 0.8647, 3.765% of lit pixels hold a dot.
+- Surprise 1: the report calls Zhang et al.'s 3D-printed objects "replicas" of the real ones; the paper has two separate sets (9 printed, 8 real-life). Wording error written by the agent.
+- Surprise 2: Intel's own white papers (projectors, subpixel, BKMs) use HFOV 65° for the D415, and BKMs gives MinZ = f·B/126 ≈ 43.8 cm, i.e. f ≈ 1005 px. Carfagni's Table 2 quotes 69.4°. ROBI's real camera (905.9 px) still points to ~70.5°.
+- Surprise 3: `An_adaptive_BRDF_fitting_metric.pdf` is a different paper (MAM 2020 workshop). The GGX supplement was re-read online: aluminium α 0.0044 / 0.0218 / 0.0201 / 0.0164, matching. Carfagni, missing from the folder, read from the university repository: 4.74 mm at 1 m, Eq. 3 with 126, matching.
+- ROBI §III-B gives a 0.8 mm camera-pose residual for RealSense data, relevant to the report's "no figure for ROBI's annotation error".
+Only SOURCES.md, STATUS.md and this diary changed; report, ASSUMPTIONS and configs untouched; nothing committed.
+
+## 2026-11-08 — Citation fixes after the source check (user's request: necessary, non-invasive, no result changes)
+- report.tex: Zhang et al. "replicas" → specular, translucent and transparent real objects vs matte 3D-printed ones (Related work, Reflection); 126 px cited to [13, 22]; plane check "with ε_d = 0.08 px and my f gives 1.62 mm" (Intel's curve is drawn at 65°); ROBI sentence now says it states no annotation error, only a 0.8 mm mean residual on its RealSense camera poses; focal-length item adds "Intel's tuning guide computes with 65° [22]"; XYZ-IBD "on metal parts in cluttered bins"; refs: [3] full Dex-Net 3.0 title, [10] arXiv:2506.00599v3, 2026, [22] now the BKMs white paper Rev 2.0 (the PDF checked) instead of the web page.
+- Build: latexmk, 8 pages, no warnings; first try left "2026." alone at the top of page 8, fixed by shortening [10]; page 8 now starts at [11]; pages 1–6 break as before. check_numbers: 94 of 94, 24 references all cited.
+- Docs: D415_DATASHEET_SUMMARY §10 (stale "vicino al nostro valore"; 126 also from BKMs, which gives MinZ ≈ 43.8 cm at 65°), ASSUMPTIONS A-16, A-25 (126 also from BKMs), A-36 (Rev 017 table numbers), configs/camera_d415_ir.yaml comment only (Rev 017 Table 3-49; no value changed; configs are not hashed by MANIFEST or quick_run), SOURCES S-03 (BKMs now cited), S-16 (cos-L2 diffuse 0.095–0.099), S-26 ✅. AI_USE_LOG row A-15.
