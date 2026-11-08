@@ -40,6 +40,12 @@ def sci(p):
     return rf"{m}\times10^{{{int(e)}}}"
 
 
+def load_search():
+    """Stereo search range in px (configs/default.yaml, camera.disparity_search_px)."""
+    import yaml
+    return yaml.safe_load((REPO / "configs" / "default.yaml").read_text())["camera"]["disparity_search_px"]
+
+
 def main():
     tex_path = Path(sys.argv[1]) if len(sys.argv) > 1 else REPO / "report" / "report.tex"
     tex = tex_path.read_text()
@@ -66,8 +72,14 @@ def main():
         add(f"table row {c}", row)
     # Fixed sequence
     for f in s["fixed_sequence"]:
-        add(f"seq {f['a']}-{f['b']}", f"{signed(f['diff'])} ({plain(f['ci95'][0])} to {plain(f['ci95'][1])}), $p={sci(f['p'])}$")
-        assert f["test_rejects"]
+        add(f"seq {f['a']}-{f['b']}", f"{signed(f['diff'])} ({plain(f['ci95'][0])} to {plain(f['ci95'][1])})")
+        assert f["test_rejects"] and f["p"] < 1e-29  # printed as "McNemar $p<10^{-29}$ in all three"
+    add("McNemar bound", "McNemar $p<10^{-29}$ in all three, unadjusted for clustering")
+    fs = {(f["a"], f["b"]): f for f in s["fixed_sequence"]}
+    c2b_c4 = s["A1_recall_5mm"]["C2b"]["all"]["recall"] - s["A1_recall_5mm"]["C4"]["all"]["recall"]
+    assert abs(fs[("C2b", "C3")]["diff"] - (c2b_c4 - fs[("C3", "C4")]["diff"])) < 1e-9
+    add("decomposition", f"So of the {fs[('C2b', 'C3')]['diff'] * 100:.1f} points between C2b and C3, {c2b_c4 * 100:.1f} appear on matte parts too and {-fs[('C3', 'C4')]['diff'] * 100:.1f} are specific to metal")
+    add("decomposition summary", f"of the {fs[('C2b', 'C3')]['diff'] * 100:.0f} points between that noise and the model on metal, {-fs[('C3', 'C4')]['diff'] * 100:.0f} are specific to metal")
     add("MDE", ", ".join(f"{f['mde_scenes'] * 100:.1f}" for f in s["fixed_sequence"]) + " points")
     add("unit", f"{s['unit']['instance_views']} instance-views ({s['unit']['profile']} profiles, {s['unit']['bracket']} brackets)")
     assert s["unit"]["excluded_visib_lt_0.1"] == 0 and not s["dirty_tree_any"] and s["commits"] == [s["commits"][0]] and s["commits"][0].startswith("7eca5f0")
@@ -78,7 +90,6 @@ def main():
     # Detectable effect implied by each interval: 2.8 standard errors, with the half-width at 1.96
     implied = [2.8 * (f["ci95"][1] - f["ci95"][0]) / 2 / 1.96 * 100 for f in s["fixed_sequence"]]
     assert 7 <= min(implied) and max(implied) <= 10, implied
-    add("detectable from intervals", "about 7--10 points are detectable at 80\\% power")
     add("detectable in limitations", "Detectable effects are about 7--10 points on 50 scenes")
     assert all(abs(f["diff"]) > f["mde_scenes"] for f in s["fixed_sequence"])
     # Sensor
@@ -112,10 +123,11 @@ def main():
     add("distance C3 C4", f"C3 falls from {f3(dist['C3'][0]['recall'])} to {f3(dist['C3'][2]['recall'])} and C4 from {f3(dist['C4'][0]['recall'])} to {f3(dist['C4'][2]['recall'])}")
     add("distance C1", f"C1 rises from {f3(dist['C1'][0]['recall'])} to {f3(dist['C1'][2]['recall'])}")
     # Suction
-    b = {c: s["B_success"][c] for c in ("C1", "C3")}
+    b = {c: s["B_success"][c] for c in ("C1", "C2a", "C2b", "C3", "C4")}
     add("suction C3", f"C3 plans a grasp on {b['C3']['bracket']['has_grasp'] * 100:.1f}\\% of views and {b['C3']['bracket']['success'] / b['C3']['bracket']['has_grasp'] * 100:.1f}\\% of those succeed")
     add("suction C1", f"against {b['C1']['bracket']['has_grasp'] * 100:.1f}\\% and {b['C1']['bracket']['success'] / b['C1']['bracket']['has_grasp'] * 100:.1f}\\% for C1")
-    add("suction profiles", f"{b['C1']['profile']['has_grasp'] * 100:.1f}\\% of profile views in C1 and on {b['C3']['profile']['has_grasp'] * 100:.1f}\\% in C3")
+    add("suction profiles", f"{b['C1']['profile']['has_grasp'] * 100:.1f}\\% of profile views in C1, {b['C2a']['profile']['has_grasp'] * 100:.1f}\\% in C2a, "
+        f"{b['C2b']['profile']['has_grasp'] * 100:.1f}\\% in C2b, {b['C4']['profile']['has_grasp'] * 100:.1f}\\% in C4 and {b['C3']['profile']['has_grasp'] * 100:.1f}\\% in C3")
     assert all(s["B_success"][c]["profile"]["success"] == 0 for c in s["B_success"])
     # Suction intervals on brackets
     bk = {c: s["B_success"][c]["bracket"] for c in ("C1", "C2a", "C2b", "C3", "C4")}
@@ -127,6 +139,7 @@ def main():
     br = J("hfov71/brightness_match.json")
     add("brightness dev", f"({br['dev']['c4_dn_mean']:.1f}\\,DN each)")
     assert f1(br["dev"]["c4_dn_mean"]) == f1(br["dev"]["c3_dn_mean"])
+    add("brightness metal brighter", f"metal is, if anything, brighter ({br['test']['c3_dn_mean']:.1f} against {br['test']['c4_dn_mean']:.1f}\\,DN)")
     add("brightness test", f"{br['test']['c4_dn_mean']:.1f}\\,DN against {br['test']['c3_dn_mean']:.1f}\\,DN on average, with a per-view ratio from {br['test']['ratio_per_view']['min']:.2f} to {br['test']['ratio_per_view']['max']:.2f}")
     # Depth overflow
     w = J("hfov71/depth_wrap.json")
@@ -174,6 +187,10 @@ def main():
     add("ROBI appearance", f"{robi['ir_appearance_mean_over_views']['obj_dn_median']:.0f}\\,DN median and {robi['ir_appearance_mean_over_views']['obj_local_sd_median']:.1f}\\,DN local contrast on real parts, against {app['metal']['obj_dn_median']:.0f}\\,DN and {app['metal']['obj_local_sd_median']:.1f}\\,DN")
     add("range", f"({J('hfov71/distance.json')['part_centre_z_m'][0]:.2f}--{J('hfov71/distance.json')['part_centre_z_m'][1]:.2f}\\,m)")
     add("ROBI views", f"{robi['n_views']} ROBI Zigzag views")
+    sh, fb = robi["camera"]["disparity_shift"], robi["camera"]["fx"] * robi["camera"]["baseline"]
+    hi = sh + load_search()
+    add("ROBI shift", f"disparity shift of {sh}\\,px, so both the D4 chip and my SGBM, run on the same pairs, search {sh}--{hi}\\,px (about {fb / hi / 1000:.2f}--{fb / sh / 1000:.2f}\\,m)")
+    assert fb / robi["z_gt_mm_quantiles"]["5"] <= hi and fb / robi["z_gt_mm_quantiles"]["95"] >= sh  # the parts lie inside the search
     ra, am, at = robi["ir_appearance_mean_over_views"], app["metal"], app["matte"]
     add("background", f"{ra['back_dn_median']:.0f}\\,DN and {ra['back_local_sd_median']:.1f}\\,DN on ROBI, against {am['back_dn_median']:.0f}\\,DN and {am['back_local_sd_median']:.1f}\\,DN here")
     add("matte parts", f"({at['obj_dn_median']:.0f}\\,DN, {at['obj_local_sd_median']:.1f}\\,DN)")
@@ -186,6 +203,7 @@ def main():
     rows = [r for r in rows if 0.5 <= r["z_m"] <= 1.0]
     add("plane bias", f"within {max(r['bias_rel'] for r in rows) * 100:.2f}\\% of $z$")
     add("plane RMS", f"{min(r['planefit_rms_mm'] for r in rows):.2f}--{max(r['planefit_rms_mm'] for r in rows):.2f}\\,mm")
+    add("C2b above plane", f"noisier than my model on the simulated plane (at most {max(r['planefit_rms_mm'] for r in rows):.2f}\\,mm)")
     add("plane median", f"measured: {anchor['summary']['median_subpixel_rms_px']:.4f}\\,px")
     assert all(r["valid_frac_roi"] == 1.0 for r in rows)
     add("plane band", f"within {max(abs(r['band_measured_px'] - r['band_expected_px']) for r in rows):.1f}\\,px of $B f/z$")

@@ -272,6 +272,7 @@ Fonte: `docs/ASSUMPTIONS.md`, che contiene dettagli, stato e misure.
 | `A-74` | Prova sulla densità dei punti, solo descrittiva: 10 000 punti invece di 30 000, scene 0–9, lettura fissata prima della corsa |
 | `A-76` | Controllo a 30 000 punti e pattern a 60 000 punti per la prova sulla densità, scene 0–9, lettura fissata prima della corsa |
 | `A-77` | Quick run fuori da macOS arm64: confronta le conclusioni con una tolleranza fissata prima della prima prova su Linux; su macOS arm64 resta il confronto esatto dei pixel. Dockerfile incluso |
+| `A-78` | Formulazioni del report dopo la review simulata del professore (8 nov): luce ambiente visibile e IR (imager senza filtro, cella buia), grasp falsi sui profili con qualsiasi rumore (proprietà del planner), scomposizione 21,7 + 27,4 punti, shift ROBI di 78 px. Nessun numero cambiato |
 | `A-75` | Overflow della profondità in uint16 oltre 6,55 m: 0,09% dei pixel dell'immagine, nessun pixel di parte in C3 e C4. Documentato, non corretto |
 
 ## 10. Rischi `R1`…`R7`

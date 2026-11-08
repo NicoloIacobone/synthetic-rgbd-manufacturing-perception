@@ -2,7 +2,7 @@
 
 Handoff note between sessions. **Read first**, then CLAUDE.md's other context files (task_description, PLAN, ASSUMPTIONS). Keep it short; overwrite outdated content (history is in DIARY.md and git).
 
-- **Updated:** 2026-11-08 (Sunday), after the full-text source check against `docs/references/` and the citation fixes it led to.
+- **Updated:** 2026-11-08 (Sunday) evening, after revising the report on a simulated expert review (A-78).
 - **Phase:** **final run at 71° done, steps 0–11 of the user's prompt of 2026-11-06 complete.** It is the primary result (A-66, PLAN §5.12); M1–M5 at 65° are the archived run. **Report: first draft in `report/report.pdf` (2026-11-07, at the user's request), written by the agent; the user verifies it.**
 - **Protocol:** tag `protocol-v1`; 7 rows in PLAN §5.12. Primary endpoint and fixed sequence unchanged. **Disclosed: the earlier test results had been seen.** 65° is a descriptive sensitivity.
 - **Dates:** code freeze Sat 7 Nov 20:00, submission Sun 8 Nov 23:59 CET, both triggered by the user. Mail to jpetrik@ethz.ch: the user sends it.
@@ -12,6 +12,10 @@ Handoff note between sessions. **Read first**, then CLAUDE.md's other context fi
 
 ## Report, first draft
 `report/report.pdf`, 8 pages (contents list on page 1; "The first six months" is now Section 11, AI-use note Section 12; page 8 holds only the end of the references), source `report/report.tex`. Written by the agent; **the user verifies it.** To confirm: author name, the AI-note sentence "checked the results and this text", other AI tools used if any, the repository link (private today). Check: `.venv/bin/python report/check_numbers.py`. Two checks added while writing: ICP repeat (no view crosses 5 mm, A-72), error structure (direction does not matter, size and layout do, A-73).
+
+## Report revised after the simulated review, 2026-11-08 evening
+The user had a separate AI session review the PDF as a sceptical ETH professor and approved a plan of wording-only edits. **No number, setting or result changed**; 8 pages; `check_numbers` 99 of 99; no overfull boxes. Applied: Summary scoped (independent per-pixel noise, 27 of 49 points metal-specific, ROBI 21% vs 2.3%); ambient light as visible + IR on unfiltered imagers (Table 1, Results, Limitations, plan); McNemar two-sided and unadjusted for clustering, p < 1e-29; decomposition 21.7 + 27.4; suction false grasps on profiles in every non-ideal condition (planner property); ROBI 78 px shift; roughness convention stated; "Even the kind of failure is uncertain" in the Reflection; E2/E3 as month-1 tests; AI note lists the user's decisions and the AI review. Sections 10–11 are 0.87 page but cross the page 7–8 break: a footnote says so. **Rejected with the data:** a roughness-convention error (none) and the 93.9% false grasps as a metal headline (A-78, AI_USE_LOG section B).
+**Unfinished from an earlier session, not committed:** `README.md` holds a `@@TESTED@@` placeholder in the quick-run section and `docs/ASSUMPTIONS.md` an `@@A77@@` status cell (Linux quick-run result). Both must be filled or reverted before the repository goes public.
 
 ## Source check against the PDFs, 2026-11-08
 Every cited claim checked against `docs/references/` (results in `docs/SOURCES.md`, paragraph "Full-text check of 2026-11-08"). **Fixes applied at the user's request, citations and wording only; no number or result changed** (report still 8 pages, `check_numbers` 94 of 94; list in DIARY 2026-11-08):
