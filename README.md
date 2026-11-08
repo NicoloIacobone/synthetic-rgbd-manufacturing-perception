@@ -11,31 +11,35 @@ The report explains the method and the results. This file covers how to run the 
 Requires Python 3.11. Blender is not needed unless you want to render new scenes.
 
 ```bash
-git clone <this repository>
+git clone https://github.com/NicoloIacobone/synthetic-rgbd-manufacturing-perception.git
 cd synthetic-rgbd-manufacturing-perception
 scripts/setup.sh
 ```
 
-`scripts/setup.sh` checks for Python 3.11, creates `.venv` from `requirements.lock.txt` and runs the tests. It takes about 1.5 minutes (50 s to install without pip's cache, 45 s of tests), and `.venv` takes 720 MB.
+`scripts/setup.sh` checks for Python 3.11, creates `.venv` from `requirements.lock.txt` and runs the tests. In four installs from a clean clone on the machine below it took 69–102 s, tests included, and `.venv` takes 720 MB.
+
+Use `git clone`, not GitHub's "Download ZIP": the scripts record the commit of every result with `git rev-parse` and stop without a `.git` folder. The quick run needs Python 3.11.4 or later, for the extraction filter of `tarfile`.
 
 **The full pipeline is tested only on macOS with Apple Silicon (Apple M2, 8 GB RAM, macOS 27.2). On Linux only the quick run is tested, in the container below; `scripts/setup.sh` on Linux is untested.**
 
 ## Quick run
 
-One sample scene, no Blender, about 2 minutes. It computes depth from the stored infrared images, runs pose and suction evaluation at the primary offset, compares with the committed numbers for that scene, and prints `QUICK_RUN_PASS` or `QUICK_RUN_FAIL`.
+One sample scene, no Blender, 2–4 minutes (measured times below). It computes depth from the stored infrared images, runs pose and suction evaluation at the primary offset, compares with the committed numbers for that scene, and prints `QUICK_RUN_PASS` or `QUICK_RUN_FAIL`.
 
 ```bash
-.venv/bin/python scripts/quick_run.py --sample <path to sample_scene_seed0.tar.gz>
+.venv/bin/python scripts/quick_run.py
 ```
 
-On Linux, or without Python 3.11, use the container, from a `git clone` because the image records the commit. The image takes about 1.3 GB on ARM and more on x86.
+The sample scene (6.5 MB, seed 0, chosen without looking at outcomes) is not in git. The script downloads it from the release [`submission-2026-11-08`](https://github.com/NicoloIacobone/synthetic-rgbd-manufacturing-perception/releases/tag/submission-2026-11-08) (`SAMPLE_SCENE_URL` at the top of `scripts/quick_run.py`) and checks its SHA-256 before opening it. A local copy is used instead if it is at `dist/sample_scene_seed0.tar.gz` or passed with `--sample <path>`. With the full dataset you can rebuild it with `scripts/make_sample_archive.py`. Scene 0 holds only profiles (12 instance-views), so the suction check compares failures, not successes.
+
+On Linux, or without Python 3.11, use the container, from a `git clone` because the image records the commit. The image takes about 1.3 GB on ARM.
 
 ```bash
 docker build -t synthrgbd-quick .
-docker run --rm -v "$PWD/dist:/app/dist:ro" synthrgbd-quick
+docker run --rm synthrgbd-quick
 ```
 
-**The sample scene is not published yet.** The archive (6.5 MB, seed 0, chosen without looking at outcomes) is not in git. Once it has a public address, that address goes into `SAMPLE_SCENE_URL` at the top of `scripts/quick_run.py`, and both `--sample` and the `-v` mount can be left out. With the full dataset you can rebuild it with `scripts/make_sample_archive.py`.
+The container downloads the sample scene too. To use a local copy, put it in `dist/` and add `-v "$PWD/dist:/app/dist:ro"` to `docker run`.
 
 On macOS arm64, where the expected numbers were computed, stereo depth must match pixel for pixel and suction outcomes exactly. ICP is compared more loosely, on the median difference and on at most one instance-view changing side of 5 mm, because it is not strictly repeatable on identical depth (see Known limits).
 
@@ -103,7 +107,7 @@ Measured on the machine above, one process at a time:
 | **`run_final.sh`, everything above from the test render** | **9 h 38** |
 | Figures | 1 min |
 
-The test set takes 1.4 GB. The values that depend on image formation were derived on the dev scenes before the test render, with `scripts/derive_dev_exposure.sh`, `scripts/rgb_sweep.sh` and `scripts/ambient_level.py`; they are fixed in `configs/camera_d415_ir.yaml`, so you do not need to run these to reproduce the experiment.
+The test set takes 1.4 GB after `run_final.sh`, 1.6 GB with the later descriptive checks. The values that depend on image formation were derived on the dev scenes before the test render, with `scripts/derive_dev_exposure.sh`, `scripts/rgb_sweep.sh` and `scripts/ambient_level.py`; they are fixed in `configs/camera_d415_ir.yaml`, so you do not need to run these to reproduce the experiment.
 
 **Renders are not bit-reproducible** (see Known limits), so a new render gives a statistically similar dataset, not the same numbers. The committed numbers come from the dataset rendered at the commit in `results/MANIFEST.json`.
 
@@ -127,7 +131,8 @@ All randomness derives from `(master, scene, view, stream)` through `numpy.rando
 | `scripts/run_m5.sh`, `run_m5_followup.sh`, `run_final.sh`, `check_stop.py` | Experiment, descriptive follow-ups, orchestrator, stop rules |
 | `scripts/mechanism_check.py`, `robi_compare.py`, `ir_appearance.py`, `ambient_level.py`, `ambient_summary.py`, `redraw_summary.py`, `icp_repeat_summary.py`, `dots_compare.py`, `error_structure_depth.py`, `error_structure_summary.py`, `run_dots_test.sh`, `dots_summary.py`, `brightness_match.py`, `depth_wrap_count.py` | Diagnostics and descriptive comparisons |
 | `scripts/fig_*.py`, `make_figures.sh` | Figures |
-| `scripts/setup.sh`, `quick_run.py`, `make_sample_archive.py`, `collect_results.py`, `Dockerfile` | Install, quick run, sample scene, tracked results, container for the quick run |
+| `scripts/setup.sh`, `quick_run.py`, `make_sample_archive.py`, `collect_results.py` | Install, quick run, sample scene, tracked results |
+| `Dockerfile` | Container for the quick run |
 | `report/` | The report: LaTeX source, PDF, and `check_numbers.py`, which checks the printed numbers against `results/` |
 | `docs/` | Plan and frozen protocol, assumptions register, sources, working diary, AI-use log |
 

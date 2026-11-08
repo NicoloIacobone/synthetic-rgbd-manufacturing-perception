@@ -36,8 +36,8 @@ sys.path.insert(0, str(REPO / "src"))
 from synthrgbd.conditions import DEPTH_DIRS  # noqa: E402
 from synthrgbd.stats import depth_summary  # noqa: E402
 
-# >>> The one place for the sample's address. Empty until the owner publishes the archive. <<<
-SAMPLE_SCENE_URL = ""
+# >>> The one place for the sample's address: an asset of the GitHub release submission-2026-11-08. <<<
+SAMPLE_SCENE_URL = "https://github.com/NicoloIacobone/synthetic-rgbd-manufacturing-perception/releases/download/submission-2026-11-08/sample_scene_seed0.tar.gz"
 
 LOCAL_SAMPLE = REPO / "dist" / "sample_scene_seed0.tar.gz"
 EXPECTED = REPO / "results" / "quick_run_expected_seed0.json"
