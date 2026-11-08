@@ -32,20 +32,20 @@ One sample scene, no Blender, 2–4 minutes (measured times below). It computes 
 
 The sample scene (6.5 MB, seed 0, chosen without looking at outcomes) is not in git. The script downloads it from the release [`submission-2026-11-08`](https://github.com/NicoloIacobone/synthetic-rgbd-manufacturing-perception/releases/tag/submission-2026-11-08) (`SAMPLE_SCENE_URL` at the top of `scripts/quick_run.py`) and checks its SHA-256 before opening it. A local copy is used instead if it is at `dist/sample_scene_seed0.tar.gz` or passed with `--sample <path>`. With the full dataset you can rebuild it with `scripts/make_sample_archive.py`. Scene 0 holds only profiles (12 instance-views), so the suction check compares failures, not successes.
 
-On Linux, or without Python 3.11, use the container, from a `git clone` because the image records the commit. The image takes about 1.3 GB on ARM.
+On Linux, or without Python 3.11, use the container, from a `git clone` because the image records the commit.
 
 ```bash
 docker build -t synthrgbd-quick .
 docker run --rm synthrgbd-quick
 ```
 
-The container downloads the sample scene too. To use a local copy, put it in `dist/` and add `-v "$PWD/dist:/app/dist:ro"` to `docker run`.
+Without a mount the container downloads the sample scene like the script does. The tested way is a local copy: put the archive in `dist/` and add `-v "$PWD/dist:/app/dist:ro"` to `docker run`.
 
 On macOS arm64, where the expected numbers were computed, stereo depth must match pixel for pixel and suction outcomes exactly. ICP is compared more loosely, on the median difference and on at most one instance-view changing side of 5 mm, because it is not strictly repeatable on identical depth (see Known limits).
 
 Elsewhere OpenCV and Open3D can take other code paths, so identical pixels are not promised and the rule compares conclusions. For each condition: each view's share of valid depth pixels within 0.5 points and its 5th, 50th and 95th depth percentiles within 1 mm; recall and suction successes within one instance-view; median difference in MSSD at most 0.5 mm. It was fixed before the first Linux run (A-77 in `docs/ASSUMPTIONS.md`), and `--rule` forces either rule.
 
-**Where it was tested (2026-11-07, Apple M2):** macOS arm64 with the exact rule, pass in 146 s; Linux aarch64 in this container (Colima on the same Mac) with the tolerance rule, pass in 199 s, with stereo depth identical to the reference. **Linux x86-64 is untested:** under emulation without AVX2 the image builds and computes depth, but ICP did not finish.
+**Where it was tested (Apple M2):** macOS arm64 with the exact rule, pass in 146 s (2026-11-07), and again on 2026-11-08 from a fresh clone of this repository with the sample downloaded from the release, pass in 118 s; Linux aarch64 in this container (Colima on the same Mac, 2026-11-07, commit b53fd45) with the tolerance rule and the sample mounted, pass in 199 s, with stereo depth identical to the reference. Since then the Dockerfile has gained one library (`libusb-1.0-0`, added for x86); that version, and the download from inside the container, are untested. **Linux x86-64 is untested:** under emulation without AVX2 the image builds and computes depth, but ICP had not finished after 15 hours.
 
 ## Expected results
 
