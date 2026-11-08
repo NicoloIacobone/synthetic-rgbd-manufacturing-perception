@@ -119,14 +119,14 @@ def main():
     x = pair[("C4", "C4bright")]
     add("brighter matte", f"{signed(-x['diff'])} points ({plain(-x['ci95'][1])} to {signed(-x['ci95'][0])})")
     # Distance
-    add("distance n", f"below 0.7\\,m ({dist['C1'][0]['n']} views) to 0.9\\,m and beyond ({dist['C1'][2]['n']} views)")
+    add("distance n", f"below 0.7\\,m ({dist['C1'][0]['n']} instance-views) to 0.9\\,m and beyond ({dist['C1'][2]['n']} instance-views)")
     add("distance C3 C4", f"C3 falls from {f3(dist['C3'][0]['recall'])} to {f3(dist['C3'][2]['recall'])} and C4 from {f3(dist['C4'][0]['recall'])} to {f3(dist['C4'][2]['recall'])}")
     add("distance C1", f"C1 rises from {f3(dist['C1'][0]['recall'])} to {f3(dist['C1'][2]['recall'])}")
     # Suction
     b = {c: s["B_success"][c] for c in ("C1", "C2a", "C2b", "C3", "C4")}
-    add("suction C3", f"C3 plans a grasp on {b['C3']['bracket']['has_grasp'] * 100:.1f}\\% of views and {b['C3']['bracket']['success'] / b['C3']['bracket']['has_grasp'] * 100:.1f}\\% of those succeed")
+    add("suction C3", f"C3 plans a grasp on {b['C3']['bracket']['has_grasp'] * 100:.1f}\\% of them and {b['C3']['bracket']['success'] / b['C3']['bracket']['has_grasp'] * 100:.1f}\\% of those succeed")
     add("suction C1", f"against {b['C1']['bracket']['has_grasp'] * 100:.1f}\\% and {b['C1']['bracket']['success'] / b['C1']['bracket']['has_grasp'] * 100:.1f}\\% for C1")
-    add("suction profiles", f"{b['C1']['profile']['has_grasp'] * 100:.1f}\\% of profile views in C1, {b['C2a']['profile']['has_grasp'] * 100:.1f}\\% in C2a, "
+    add("suction profiles", f"{b['C1']['profile']['has_grasp'] * 100:.1f}\\% of profile instance-views in C1, {b['C2a']['profile']['has_grasp'] * 100:.1f}\\% in C2a, "
         f"{b['C2b']['profile']['has_grasp'] * 100:.1f}\\% in C2b, {b['C4']['profile']['has_grasp'] * 100:.1f}\\% in C4 and {b['C3']['profile']['has_grasp'] * 100:.1f}\\% in C3")
     assert all(s["B_success"][c]["profile"]["success"] == 0 for c in s["B_success"])
     # Suction intervals on brackets
@@ -134,7 +134,7 @@ def main():
     add("suction intervals", ", ".join(f"{c} {f3(bk[c]['success'])} ({f3(bk[c]['ci95'][0])}--{f3(bk[c]['ci95'][1])})" for c in ("C1", "C2a", "C2b", "C4", "C3")))
     pb = {(x["a"], x["b"]): x for x in s["B_pairs_bracket"]}[("C1", "C3")]
     add("suction C1-C3", f"{signed(pb['diff'])} points ({plain(pb['ci95'][0])} to {plain(pb['ci95'][1])})")
-    add("suction n", f"the {pb['n']} bracket views")
+    add("suction n", f"the {pb['n']} bracket instance-views")
     # Brightness match of matte and metal
     br = J("hfov71/brightness_match.json")
     add("brightness dev", f"({br['dev']['c4_dn_mean']:.1f}\\,DN each)")
@@ -212,7 +212,7 @@ def main():
     dc = J("hfov71/dots_compare.json")
     drec = dc["recall_5mm"]
     assert all(v["n_up"] + v["n_down"] == 0 for v in dc["repeat"].values()) and all(dc["order_held"].values()) and dc["reading"]["stereo_vs_noise"]["60000"] == "holds"
-    add("dots repeat row", f"Same 30\\,000 dots, rendered again & {f3(drec['C3dots30k'])} & {f3(drec['C4dots30k'])} & No view crosses 5\\,mm")
+    add("dots repeat row", f"Same 30\\,000 dots, rendered again & {f3(drec['C3dots30k'])} & {f3(drec['C4dots30k'])} & No instance-view crosses 5\\,mm")
     for n, k in ((10000, "10k"), (60000, "60k")):
         m3, m4 = dc["density"][str(n)]["C3"], dc["density"][str(n)]["C4"]
         add(f"dots {k} row", f"{n // 1000}\\,000 dots, new render & {f3(m3['recall'])} & {f3(m4['recall'])} & Metal {signed(m3['diff'])} points ({signed(m3['ci95'][0])} to {signed(m3['ci95'][1])}), "
@@ -226,9 +226,9 @@ def main():
     # ICP repeat
     rep = J("hfov71/icp_repeat.json")
     ir = rep["conditions"]
-    add("ICP repeat row", f"ICP run again on identical depth & {f3(ir['C3']['recall_repeat'])} & {f3(ir['C4']['recall_repeat'])} & No view crosses 5\\,mm in {sum(v['n'] for v in ir.values())} comparisons")
+    add("ICP repeat row", f"ICP run again on identical depth & {f3(ir['C3']['recall_repeat'])} & {f3(ir['C4']['recall_repeat'])} & No instance-view crosses 5\\,mm in {sum(v['n'] for v in ir.values())} comparisons")
     assert all(v["side_changes"] == 0 for v in ir.values()) and all(f["rejects"] for f in rep["fixed_sequence_repeat"]) and not rep["dirty_tree_any"]
-    add("ICP repeat moved", f"at most {max(v['moved_gt_0.01mm'] for v in ir.values())} of {ir['C3']['n']} views")
+    add("ICP repeat moved", f"at most {max(v['moved_gt_0.01mm'] for v in ir.values())} of {ir['C3']['n']} instance-views")
     add("ICP repeat largest", f"the largest by {max(v['max_abs_d_mssd_mm'] for v in ir.values()):.0f}\\,mm")
     # Error structure
     es = J("hfov71/error_structure.json")
@@ -241,7 +241,7 @@ def main():
     b2 = es["C3both_against_C3shuf"]
     add("both vs permuted", f"{signed(b2['diff'])} points, {plain(b2['ci95'][0])} to {signed(b2['ci95'][1])}")
     add("C1 on these seeds", f"from C1 ({f3(rc['C1'])} on these seeds)")
-    add("both vs C3 text", f"gives {f3(rc['C3both'])} against {f3(rc['C3'])} on the same scenes")
+    add("both vs C3 text", f"gives {f3(rc['C3both'])} against {f3(rc['C3'])} on the same ten scenes")
     add("C2b > 5 mm", f"{se['C3']['parts']['frac_gt_5mm'] * 100:.1f}\\% of valid pixels beyond 5\\,mm against {se['C2b']['parts']['frac_gt_5mm'] * 100:.1f}\\% in C2b")
 
     # Descriptive contrast and part-type discordance, from the per-view files
@@ -263,7 +263,7 @@ def main():
             sel = np.array([r["type"] == typ for r in A])
             a, b = good(A)[sel], good(B)[sel]
             up, down = int((b & ~a).sum()), int((a & ~b).sum())
-            add(f"C2a {typ}", f"{text} ({up} " + ("views gained" if typ == "profile" else "gained") + f", {down} " + f"lost, $p={binomtest(up, up + down, 0.5).pvalue:.3f}$)".replace("0.109", "0.11").replace("0.001", "0.001"))
+            add(f"C2a {typ}", f"{text} ({up} " + ("instance-views gained" if typ == "profile" else "gained") + f", {down} " + f"lost, $p={binomtest(up, up + down, 0.5).pvalue:.3f}$)".replace("0.109", "0.11").replace("0.001", "0.001"))
 
     # Citations: every reference used, none out of range
     import re

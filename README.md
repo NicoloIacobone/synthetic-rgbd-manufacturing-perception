@@ -18,7 +18,7 @@ scripts/setup.sh
 
 `scripts/setup.sh` checks for Python 3.11, creates `.venv` from `requirements.lock.txt` and runs the tests. It takes about 1.5 minutes (50 s to install without pip's cache, 45 s of tests), and `.venv` takes 720 MB.
 
-**Tested only on macOS with Apple Silicon (Apple M2, 8 GB RAM, macOS 27.2). Linux is untested.**
+**The full pipeline is tested only on macOS with Apple Silicon (Apple M2, 8 GB RAM, macOS 27.2). On Linux only the quick run is tested, in the container below; `scripts/setup.sh` on Linux is untested.**
 
 ## Quick run
 
@@ -28,9 +28,20 @@ One sample scene, no Blender, about 2 minutes. It computes depth from the stored
 .venv/bin/python scripts/quick_run.py --sample <path to sample_scene_seed0.tar.gz>
 ```
 
-**The sample scene is not published yet.** The archive (6.5 MB, seed 0, chosen without looking at outcomes) is not in git. Once it has a public address, that address goes into `SAMPLE_SCENE_URL` at the top of `scripts/quick_run.py`, and `--sample` can be left out. With the full dataset you can rebuild it with `scripts/make_sample_archive.py`.
+On Linux, or without Python 3.11, use the container, from a `git clone` because the image records the commit. The image takes about 1.3 GB on ARM and more on x86.
 
-Stereo depth must match the committed numbers pixel for pixel, and suction outcomes must match exactly. ICP is compared more loosely, on the median difference and on at most one instance-view changing side of 5 mm, because it is not strictly repeatable on identical depth (see Known limits).
+```bash
+docker build -t synthrgbd-quick .
+docker run --rm -v "$PWD/dist:/app/dist:ro" synthrgbd-quick
+```
+
+**The sample scene is not published yet.** The archive (6.5 MB, seed 0, chosen without looking at outcomes) is not in git. Once it has a public address, that address goes into `SAMPLE_SCENE_URL` at the top of `scripts/quick_run.py`, and both `--sample` and the `-v` mount can be left out. With the full dataset you can rebuild it with `scripts/make_sample_archive.py`.
+
+On macOS arm64, where the expected numbers were computed, stereo depth must match pixel for pixel and suction outcomes exactly. ICP is compared more loosely, on the median difference and on at most one instance-view changing side of 5 mm, because it is not strictly repeatable on identical depth (see Known limits).
+
+Elsewhere OpenCV and Open3D can take other code paths, so identical pixels are not promised and the rule compares conclusions. For each condition: each view's share of valid depth pixels within 0.5 points and its 5th, 50th and 95th depth percentiles within 1 mm; recall and suction successes within one instance-view; median difference in MSSD at most 0.5 mm. It was fixed before the first Linux run (A-77 in `docs/ASSUMPTIONS.md`), and `--rule` forces either rule.
+
+**Where it was tested (2026-11-07, Apple M2):** macOS arm64 with the exact rule, pass in 146 s; Linux aarch64 in this container (Colima on the same Mac) with the tolerance rule, pass in 199 s, with stereo depth identical to the reference. **Linux x86-64 is untested:** under emulation without AVX2 the image builds and computes depth, but ICP did not finish.
 
 ## Expected results
 
@@ -114,16 +125,16 @@ All randomness derives from `(master, scene, view, stream)` through `numpy.rando
 | `scripts/stats_m5.py`, `sensor_metrics.py`, `distance_table.py` | Statistics with the fixed sequence, sensor metrics, recall by distance |
 | `scripts/plane_gate.py`, `anchor_a.py` | Gate on the plane without and with noise |
 | `scripts/run_m5.sh`, `run_m5_followup.sh`, `run_final.sh`, `check_stop.py` | Experiment, descriptive follow-ups, orchestrator, stop rules |
-| `scripts/mechanism_check.py`, `robi_compare.py`, `ir_appearance.py`, `ambient_level.py`, `ambient_summary.py`, `redraw_summary.py`, `icp_repeat_summary.py`, `error_structure_depth.py`, `error_structure_summary.py`, `run_dots_test.sh`, `dots_summary.py`, `brightness_match.py`, `depth_wrap_count.py` | Diagnostics and descriptive comparisons |
+| `scripts/mechanism_check.py`, `robi_compare.py`, `ir_appearance.py`, `ambient_level.py`, `ambient_summary.py`, `redraw_summary.py`, `icp_repeat_summary.py`, `dots_compare.py`, `error_structure_depth.py`, `error_structure_summary.py`, `run_dots_test.sh`, `dots_summary.py`, `brightness_match.py`, `depth_wrap_count.py` | Diagnostics and descriptive comparisons |
 | `scripts/fig_*.py`, `make_figures.sh` | Figures |
-| `scripts/setup.sh`, `quick_run.py`, `make_sample_archive.py`, `collect_results.py` | Install, quick run, sample scene, tracked results |
+| `scripts/setup.sh`, `quick_run.py`, `make_sample_archive.py`, `collect_results.py`, `Dockerfile` | Install, quick run, sample scene, tracked results, container for the quick run |
 | `report/` | The report: LaTeX source, PDF, and `check_numbers.py`, which checks the printed numbers against `results/` |
 | `docs/` | Plan and frozen protocol, assumptions register, sources, working diary, AI-use log |
 
 ## Known limits
 
 - **Not a physical D415.** The matcher is OpenCV SGBM, not Intel's chip. The metal is a material model with an assumed roughness, and C3's level depends on it: 0.070 at roughness 0.15, 0.139 at 0.2, 0.276 at 0.4 (`results/hfov71/stats.json`).
-- **The dot density is assumed.** The D415's pattern is not published. The primary run uses 30 000 dots, 3.76% of lit pixels, inside the band in Intel's guidance. One descriptive test on seeds 0–9 with 10 000 dots, a new render, gives 0.041 on metal and 0.184 on matte, against 0.102 and 0.265 on the same seeds (`results/hfov71/dots.json`, A-74 in `docs/ASSUMPTIONS.md`). Denser patterns are untested.
+- **The dot density is assumed, and the metal level depends on the pattern.** The D415's pattern is not published. The primary run uses 30 000 dots, 3.76% of lit pixels, inside the band in Intel's guidance. A descriptive test on seeds 0–9 gives, for metal and matte: 0.102 and 0.265 at 30 000 dots, and the same after a repeat render, with no view crossing 5 mm; 0.041 and 0.184 at 10 000; 0.031 and 0.235 at 60 000 (`results/hfov71/dots_compare.json`, A-74 and A-76 in `docs/ASSUMPTIONS.md`). Metal falls in both directions. Changing the count also moves every dot, so density and layout are mixed, and another layout at 30 000 is untested. Metal stays below matte, and matte below noise of 0.234 px, at all three densities.
 - **The stereo search range and the datasheet's minimum range disagree at this focal length.** With a 126 px search the depth transition is at 392 mm, against the datasheet's 450 mm. No scene pixel is that close.
 - **The imager is wider than the projector** (71° against 67°), so the image has unlit margins. The matcher fills narrow unlit strips with depth.
 - **Depth wraps around beyond 6.55 m.** `scripts/stereo_scene.py` stores depth as uint16 at 0.1 mm, so a match beyond 6.5535 m (disparity below 7.5 px) wraps to a false value, as low as 26 mm. On the test scenes this is 0.09% of image pixels and none of the part pixels in C3 and C4, so recall and part metrics do not change. With all matcher filters off it is 0.04% of part pixels on seeds 0–9 (`results/hfov71/depth_wrap.json`). Not fixed: a fix changes pixels outside the parts and the quick run's expected hashes.
