@@ -513,3 +513,4 @@ Placeholders from the 2026-11-07 session filled from its logs (scratchpad of ses
 - Author name with the accent, "Nicolò", in the title block and the PDF metadata.
 - Build: 8 pages, 0 overfull boxes, `check_numbers` 99 of 99. Sections 10–11 measured from the PDF word boxes (heading top to last line of Section 11): 701.8 pt of 748.3 pt text height = 0.94 page (same method on HEAD 9021328: 653.0 pt = 0.87); footnote updated to 0.94. No number or result changed.
 - AI_USE_LOG section A row 16.
+- Same evening: footnote on Sections 10–11 ("the one-page answer … about 0.94 of a page, across a page break") removed at the user's request. Rebuild: 8 pages, 0 overfull, `check_numbers` 99 of 99.
