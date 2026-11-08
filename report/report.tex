@@ -8,6 +8,12 @@
 \usepackage[compact,small]{titlesec}
 \usepackage[hidelinks]{hyperref}
 \usepackage{enumitem}
+\usepackage[titles]{tocloft}
+\setcounter{tocdepth}{1}
+\renewcommand{\cftsecfont}{\normalfont}
+\renewcommand{\cftsecpagefont}{\normalfont}
+\setlength{\cftbeforesecskip}{0pt}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
 \setlist{nosep,leftmargin=1.2em,topsep=1pt,itemsep=1pt}
 \setlength{\parskip}{2.5pt plus 1pt}
 \setlength{\parindent}{0pt}
@@ -33,6 +39,12 @@
 
 \noindent\fbox{\parbox{\dimexpr\textwidth-2\fboxsep-2\fboxrule}{\small
 \textbf{Summary.} I built a pipeline that generates labelled synthetic RGB-D scenes of aluminium T-slot profiles and L-brackets, with a physics-based model of an Intel RealSense D415: rendered infrared stereo pairs with the projected dots, metal and matte materials, sensor noise and stereo matching. I then ran one experiment on 460 paired part views in 50 test scenes. CAD-based pose recall at 5\,mm is 0.717 on ideal depth, 0.561 with noise matched to a published D415 measurement, 0.070 with the camera model on metal and 0.343 on matte parts. All three pre-specified comparisons reject. So the camera model changes the outcome, and additive noise does not stand in for it: even independent noise with the model's own error sizes gives 0.276 against 0.102 on the same scenes. The size of the effect on a real camera remains open: the metal result moves from 0.070 to 0.276 over a range of surface roughness I could not source, and against real images the model's disparity errors are compatible, while invalid pixels and infrared appearance differ.}}
+
+{\small\vspace{3pt}\noindent\textbf{Contents}\vspace{-4pt}
+\begin{multicols}{3}
+\makeatletter\@starttoc{toc}\makeatother
+\end{multicols}}
+\vspace{-6pt}
 
 \section{Problem and scope}
 A robot that picks and assembles aluminium profiles and brackets needs depth on surfaces that are hard for active stereo, because smooth metal sends the projected pattern away from the camera or onto other parts. The D415 datasheet specifies depth on a white target and says nothing about metal \cte{1}. My question is whether modelling this camera changes the result of a downstream step, compared with ideal depth and with noise of the size the camera is known to have.
@@ -228,7 +240,8 @@ Masks are ground truth, and real masks would degrade at edges. Scenes are sparse
 \end{itemize}
 Two other candidates are real but show themselves sooner: appearance randomisation that misses factory surfaces \cte{24} fails visibly in the first real images, and pose error that does not predict pick success appears in the first trials. A wrong sensor error model can stay hidden until grasps fail on one surface finish at one distance.
 
-\para{The first six months.} The aim is to measure this gap on real parts, then decide from evidence how much sensor realism is worth.
+\section{The first six months}
+The aim is to measure this gap on real parts, then decide from evidence how much sensor realism is worth.
 \begin{itemize}
 \item \textbf{Month 1, no hardware.} Repeat my comparison on the D415 depth of XYZ-IBD \cte{10}, which is at my working range (600--1000\,mm) and covers 15 metal objects, unlike the single ROBI object at 0.32--0.41\,m used here. Extend the ROBI comparison to its other six objects, whose infrared pairs let me separate the images from the matcher.
 \item \textbf{Months 1--2, calibration set.} Record real extruded profiles and brackets, mill-finish and anodised, 20--30 scenes at 0.6--1.0\,m, with a D415 and a structured-light reference on a robot arm for repeatable views. Take ground truth from anti-reflective spray, as ROBI and XYZ-IBD do. Depth and both infrared streams together are supported only for calibration (datasheet p.\,84), so record them in succession.
